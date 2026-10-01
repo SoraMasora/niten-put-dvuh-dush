@@ -22,5 +22,7 @@ export const SFX={
  grab(){tone(70,0.6,'sawtooth',0.2,40)},
  bell(){tone(146,4,'sine',0.35);tone(293,3,'sine',0.12);tone(440,2,'sine',0.05)},
  iai(){tone(1600,0.7,'sine',0.12,2600)},
+ thunder(d=1){noise(0.25,900,0.7,0.25,'lowpass',d*0.3);noise(2.8,140,0.6,0.55,'lowpass',d*0.3+0.1);tone(45,2.2,'sine',0.25,28,d*0.3+0.1)},
+ rain(on){if(!AC)return false;if(!SFX._r){const s=AC.createBufferSource();s.buffer=NB;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2600;f.Q.value=0.4;const g=AC.createGain();g.gain.value=0;s.connect(f);f.connect(g);g.connect(master);s.start();SFX._r=g}SFX._r.gain.setTargetAtTime(on?0.07:0,AC.currentTime,0.6)},
  guitar(){tone(82,0.45,'sawtooth',0.05);tone(123,0.45,'sawtooth',0.04)}
 };

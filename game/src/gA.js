@@ -6,7 +6,7 @@ import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {initMats,M,mesh,makeHuman,makeSword,POSE,mixPose,applyPose,ASSET} from './models.js';
 import {loadAssets,addPart} from './assets.js';
-await loadAssets();{const l=document.getElementById('ld');if(l)l.remove()}
+await loadAssets();
 import {audioInit,SFX} from './audio.js';
 const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,Vector3:V3}=THREE;
 const rnd=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;

@@ -7,9 +7,10 @@ function heroPose(){const st=P.stance,base=[POSE.tiger,POSE.crane,POSE.water][st
   else{p=T<a.s?mixPose(base,POSE.nUp,k1):T<a.s+a.a?mixPose(POSE.nUp,POSE.nDown,k2):mixPose(POSE.nDown,base,k3)}}
  else if(s==='block'||s==='clinch')p=POSE.block;else if(s==='dodge')p=POSE.dodge;else if(s==='absorb')p=POSE.absorb;else if(s==='issen')p=POSE.issen;else if(s==='hurt')p=POSE.hurt;else if(s==='dead')p=POSE.dead;else if(s==='eat')p=POSE.eat;else if(s==='dive')p=POSE.nDown;
  else if(s==='idle'&&P.st<30)p=mixPose(base,POSE.hurt,0.3);
+ else if(s==='idle'&&P.idleT>300)p=mixPose(base,POSE.rest,Math.min(1,(P.idleT-300)/60));
  P.pose=mixPose(P.pose,p,s==='atk'||s==='issen'?0.7:0.25);return P.pose}
 const glV=new V3();
-function syncHero(t){const p=heroPose();applyPose(hero,p,P.walk,P.walkPh,t);hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
+function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:lk});hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
  heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
  const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:0x000000);
@@ -22,9 +23,9 @@ function syncHero(t){const p=heroPose();applyPose(hero,p,P.walk,P.walkPh,t);hero
 function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.atk.wind):0,act=e.state==='act',rec=e.state==='rec';
  if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.y=e.yaw}
  if(r.mat){r.mat.emissive.set(e.flash>0?0x606060:e.frozen>0?0x103060:e.burn>0?0x401000:0x000000)}
- const mv=(e.state==='move'||e.state==='enter')?1:0,ph=e.anim*0.18;
+ const mv=(e.state==='move'||e.state==='enter')?1:0,ph=e.anim*0.11;
  if(e.dead){r.gl.visible=false;return}
- if(r.kind==='ash'||r.kind==='gasa'){r.legs[0].rotation.x=Math.sin(ph)*0.5*mv;r.legs[1].rotation.x=-Math.sin(ph)*0.5*mv;r.torso.rotation.x=0.4+Math.sin(t*2+e.anim)*0.04;
+ if(r.kind==='ash'||r.kind==='gasa'){r.legs[0].rotation.x=Math.sin(ph)*0.5*mv;r.legs[1].rotation.x=-Math.sin(ph)*0.5*mv;r.torso.rotation.x=0.4+Math.sin(t*2+e.anim)*0.04+mv*0.08;r.torso.rotation.z=Math.sin(t*0.9+e.anim)*0.07*(1-mv)+Math.sin(ph)*0.06*mv;r.root.position.y+=Math.abs(Math.cos(ph))*0.05*mv;if(r.head){const tw=Math.sin(t*0.7+e.anim*0.01);r.head.rotation.z=tw>0.93?Math.sin(t*40)*0.25:Math.sin(t*0.5+e.anim)*0.12}
   if(r.kind==='ash'){r.weap.position.z=wind?-0.5*k:act?0.7:rec?0.7*(1-e.st/e.atk.rec):0;r.arm.rotation.x=e.state==='stag'?0.6:0}
   else{const grab=e.atk&&e.atk.k==='grab'&&(wind||e.state==='hold');const a2=r.root.userData.arm2;
    if(grab){r.arm.rotation.x=-1.4;a2.rotation.x=-1.4;r.weap.rotation.x=1.2}else{r.arm.rotation.x=wind?lerp(-0.6,-3.0,k):act?-0.2:rec?lerp(-0.2,-0.6,e.st/e.atk.rec):-0.6;a2.rotation.x=-0.3;r.weap.rotation.x=0.8}}}
@@ -33,10 +34,11 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
   const top=r.neck[6].position;r.head.position.set(top.x,top.y+0.12,top.z);r.head.lookAt(tv1.set(P.x,1.5,P.z));}
  else if(r.kind==='sota'){let p=POSE.crane;const a=e.atk;
   if(wind&&a){p=a.k==='iai'?mixPose(POSE.crane,POSE.iai,k):mixPose(POSE.crane,POSE.nUp,k)}else if(act||rec){p=a&&a.k==='iai'?POSE.issen:POSE.nDown}else if(e.state==='stag'||e.state==='trans')p=POSE.hurt;
-  e.pose=mixPose(e.pose||POSE.crane,p,0.35);applyPose(r.human,e.pose,mv,ph*0.9,t)}
+  e.pose=mixPose(e.pose||POSE.crane,p,0.35);applyPose(r.human,e.pose,mv,ph*1.2,t,{run:0.8,idle:e.state==='idle'||e.state==='circle'?1:0.4,seed:1.7,look:Math.sin(t*0.4)*0.2})}
  const tele=wind&&e.atk.wind-e.st<=30;r.gl.visible=tele;if(tele){r.tip.getWorldPosition(tv1);r.gl.position.copy(tv1);const kk=1-(e.atk.wind-e.st)/30,sc=0.25+kk*0.7;r.gl.scale.set(sc,sc,1);
   r.gl.material.color.set(e.atk.k==='grab'?glintCols.purple:e.atk.k==='iai'?glintCols.blue:glintCols.red);r.gl.material.rotation=t*2}}
 const iaiLine=new Mesh(new THREE.BoxGeometry(0.06,0.06,1),new MB({color:0x80c8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false}));iaiLine.visible=false;scene.add(iaiLine);
+const tmpC=new THREE.Color();
 function syncWorld(t){
  for(const f of flames){const k=0.85+Math.sin(t*9+f.ph)*0.1+Math.sin(t*23+f.ph)*0.05;f.s.scale.set(0.6*f.b*k,1.1*f.b*(2-k),1);if(Math.random()<0.05*f.b)embers(f.x,f.y+0.5*f.b,f.z)}
  for(const l of STATIC)if(l.userData.base)l.intensity=l.userData.base*(0.85+Math.sin(t*11+l.position.x)*0.08+Math.random()*0.07);
@@ -53,7 +55,10 @@ function syncWorld(t){
  // iai line
  const L=lines[0];iaiLine.visible=!!L;if(L){iaiLine.position.set((L.x1+L.x2)/2,1.2,(L.z1+L.z2)/2);iaiLine.lookAt(L.x2,1.2,L.z2);iaiLine.scale.set(1,1,Math.hypot(L.x2-L.x1,L.z2-L.z1)||0.1);iaiLine.material.opacity=L.life/24}
  // rain
- if(rain.obj){const a=rain.arr;const fz=G.rainFreeze>0,up=G.rainUp;rain.obj.position.set(P.x,0,P.z);for(let i=0;i<rain.N;i++){const o=i*6;if(!fz){const dy=up?0.1:-0.3;a[o+1]+=dy;a[o+4]+=dy;if(a[o+1]<0){a[o+1]+=12;a[o+4]+=12}if(a[o+1]>12){a[o+1]-=12;a[o+4]-=12}}}rain.obj.geometry.attributes.position.needsUpdate=true}
+ {const wr=!!rain.obj&&G.mode==='play';if(wr!==!!rain.snd&&SFX.rain(wr)!==false)rain.snd=wr}
+ if(rain.obj){const dt=rain.last==null?0:Math.min(0.1,t-rain.last);rain.last=t;const fz=G.rainFreeze>0,up=G.rainUp;rain.T+=dt*(fz?0:up?-0.35:1);const U=rain.U;U.uT.value=rain.T;U.uC.value.set(camera.position.x,0,camera.position.z);U.uCam.value.copy(camera.position);U.uStr.value=fz?0.25:1;rain.rip.visible=!fz&&!up;
+  rain.next-=dt;if(rain.next<=0&&!fz){rain.flash=1;rain.next=10+Math.random()*16;SFX.thunder&&SFX.thunder(0.8+Math.random()*1.6)}
+  if(rain.flash>0){rain.flash=Math.max(0,rain.flash-dt*2.2);const f=rain.flash,fl=f>0.75||(f>0.35&&f<0.5)?f:f*0.15;U.uLit.value=fl;hemi.intensity=THEMES.duel.hemi[2]*(1+fl*5);scene.background.setHex(THEMES.duel.bg).lerp(tmpC.set(0x8090b0),fl*0.6)}else U.uLit.value=0}
  // issen
  const fx=G.issenFx;crescent.visible=false;if(fx){const tt=fx.t;if(tt<24){crescent.visible=true;const k=Math.min(1,tt/5);crescent.geometry.dispose();crescent.geometry=new THREE.RingGeometry(2.3,2.75,48,1,Math.PI*0.95,-Math.PI*1.1*k);
    crescent.position.set(fx.x,1.3,fx.z);crescent.lookAt(camera.position);crescent.rotateZ(-0.5);crescent.material.opacity=tt<9?1:Math.max(0,1-(tt-9)/15)}}

@@ -54,7 +54,7 @@ function updTrail(t,sw,on){const H=t.hist;if(on){sw.userData.base.getWorldPositi
  t.g.attributes.position.needsUpdate=true;t.g.attributes.color.needsUpdate=true;t.m.visible=H.length>1}
 const bolts=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x9ad8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false}));bolts.frustumCulled=false;scene.add(bolts);
 const crescent=new Mesh(new THREE.RingGeometry(2.4,2.9,48,1,0,0.1),new MB({color:0xffffff,transparent:true,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false}));crescent.renderOrder=20;crescent.visible=false;scene.add(crescent);
-function resetPlayer(x,z){Object.assign(P,{x,z,y:0,vy:0,yaw:0,vx:0,vz:0,hp:120,max:120,st:100,stMax:100,oni:0,mana:40,state:'idle',t:0,atk:null,hitList:null,combo:'',comboT:0,buf:null,stance:1,stanceFx:0,muso:0,exhaust:0,iss:0,blockTap:-999,pdWin:0,air:false,food:3,tar:0,rT:-99,lT:-99,pendR:false,pendL:false,clinch:null,clT:0,hurtT:0,invT:0,dodgeLen:24,swung:false,absorbing:false,atkSpd:1,eatDone:false,walkPh:0,walk:0,pose:POSE.crane})}
+function resetPlayer(x,z){Object.assign(P,{x,z,y:0,vy:0,yaw:0,vx:0,vz:0,hp:120,max:120,st:100,stMax:100,oni:0,mana:40,state:'idle',t:0,atk:null,hitList:null,combo:'',comboT:0,buf:null,stance:1,stanceFx:0,muso:0,exhaust:0,iss:0,blockTap:-999,pdWin:0,air:false,food:3,tar:0,rT:-99,lT:-99,pendR:false,pendL:false,clinch:null,clT:0,hurtT:0,invT:0,dodgeLen:24,swung:false,absorbing:false,atkSpd:1,eatDone:false,walkPh:0,walk:0,gait:1,idleT:0,pose:POSE.crane})}
 const fwdX=y=>Math.sin(y),fwdZ=y=>Math.cos(y);
 function say(n,t){G.subs.push({n,t,d:Math.max(170,t.length*4.2),a:0})}
 function pop(t,col='#e8dcc0'){G.pops.push({t,col,life:110})}
@@ -125,7 +125,7 @@ function updPlayer(ts){
   if(down('KeyQ')&&!P.air){P.state='block';P.t=0;break}
   if(down('KeyE')&&!P.air){P.state='absorb';P.t=0;break}
   if(hit('KeyF')){castFire();break}if(hit('KeyG'))castIce();if(hit('KeyR'))startMuso();if(hit('KeyH'))eat();
-  if(dirY!=null){P.yaw=turn(P.yaw,dirY,0.25);mv=5.2/60*m;P.state='run';P.st=Math.min(P.stMax,P.st+12/60*ts)}else{P.state='idle';P.st=Math.min(P.stMax,P.st+25/60*ts)}
+  if(dirY!=null){P.yaw=turn(P.yaw,dirY,0.25);const wk=down('KeyC')||down('CapsLock');P.gait=lerp(P.gait??1,wk?0:1,0.12);mv=(1.9+3.3*P.gait)/60*m;P.state='run';P.st=Math.min(P.stMax,P.st+12/60*ts)}else{P.state='idle';P.st=Math.min(P.stMax,P.st+25/60*ts)}
   P.comboT-=ts;if(P.comboT<=0)P.combo='';break;
  case'atk':{const a=P.atk,T=P.t*P.atkSpd;
   if(T<a.s){if(T>a.s-6)mv=P.lunge/6*P.atkSpd;if(act)P.buf=act;if(G.lock&&!G.lock.dead)aimAt(G.lock)}
@@ -146,6 +146,6 @@ function updPlayer(ts){
  }
  P.x+=fwdX(P.yaw)*mv*ts+P.vx*ts;P.z+=fwdZ(P.yaw)*mv*ts+P.vz*ts;P.vx*=0.85;P.vz*=0.85;arenaClamp(P,0.5);
  for(const e of enemies){if(e.dead)continue;const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz),min=e.d.rad+0.35;if(d<min&&d>0.001&&P.state!=='dodge'){P.x=e.x+dx/d*min;P.z=e.z+dz/d*min}}
- P.walk=lerp(P.walk,mv>0?1:0,0.2);P.walkPh+=mv*ts*9;P.absorbing=P.state==='absorb';
+ P.walk=lerp(P.walk,mv>0?1:0,0.2);P.walkPh+=mv*ts*(4.4-1.8*(P.gait??1));P.idleT=P.state==='idle'?(P.idleT||0)+ts:0;P.absorbing=P.state==='absorb';
  if(LV.env.theme==='duel')P.tar=Math.max(0,P.tar-0.0008*ts);
 }

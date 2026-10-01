@@ -58,14 +58,20 @@ def build():
     save('metal_n',norm_from_h(br*0.3+scr*0.25,1.5))
     orm=np.dstack([np.ones((n,n)),0.25+0.3*fbm(n,2.0,12)+0.2*scr,np.ones((n,n))]);save('metal_orm',orm)
     # клинок: хамон вдоль длины (u), поперёк (v: 0 обух .. 1 лезвие)
-    W,H=1024,128;uu=lin(W)[None,:];vv=lin(H)[:,None]
-    ham=0.62+0.06*np.sin(uu*2*np.pi*34)+0.03*np.sin(uu*2*np.pi*91+1)+0.04*(fbm(W,2,13,H)[H//2:H//2+1,:]-0.5)
-    edge=np.clip((vv-ham)/0.02,0,1);nioi=np.exp(-((vv-ham)/0.025)**2)
+    W,H=2048,256;uu=lin(W)[None,:];vv=lin(H)[:,None]
+    gun=np.abs(np.sin(uu*np.pi*46+0.6*np.sin(uu*2*np.pi*7)))**0.6
+    cho=np.abs(np.sin(uu*np.pi*130+1.3))**3
+    ham=0.6+0.07*gun+0.025*cho+0.03*(fbm(W,2,13,H)[H//2:H//2+1,:]-0.5)
+    tip=np.clip((uu-0.9)/0.1,0,1);ham=ham*(1-tip)+(0.55+0.3*tip)*tip   # боси: хамон поворачивает в кончике
+    edge=np.clip((vv-ham)/0.012,0,1);nioi=np.exp(-((vv-ham)/0.018)**2)
+    nie=(R.random((H,W))>0.985).astype(float)*np.exp(-((vv-ham)/0.04)**2)
+    hada=np.repeat(fbm(W,1.6,17,H).mean(axis=0,keepdims=True)*0,H,0)+fbm(W,2.4,18,H)*0.5+np.roll(fbm(W,1.2,19,H),0,1)*0.5
+    hada=0.5+0.5*np.sin(hada*40)
     jit=fbm(W,1.1,14,H)
-    shin=(vv<0.28).astype(float)
-    g=0.48+0.12*jit*0.5+edge*0.32+nioi*0.15-shin*0.08
+    shin=(vv<0.28).astype(float);yok=np.exp(-((uu-0.925)/0.0015)**2)
+    g=0.44+0.08*jit+0.05*hada*(1-edge)+edge*0.34+nioi*0.16+nie*0.25-shin*0.1+yok*0.15
     save('blade_c',np.dstack([g*0.97,g*0.99,g*1.03]))
-    save('blade_orm',np.dstack([np.ones_like(g),0.12+edge*0.25+nioi*0.1+shin*0.0,np.ones_like(g)]))
+    save('blade_orm',np.dstack([np.ones_like(g),0.1+edge*0.22+nioi*0.1-shin*0.04+hada*0.04,np.ones_like(g)]))
     # смола Гэнмы: морщины и прожилки
     t1=fbm(n,2.2,15);rid=1-np.abs(fbm(n,1.9,16)*2-1);rid=rid**6
     save('tar_n',norm_from_h(t1*0.5+rid*0.5,3.5))
@@ -97,4 +103,39 @@ def build():
     # бумага (зонт)
     p1=fbm(n,1.2,29);st2=fbm(n,2.8,30)
     save('paper_c',np.dstack([0.78-0.25*st2,0.7-0.28*st2,0.55-0.3*st2])*(0.9+0.1*p1)[...,None]);save('paper_n',norm_from_h(p1*0.3+st2*0.2,1))
+    build_env()
+def build_env():
+    """Текстуры окружения: земля (пепел/мох/каменные плиты), штукатурка, бамбук, черепица."""
+    n=512;u=lin(n)[None,:];v=lin(n)[:,None]
+    a1=fbm(n,2.2,40);a2=fbm(n,1.3,41);a3=fbm(n,2.8,42)
+    soot=(fbm(n,1.8,43)>0.62).astype(float)*0.6;bits=(R.random((n,n))>0.993).astype(float)
+    h=a1*0.5+a3*0.3+bits*0.5
+    c=np.dstack([0.33+0.18*a1-0.2*soot+0.3*bits*0.2,0.3+0.16*a1-0.18*soot,0.28+0.14*a1-0.16*soot])*(0.85+0.3*a2)[...,None]
+    save('ground_ash_c',c);save('ground_ash_n',norm_from_h(h,2.0))
+    m1=fbm(n,2.0,44);m2=fbm(n,2.6,45);leaf=fbm(n,3.0,46)
+    moss=np.clip((m1-0.45)*3,0,1)
+    c=np.dstack([0.22+0.12*m2-0.1*moss+0.1*leaf,0.2+0.12*m2+0.1*moss,0.12+0.06*m2])
+    save('ground_moss_c',c);save('ground_moss_n',norm_from_h(m1*0.4+m2*0.3+leaf*0.3,2.0))
+    # каменные плиты: ряды прямоугольных плит со смещением
+    rows=6;hgt=np.zeros((n,n));col=np.zeros((n,n));rr=np.random.default_rng(47)
+    rh=n//rows
+    for r in range(rows):
+        y0=r*rh;x=int(rr.integers(0,n//4))
+        while x<n+n//4:
+            w=int(rr.integers(n//7,n//3));tone=rr.uniform(-0.12,0.12)
+            xs=np.arange(x,x+w)%n
+            gx=np.minimum(np.arange(w),w-1-np.arange(w))[None,:];gy=np.minimum(np.arange(rh),rh-1-np.arange(rh))[:,None]
+            e=np.clip(np.minimum(gx,gy)/5.0,0,1)
+            hgt[y0:y0+rh][:,xs]=e*(0.8+0.2*rr.random());col[y0:y0+rh][:,xs]=tone
+            x+=w
+    s1=fbm(n,2.3,48);s2=fbm(n,1.5,49)
+    hh=hgt*0.7+s1*0.2+s2*0.1
+    g=(0.42+col+0.18*s1+0.1*s2)*(0.35+0.65*np.clip(hgt*1.5,0,1))
+    save('paving_c',np.dstack([g*0.95,g*0.96,g*1.0]));save('paving_n',norm_from_h(hh,3.0))
+    # штукатурка
+    p1=fbm(n,2.4,50);p2=fbm(n,1.4,51)
+    save('plaster_c',np.dstack([0.8,0.74,0.62])*(0.82+0.12*p1+0.08*p2)[...,None]-(fbm(n,1.6,52)[...,None]>0.7)*0.12);save('plaster_n',norm_from_h(p1*0.5+p2*0.2,1.2))
+    # бамбук: продольные волокна
+    fib=np.repeat(fbm(n,1.0,53)[0:1,:],n,0)*0.5+fbm(n,2.2,54)*0.5
+    save('bamboo_c',np.dstack([0.42+0.15*fib,0.48+0.14*fib,0.22+0.08*fib]));save('bamboo_n',norm_from_h(fib*0.3,1.0))
 if __name__=='__main__':build();print('ok',len(os.listdir(OUT)))

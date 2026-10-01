@@ -98,17 +98,25 @@ export const POSE={
  eat:{c:0.1,tx:0,ty:0,R:[-2.7,0.2,0.3,-0.4,-0.55],L:[-2.0,0.6,0,-2.1,1.3]},
  spinA:{c:0.4,tx:0.3,ty:1.3,R:[-1.6,-1.3,0.1,0,0],L:[-1.6,-1.3,0.1,0,0]},
  spinB:{c:0.4,tx:0.3,ty:-1.3,R:[-1.6,-1.3,0.1,0,0],L:[-1.6,-1.3,0.1,0,0]},
+ rest:{c:0.06,tx:0.07,ty:0.06,R:[-0.22,0.02,0.38,-0.45,1.0],L:[-0.2,0.02,0.38,-0.4,1.05]},
  iai:{c:0.5,tx:0.4,ty:0.6,R:[-0.4,0.6,0.2,-1.2,2.84],L:[-0.3,0.6,0.2,-1.2,2.8]}
 };
 export function mixPose(a,b,t){const r={c:a.c+(b.c-a.c)*t,tx:a.tx+(b.tx-a.tx)*t,ty:a.ty+(b.ty-a.ty)*t,R:[],L:[]};for(let i=0;i<5;i++){r.R[i]=a.R[i]+(b.R[i]-a.R[i])*t;r.L[i]=a.L[i]+(b.L[i]-a.L[i])*t}return r}
-export function applyPose(h,p,walk=0,ph=0,t=0){
- h.hips.position.y=0.92-p.c*0.28;h.torso.rotation.set(p.tx,p.ty,0);h.hips.rotation.y=-p.ty*0.3;
- const sw=Math.sin(ph)*0.7*walk;
- h.legs[0].th.rotation.x=-sw-p.c*0.9;h.legs[0].kn.rotation.x=p.c*1.6+Math.max(0,-Math.cos(ph))*walk*0.9;
- h.legs[1].th.rotation.x=sw-p.c*0.6+p.c*0.1;h.legs[1].kn.rotation.x=p.c*1.3+Math.max(0,Math.cos(ph))*walk*0.9;
- h.legs[0].th.rotation.z=-0.06-p.c*0.15;h.legs[1].th.rotation.z=0.06+p.c*0.15;
- const A=h.arms;const r=p.R,l=p.L;
- A.R.sh.rotation.set(r[0],r[1],-r[2]);A.R.el.rotation.x=r[3];A.R.hand.rotation.x=r[4]-r[0]-r[3];
- A.L.sh.rotation.set(l[0],-l[1],l[2]);A.L.el.rotation.x=l[3];A.L.hand.rotation.x=l[4]-l[0]-l[3];
+export function applyPose(h,p,walk=0,ph=0,t=0,o={}){
+ const run=o.run??1,idle=(o.idle??0)*(1-walk),A1=0.36+0.26*run,K1=0.55+0.75*run;
+ const br=Math.sin(t*1.7+(o.seed||0)),sway=Math.sin(t*0.45+(o.seed||0)*2);
+ const bob=walk*(0.022+0.03*run)*(0.5-0.5*Math.cos(2*ph))+idle*br*0.006;
+ h.hips.position.y=0.92-p.c*0.28-bob-walk*run*0.035;h.hips.position.x=idle*sway*0.025;
+ h.torso.rotation.set(p.tx+walk*run*0.16+idle*br*0.02,p.ty-Math.sin(ph)*0.14*walk+idle*(o.look||0)*0.25,-idle*sway*0.03);
+ h.hips.rotation.set(0,-p.ty*0.3+Math.sin(ph)*0.12*walk,idle*sway*0.035+Math.cos(ph)*0.04*walk);
+ if(h.neck)h.neck.rotation.set(-walk*run*0.1+idle*br*0.015,idle*(o.look||0)*0.55,0);
+ for(let i=0;i<2;i++){const L=h.legs[i],q=ph+i*Math.PI,sq=Math.sin(q),cq=Math.cos(q),side=i?1:-1;
+  const swing=-sq*A1*walk,kneeSw=Math.pow(Math.max(0,cq),1.5)*K1*walk,stance=Math.max(0,-cq)*Math.max(0,sq)*0.25*walk;
+  const crouch=i?p.c*0.6-p.c*0.1:p.c*0.9;
+  L.th.rotation.x=swing-crouch-kneeSw*0.25;L.kn.rotation.x=(i?p.c*1.3:p.c*1.6)+kneeSw+stance+walk*run*0.15;
+  L.th.rotation.z=side*(0.06+p.c*0.15)+(i?-1:1)*idle*sway*0.03*side}
+ const Ar=h.arms;const r=p.R,l=p.L,as=Math.sin(ph)*walk*(0.12+0.1*run);
+ Ar.R.sh.rotation.set(r[0]+as,r[1],-r[2]-idle*br*0.02);Ar.R.el.rotation.x=r[3]-walk*run*0.15;Ar.R.hand.rotation.x=r[4]-r[0]-r[3]-as*0.5;
+ Ar.L.sh.rotation.set(l[0]-as,-l[1],l[2]+idle*br*0.02);Ar.L.el.rotation.x=l[3]-walk*run*0.15;Ar.L.hand.rotation.x=l[4]-l[0]-l[3]+as*0.5;
  if(h.cape){const g=h.cape.geometry,pa=g.attributes.position,b=h.cape.userData.base;for(let i=0;i<pa.count;i++){const y=b[i*3+1],x=b[i*3],d=-y;pa.array[i*3+2]=b[i*3+2]-d*d*(0.12+walk*0.35)-Math.sin(t*3+x*4+d*3)*0.025*d-p.c*d*0.2}pa.needsUpdate=true;g.computeVertexNormals()}
 }
