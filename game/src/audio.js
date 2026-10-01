@@ -25,5 +25,10 @@ export const SFX={
  thunder(d=1){noise(0.25,900,0.7,0.25,'lowpass',d*0.3);noise(2.8,140,0.6,0.55,'lowpass',d*0.3+0.1);tone(45,2.2,'sine',0.25,28,d*0.3+0.1)},
  rain(on){if(!AC)return false;if(!SFX._r){const s=AC.createBufferSource();s.buffer=NB;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2600;f.Q.value=0.4;const g=AC.createGain();g.gain.value=0;s.connect(f);f.connect(g);g.connect(master);s.start();SFX._r=g}SFX._r.gain.setTargetAtTime(on?0.07:0,AC.currentTime,0.6)},
  draw(d){if(d){noise(0.06,1800,2,0.12,'bandpass',0.12);noise(0.45,5200,4,0.12,'highpass',0.2);tone(2900,0.6,'sine',0.04,3400,0.22)}else{noise(0.35,3800,3,0.1,'highpass',0.45);tone(620,0.12,'triangle',0.12,300,0.85);noise(0.05,600,1,0.25,'lowpass',0.85)}},
+ // ветер: шум -> полосовой фильтр (+ узкий «свист»), громкость и тон следуют порывам из игры
+ wind(theme,k){if(!AC)return;if(!SFX._w){const mk=(q,ty)=>{const s=AC.createBufferSource();s.buffer=NB;s.loop=true;s.playbackRate.value=0.5+Math.random()*0.2;const f=AC.createBiquadFilter();f.type=ty;f.Q.value=q;const g=AC.createGain();g.gain.value=0;s.connect(f);f.connect(g);g.connect(master);s.start();return{f,g}};SFX._w=[mk(0.7,'bandpass'),mk(9,'bandpass'),mk(0.5,'lowpass')]}
+  const P={ash:[380,0.07,820,0.012,160,0.05],forest:[950,0.045,1500,0.006,220,0.03],duel:[520,0.03,1100,0.006,140,0.03]}[theme]||[500,0.04,1000,0.005,150,0.03],t=AC.currentTime,[a,b,c]=SFX._w;
+  a.f.frequency.setTargetAtTime(P[0]*(0.7+0.6*k),t,0.3);a.g.gain.setTargetAtTime(P[1]*(0.25+k),t,0.4);b.f.frequency.setTargetAtTime(P[2]*(0.8+0.5*k),t,0.5);b.g.gain.setTargetAtTime(P[3]*k*k,t,0.5);c.f.frequency.setTargetAtTime(P[4],t,0.5);c.g.gain.setTargetAtTime(P[5]*(0.3+k),t,0.5)},
+ windOff(){if(SFX._w)for(const n of SFX._w)n.g.gain.setTargetAtTime(0,AC.currentTime,0.3)},
  guitar(){tone(82,0.45,'sawtooth',0.05);tone(123,0.45,'sawtooth',0.04)}
 };

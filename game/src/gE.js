@@ -56,8 +56,9 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
   r.gl.material.color.set(e.atk.k==='grab'?glintCols.purple:e.atk.k==='iai'?glintCols.blue:glintCols.red);r.gl.material.rotation=t*2}}
 const iaiLine=new Mesh(new THREE.BoxGeometry(0.06,0.06,1),new MB({color:0x80c8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false}));iaiLine.visible=false;scene.add(iaiLine);
 const tmpC=new THREE.Color();
+function windGust(t){return clamp(0.45+0.35*Math.sin(t*0.21)+0.25*Math.sin(t*0.53+1.3)+0.18*Math.sin(t*1.37+0.4),0,1)}
 function syncWorld(t){
- updHitFx();
+ updHitFx();G.wind=windGust(t);if(G.frame%6===0){if(G.mode==='play')SFX.wind(LV.env.theme,G.wind);else SFX.windOff()}
  for(const f of flames){const k=0.85+Math.sin(t*9+f.ph)*0.1+Math.sin(t*23+f.ph)*0.05;f.s.scale.set(0.6*f.b*k,1.1*f.b*(2-k),1);if(Math.random()<0.05*f.b)embers(f.x,f.y+0.5*f.b,f.z)}
  for(const l of STATIC)if(l.userData.base)l.intensity=l.userData.base*(0.85+Math.sin(t*11+l.position.x)*0.08+Math.random()*0.07);
  // dynamic lights
