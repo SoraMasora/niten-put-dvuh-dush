@@ -21,11 +21,13 @@ export async function loadAssets(){
    if(t[t.length-1]==='TIP'){o.updateMatrix();ASSET.tips[t.length>2?pre+'__'+t[1]:pre]=o.position.clone();return}
    if(!o.isMesh)return;const part=t[1],det=t.slice(2).join('__')||part;
    const m=o.material;if(m&&m.name)ASSET.mats[m.name]=m;
-   const key=pre+'|'+(t.length>2?part:'_')+'|'+(SPECIAL.test(det)?det:(m?m.name:''))+(SPECIAL.test(det)?'':'');
-   (groups[key]=groups[key]||{pre,part:t.length>2?part:det,det,mat:m,list:[]}).list.push(o)});
+   const sk=/^sk_/.test(det);const key=pre+'|'+(t.length>2?part:'_')+'|'+(SPECIAL.test(det)?det:(m?m.name:''))+(sk?'|sk':'');
+   (groups[key]=groups[key]||{pre,part:t.length>2?part:det,det,mat:m,sk,list:[]}).list.push(o)});
   for(const k in groups){const gr=groups[k];let geos=gr.list.map(bake);let geo=geos.length>1?mergeGeometries(geos,false):geos[0];if(!geo){geo=geos[0]}
+   if(gr.mat&&gr.mat.name==='AK_stubble'){const u=geo.attributes.uv,n=u.count,c=new Float32Array(n*4);for(let i=0;i<n;i++){const h=Math.sin(i*12.9898)*43758.5453;c.set([1,1,1,Math.min(1,1.8*Math.pow(u.getX(i),0.9)*(0.75+0.25*(h-Math.floor(h))))],i*4)}geo.setAttribute('color',new THREE.BufferAttribute(c,4))}
    ASSET.stats.meshes++;ASSET.stats.tris+=(geo.index?geo.index.count:geo.attributes.position.count)/3;
-   const P=ASSET.parts[gr.pre]=ASSET.parts[gr.pre]||{};(P[gr.part]=P[gr.part]||[]).push({geo,mat:gr.mat,det:SPECIAL.test(gr.det)?gr.det:'',name:gr.list[0].name})}
+   const P=ASSET.parts[gr.pre]=ASSET.parts[gr.pre]||{};(P[gr.part]=P[gr.part]||[]).push({geo,mat:gr.mat,det:SPECIAL.test(gr.det)?gr.det:'',sk:gr.sk,name:gr.list[0].name})}
+  const st=ASSET.mats.AK_stubble;if(st){st.map=null;st.vertexColors=true;st.transparent=true;st.opacity=0.95;st.depthWrite=false;st.polygonOffset=true;st.polygonOffsetFactor=-2;st.side=THREE.DoubleSide;st.needsUpdate=true}
   for(const m of Object.values(ASSET.mats)){m.envMapIntensity=1.0;if(m.emissive&&m.emissiveIntensity>4){m.toneMapped=false}}
   ASSET.ok=true;console.log('NITEN assets:',ASSET.stats);return true}catch(e){console.warn('assets failed',e);return false}}
 // Добавить все меши части `part` префикса `pre` в группу. opt.mat(m) — подмена материала; возвращает {all, special:{det:mesh}}
@@ -33,6 +35,7 @@ export function addPart(group,pre,part,opt={}){const L=(ASSET.parts[pre]||{})[pa
  for(const it of L){let geo=it.geo,mesh;const mat=opt.mat?opt.mat(it.mat):it.mat;
   if(it.det){geo=geo.clone();geo.computeBoundingBox();const c=new THREE.Vector3();
    if(it.det==='cape')c.set(0,0.6,0.02);else geo.boundingBox.getCenter(c);geo.translate(-c.x,-c.y,-c.z);mesh=new THREE.Mesh(geo,mat);mesh.position.copy(c);out.special[it.det]=mesh}
+  else if(it.sk){mesh=new THREE.SkinnedMesh(geo,mat);mesh.frustumCulled=false;(out.skin=out.skin||[]).push(mesh)}
   else mesh=new THREE.Mesh(geo,mat);
   mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);out.all.push(mesh)}
  return out}

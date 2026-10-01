@@ -10,7 +10,7 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 from lib import *
 import chars,swords,demons,props,env
 t0=time.time()
-collection('Akira');chars.build_human('AK',chars.AKIRA,chars.mats_akira(),(0,0,0))
+collection('Akira');chars.build_human('AK',chars.MUSASHI,chars.mats_musashi(),(0,0,0))
 collection('Sota');chars.build_human('SO',chars.SOTA,chars.mats_sota(),(1.2,0,0))
 collection('Swords')
 for pre,L,stl,x in(('SW_A',0.74,'A',-0.9),('SW_Y',0.69,'Y',-1.1),('SW_S',0.9,'S',-1.3),('SW_G',1.2,'G',-1.5)):

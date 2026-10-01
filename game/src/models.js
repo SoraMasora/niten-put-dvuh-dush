@@ -29,7 +29,7 @@ export function makeSword(len,tsuba,lapis){if(ASSET.ok)return makeSwordA(len,tsu
  const tip=new THREE.Object3D();tip.position.set(0,0.07,0.08+len);g.add(tip);const base=new THREE.Object3D();base.position.set(0,0,0.25);g.add(base);
  g.userData={tip,base};return g}
 function makeHumanA(o){const pre=o.set;const mm=m=>(o.matMap&&m&&o.matMap[m.name])||m;const add=(g,p)=>addPart(g,pre,p,{mat:mm});
- const root=new Group(),hips=new Group();hips.position.y=0.92;root.add(hips);root.scale.setScalar(o.scale||1);add(hips,'hips');
+ const root=new Group(),hips=new Group();hips.position.y=0.92;root.add(hips);root.scale.setScalar(o.scale||1);const hp0=add(hips,'hips');
  const legs=[];for(const [sd,k] of[[-1,'R'],[1,'L']]){const th=new Group();th.position.set(sd*0.1,0,0);hips.add(th);add(th,'thigh'+k);const kn=new Group();kn.position.y=-0.44;th.add(kn);add(kn,'shin'+k);legs.push({th,kn})}
  const torso=new Group();hips.add(torso);add(torso,'torso');
  const neck=new Group();neck.position.y=0.6;torso.add(neck);const nk=add(neck,'neck');
@@ -42,7 +42,17 @@ function makeHumanA(o){const pre=o.set;const mm=m=>(o.matMap&&m&&o.matMap[m.name
   const sw=makeSword(o.len[k],k==='R'?o.tsR:o.tsL,k==='L'&&o.lapis);hand.add(sw);
   arms[k]={sh,el,hand,sw,orb}}
  let cape=null;const cp=addPart(torso,pre,'cape',{mat:mm});if(cp.special.cape){cape=cp.special.cape;cape.userData.base=cape.geometry.attributes.position.array.slice()}
+ if(hp0.skin)skinSkirt(hp0.skin,root,hips,legs);
  return{root,hips,torso,neck,legs,arms,cape,horns}}
+// Юбка хакама/кусадзури: GPU-скиннинг к бёдрам, чтобы ноги не проходили сквозь ткань.
+function skinSkirt(list,root,hips,legs){root.updateMatrixWorld(true);
+ const bones=[hips,legs[0].th,legs[1].th];
+ const sk=new THREE.Skeleton(bones.map(b=>b));
+ for(const m of list){const g=m.geometry,p=g.attributes.position,n=p.count,si=new Uint16Array(n*4),sw=new Float32Array(n*4);
+  for(let i=0;i<n;i++){const x=p.getX(i),y=p.getY(i);let s=Math.min(1,Math.max(0,(0.02-y)/0.32));s=s*s*(3-2*s);const t=Math.max(-1,Math.min(1,x/0.11));
+   const wl=s*(0.5+0.5*t)*0.92,wr=s*(0.5-0.5*t)*0.92;si.set([0,1,2,0],i*4);sw.set([1-wl-wr,wr,wl,0],i*4)}
+  g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
+  m.bind(sk,m.matrixWorld)}}
 export function makeHuman(o){if(ASSET.ok&&o.set)return makeHumanA(o);
  const root=new Group(),hips=new Group();hips.position.y=0.92;root.add(hips);root.scale.setScalar(o.scale||1);
  const legs=[];
