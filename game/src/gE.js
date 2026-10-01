@@ -8,6 +8,7 @@ function heroPose(){const st=P.stance,base=P.drawn?[POSE.tiger,POSE.crane,POSE.w
  else if(s==='block'||s==='clinch')p=POSE.block;else if(s==='dodge')p=POSE.dodge;else if(s==='absorb')p=POSE.absorb;else if(s==='issen')p=POSE.issen;else if(s==='hurt')p=POSE.hurt;else if(s==='dead')p=POSE.dead;else if(s==='eat')p=POSE.eat;else if(s==='dive')p=POSE.nDown;
  else if(s==='idle'&&P.st<30)p=mixPose(base,POSE.hurt,0.3);
  else if(s==='idle'&&P.idleT>300&&P.drawn)p=mixPose(base,POSE.rest,Math.min(1,(P.idleT-300)/60));
+ if(P.csPose&&P.csPose.w>0.001)p=mixPose(p,P.csPose.p,P.csPose.w);
  P.pose=mixPose(P.pose,p,s==='atk'||s==='issen'?0.7:0.25);return P.pose}
 const glV=new V3();
 // клипы Blender поверх процедурной позы + мечи (ножны / рука / полёт)
@@ -25,7 +26,7 @@ function heroClips(){let cn=null,ct=0,atk=false;
   if(P.drawn||!S){_bp.copy(_hp);_bq.copy(_hq)}else{_bp.set(S[0],S[1],S[2]);_bq.set(S[3],S[4],S[5],S[6])}
   if(HC.w>0.001&&clipSword(HC.name,s,HC.t,swS)){swS.p.lerp(_hp,swS.a);swS.q.slerp(_hq,swS.a);_bp.lerp(swS.p,HC.w);_bq.slerp(swS.q,HC.w)}
   sw.position.copy(_bp);sw.quaternion.copy(_bq);sw.updateMatrixWorld(true)}}
-function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.idleClip?0:lk,lockL:!P.drawn});hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
+function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.csLook!=null?P.csLook:P.idleClip?0:lk,lockL:!P.drawn});hero.root.visible=!P.csHide;{const s=P.csScale;hero.root.scale.set(1.02*(s?s[0]:1),1.02*(s?s[1]:1),1.02*(s?s[2]:1))}hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
  heroClips();stepTilt(P.tl,1);if(P.tl){hero.torso.rotateX(P.tl.x*0.8);hero.torso.rotateZ(P.tl.z*0.8)}
  P.ldv=(P.ldv||0)+(-0.12*(P.ld||0)-0.2*(P.ldv||0));P.ld=(P.ld||0)+P.ldv;hero.hips.position.y+=P.ld;
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
@@ -65,6 +66,7 @@ function syncWorld(t){
  // dynamic lights
  const src=[];src.push([P.x-fwdX(G.camYaw)*1.5,2.2,P.z-fwdZ(G.camYaw)*1.5,0xc0c8d8,2.5,8]);
  if(P.absorbing){hero.arms.L.orb.getWorldPosition(tv1);src.push([tv1.x,tv1.y,tv1.z,0x50a8ff,6,7])}
+ for(const l of csLights())src.push(l);
  for(const f of flashes)src.push([f.x,f.y,f.z,f.col,f.int*f.life/f.max,9]);
  for(const p of proj)if(p.k==='fire')src.push([p.x,p.y,p.z,0xff7030,6,9]);
  const ss=souls.filter(s=>!s.black).slice(0,3);for(const s of ss)src.push([s.x,s.y,s.z,s.c==='r'?0xff3020:s.c==='b'?0x2a8aff:s.c==='y'?0xffc030:0xb050ff,1.5,4]);
@@ -95,4 +97,4 @@ function updCamera(){
  let tx=P.x,tz=P.z;if(G.lock){tx=lerp(P.x,G.lock.x,0.25);tz=lerp(P.z,G.lock.z,0.25)}
  const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
  const rx=-Math.cos(G.camYaw)*0.45,rz=Math.sin(G.camYaw)*0.45;camera.position.x+=rx;camera.position.z+=rz;
- camera.lookAt(tx+rx,1.35+P.y*0.6,tz+rz);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}
+ tv1.set(tx+rx,1.35+P.y*0.6,tz+rz);if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}

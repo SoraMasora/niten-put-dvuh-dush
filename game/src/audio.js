@@ -30,5 +30,10 @@ export const SFX={
   const P={ash:[380,0.07,820,0.012,160,0.05],forest:[950,0.045,1500,0.006,220,0.03],duel:[520,0.03,1100,0.006,140,0.03]}[theme]||[500,0.04,1000,0.005,150,0.03],t=AC.currentTime,[a,b,c]=SFX._w;
   a.f.frequency.setTargetAtTime(P[0]*(0.7+0.6*k),t,0.3);a.g.gain.setTargetAtTime(P[1]*(0.25+k),t,0.4);b.f.frequency.setTargetAtTime(P[2]*(0.8+0.5*k),t,0.5);b.g.gain.setTargetAtTime(P[3]*k*k,t,0.5);c.f.frequency.setTargetAtTime(P[4],t,0.5);c.g.gain.setTargetAtTime(P[5]*(0.3+k),t,0.5)},
  windOff(){if(SFX._w)for(const n of SFX._w)n.g.gain.setTargetAtTime(0,AC.currentTime,0.3)},
+ rift(){tone(46,3.2,'sine',0.4,30);noise(2.8,170,0.6,0.45,'lowpass');tone(620,1.8,'sine',0.05,180,0.2);noise(1.6,900,3,0.08,'bandpass',0.4)},
+ portal(){tone(110,2.0,'sine',0.25,440);tone(220,1.8,'triangle',0.07,880,0.1);noise(1.8,1400,1.2,0.16);tone(1320,1.2,'sine',0.04,2640,0.4)},
+ warp(){noise(0.9,2600,0.7,0.35);tone(900,0.9,'sine',0.12,90);noise(0.6,300,0.8,0.3,'lowpass',0.2)},
+ impact(a=1){tone(70,0.5,'sine',0.55*a,32);noise(0.5,140,0.8,0.5*a,'lowpass');noise(0.12,2000,1,0.12*a,'bandpass')},
+ roar(){tone(85,1.3,'sawtooth',0.12,42);tone(128,1.1,'sawtooth',0.06,60,0.1);noise(1.2,520,0.7,0.22)},
  guitar(){tone(82,0.45,'sawtooth',0.05);tone(123,0.45,'sawtooth',0.04)}
 };

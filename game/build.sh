@@ -4,7 +4,7 @@
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)";cd "$ROOT"
 [ "$SKIP_MODELS" = "1" ] || { python3 blender/build.py; node tools/optimize.mjs blender/out/niten_assets.glb blender/out/niten_assets.opt.glb; }
-cat game/src/gA.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gF.js > game/src/game.js
+cat game/src/gA.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gF.js > game/src/game.js
 npx esbuild game/src/game.js --bundle --minify --format=esm --target=es2022 --outfile=dist/niten.js --log-level=warning
 python3 - "$ROOT" <<'PY'
 import base64,os,sys

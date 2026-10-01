@@ -103,16 +103,19 @@ function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s
  w.en.forEach((t,i)=>{let x,z,tries=0;do{const a=G.camYaw+rnd(-1.3,1.3)+(i%2?0.4:-0.4),r=t==='yumi'?rnd(11,14):t==='sota'?7:rnd(8,11);x=P.x+Math.sin(a)*r;z=P.z+Math.cos(a)*r;tries++}while(Math.hypot(x,z)>LV.env.R-1.5&&tries<30);
   if(Math.hypot(x,z)>LV.env.R-1.5){const k=(LV.env.R-1.5)/Math.hypot(x,z);x*=k;z*=k}
   const e=mkEnemy(t,x,z);enemies.push(e);if(t==='sota'){G.bossBar=e;SFX.bell()}});LV.active=true}
+function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){u.open=0;gateP.visible=false;return}
+ if(!u.open){const nx=CH[G.chap+1];portalCol(gateP,PCOL[nx?nx.theme:'ash']||PCOL.ash);u.w=1.15;u.h=1.55;u.int=1;u.spin=1;ripple(gateP)}
+ gateP.position.set(gt.x,1.75,gt.z);gateP.rotation.set(0,0,0);u.open=Math.min(1,u.open+0.02);if(!CS.on){u.int=lerp(u.int,1,0.05);u.spin=lerp(u.spin,1,0.05)}updPortal(gateP)}
 function updChapter(ts){
  if(!LV.started){LV.waveT+=ts;if(LV.waveT>300||Math.hypot(P.x,P.z+12)>4){LV.started=true;LV.waveT=150}}
  else if(!LV.active&&LV.wave<LV.c.waves.length){LV.waveT+=ts;if(LV.waveT>180&&!G.subs.length||LV.waveT>420){spawnWave();LV.waveT=0}}
  else if(LV.active&&!enemies.some(e=>!e.dead)){LV.active=false;LV.wave++;LV.waveT=0;if(LV.wave>=LV.c.waves.length){if(G.chap<CH.length-1){LV.env.gate.t.visible=true;say('Юки','Путь открыт. Иди к вратам.');SFX.bell()}}else pop('Волна отбита','#cfc6b0')}
  if(LV.active&&G.frame%30===0)SFX.taiko(G.frame%120===0?1:0.55);
  for(const [i,m] of LV.env.mirrors.entries())if(!m.act&&Math.hypot(P.x-m.x,P.z-m.z)<1.8){activateMirror(m);G.cp={chap:G.chap,wave:LV.wave+(LV.active?0:0),mi:i,oni:P.oni}}
- const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<1.8&&!G.trans)G.trans=1}
+ const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<2.6&&!G.trans&&!CS.on&&P.state!=='dead')startPortalExit()}
  if(G.rainFreeze>0){G.rainFreeze-=ts;if(G.rainFreeze<=0)G.rainUp=true}}
 function updWorld(ts){
- for(const e of enemies){updEnemy(e,ts);stepTilt(e.tl,ts)}separate();
+ for(const e of enemies){if(!CS.on)updEnemy(e,ts);stepTilt(e.tl,ts)}separate();
  for(let i=0;i<enemies.length;i++)for(let j=i+1;j<enemies.length;j++){const a=enemies[i],b=enemies[j];if(a.dead||b.dead)continue;const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad+0.2;if(d<m&&d>0.001){const p=(m-d)*0.1;a.x-=dx/d*p;a.z-=dz/d*p;b.x+=dx/d*p;b.z+=dz/d*p}}
  enemies=enemies.filter(e=>{if(e.dead&&e.pending<=0&&e.deathT>700){removeRig(e);return false}return true});
  const orb=hero.arms.L.orb;orb.getWorldPosition(tv1);const gx=tv1.x,gy=tv1.y,gz=tv1.z;
@@ -136,7 +139,7 @@ function updWorld(ts){
  FX.add.update(ts);FX.norm.update(ts);
  for(const f of flashes)f.life-=ts;for(let i=flashes.length-1;i>=0;i--)if(flashes[i].life<=0)flashes.splice(i,1);
  for(const l of lines)l.life-=ts;lines=lines.filter(l=>l.life>0);
- updChapter(ts);
+ if(!CS.on)updChapter(ts);updGate();
  if(LV.env.theme==='ash'&&G.frame%2===0)FX.norm.add({x:P.x+rnd(-12,12),y:0,z:P.z+rnd(-12,12),vx:rnd(-.3,.3)/60,vy:rnd(0.3,0.9)/60,vz:rnd(-.3,.3)/60,life:rnd(200,400),s:rnd(0.03,0.06),r:0.55,gg:0.52,b:0.5,a:0.7});
  if(LV.env.theme==='ash'&&G.frame%3===0)embers(P.x+rnd(-10,10),rnd(0,1),P.z+rnd(-10,10));
  if(LV.env.theme==='forest'&&G.frame%5===0)FX.add.add({x:P.x+rnd(-10,10),y:rnd(0.3,2.5),z:P.z+rnd(-10,10),vx:rnd(-.2,.2)/60,vy:rnd(-.1,.1)/60,vz:rnd(-.2,.2)/60,life:rnd(160,300),s:0.04,r:0.9,gg:1.6,b:0.5,pulse:rnd(0,6),fade:false,sw:rnd(0,6)});
