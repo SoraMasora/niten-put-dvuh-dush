@@ -17,7 +17,11 @@ for i,p in enumerate(parts):open(d+'/assets/part%02d.js'%i,'w').write('(window._
 lb=base64.b64encode(open(R+'/blender/out/niten_loot.opt.glb','rb').read()).decode() if os.path.exists(R+'/blender/out/niten_loot.opt.glb') else ''
 lparts=[lb[i:i+n] for i in range(0,len(lb),n)]
 for i,p in enumerate(lparts):open(d+'/assets/loot%02d.js'%i,'w').write('(window.__NITEN_LOOT_PARTS=window.__NITEN_LOOT_PARTS||[]).push("'+p+'");\n')
-open(d+'/index.html','w').write(head+''.join('<script src="assets/part%02d.js"></script>'%i for i in range(len(parts)))+''.join('<script src="assets/loot%02d.js"></script>'%i for i in range(len(lparts)))+'<script type="module">'+open(d+'/niten.js').read().replace('</script','<\\/script')+'</script></body></html>')
+import json
+src=open(d+'/niten.js').read();m=600000;gp=[src[i:i+m] for i in range(0,len(src),m)]
+for i,p in enumerate(gp):open(d+'/assets/game%02d.js'%i,'w').write('(window.__NITEN_JS=window.__NITEN_JS||[]).push('+json.dumps(p)+');\n')
+boot='<script>(function(){var s=document.createElement("script");s.type="module";s.src=URL.createObjectURL(new Blob([window.__NITEN_JS.join("")],{type:"text/javascript"}));document.body.appendChild(s)})()</script>'
+open(d+'/index.html','w').write(head+''.join('<script src="assets/part%02d.js"></script>'%i for i in range(len(parts)))+''.join('<script src="assets/loot%02d.js"></script>'%i for i in range(len(lparts)))+''.join('<script src="assets/game%02d.js"></script>'%i for i in range(len(gp)))+boot+'</body></html>')
 js=open(d+'/niten.js').read().replace('</script','<\\/script')
 open(R+'/NITEN_3D_single.html','w').write(head+'<script>window.__NITEN_ASSETS="'+b64+'";window.__NITEN_LOOT="'+lb+'"</script><script type="module">'+js+'</script></body></html>')
 print('dist ok, parts:',len(parts))
