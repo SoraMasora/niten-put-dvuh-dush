@@ -80,7 +80,7 @@ export function makeHuman(o){if(ASSET.ok&&o.set)return makeHumanA(o);
 // ---------- poses
 // arm: [shoulderPitch, across(yaw), abduct, elbow, bladePitchTotal]
 export const POSE={
- crane:{c:0.08,tx:0.05,ty:0.3,R:[-2.35,0.25,0.3,-0.7,-0.5],L:[0.35,0.1,0.25,-0.3,2.5]},
+ crane:{c:0.12,tx:0.08,ty:0.12,R:[-0.3,0.02,0.36,-0.5,1.05],L:[-0.6,0.12,0.38,-0.65,-0.3]},
  tiger:{c:0.32,tx:0.35,ty:0.1,R:[-0.45,0.25,0.25,-0.3,0.95],L:[-0.4,0.25,0.25,-0.3,1.0]},
  water:{c:0.14,tx:0.1,ty:0,R:[-1.3,0.55,0.1,-0.9,-1.2],L:[-1.2,0.55,0.1,-0.9,-1.95]},
  rUp:{c:0.1,tx:-0.12,ty:0.55,R:[-3.0,0.1,0.3,-0.5,-3.7],L:[0.3,0.1,0.3,-0.3,2.5]},
