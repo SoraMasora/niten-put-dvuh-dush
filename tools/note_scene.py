@@ -47,7 +47,7 @@ for i,l in enumerate(lines):
     x=46+random.randint(-3,3);d.text((x,y),l,font=F,fill=(32,20,14,240));y+=47+random.randint(-2,2)
 d.text((330,y+22),'— Сота',font=ImageFont.truetype('marck.ttf',38),fill=(70,14,12,240))
 # клякса
-d.ellipse([60,y+40,80,y+56],fill=(30,18,12,140))
+#d.ellipse([60,y+40,80,y+56],fill=(30,18,12,140))
 place(p2,-4,890,360)
 base.convert('RGB').save('note_scene.jpg',quality=86)
 print('ok')

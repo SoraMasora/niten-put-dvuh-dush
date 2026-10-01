@@ -72,6 +72,7 @@ function makeChest(x,z,i,item,opened){const yaw=Math.atan2(-x,-z),g=new Group();
  const glow=new Mesh(new THREE.PlaneGeometry(0.8,0.5),new MB({map:glintTex,color:0xffc070,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));glow.rotation.x=-Math.PI/2;glow.position.y=0.42;g.add(glow);
  const c={i,x,z,yaw,g,lid,seal,glow,item,state:opened?'open':'sealed',open:opened?1:0,keyObj:null};if(opened){lid.rotation.x=-1.95;seal.visible=false}return c}
 function setupChests(cp){const th=LV.c.theme,pos=CHESTS[th]||[];const op=G.opened[G.chap]=G.opened[G.chap]||{};if(!G.lootPlan||G.lootPlan.chap!==G.chap)G.lootPlan={chap:G.chap,items:lootPick(pos.length)};
+ for(const o of ENV.children.slice()){for(const [x,z] of pos)if(Math.hypot(o.position.x-x,o.position.z-z)<2.1&&!o.isLight){const b=new THREE.Box3().setFromObject(o);if(b.isEmpty()||Math.max(b.max.x-b.min.x,b.max.z-b.min.z)<4.5){ENV.remove(o);break}}}
  LV.chests=pos.map(([x,z],i)=>makeChest(x,z,i,G.lootPlan.items[i],!!op[i]));
  const waves=LV.c.waves.slice(cp?cp.wave:0),total=waves.reduce((a,w)=>a+w.en.length,0),need=Math.max(0,LV.chests.filter(c=>c.state!=='open').length-invCount('key'));
  const idx=[...Array(total).keys()].sort(()=>Math.random()-0.5).slice(0,need);LV.keyAt=new Set(idx);LV.killN=0;LV.unsealed=false}
@@ -131,7 +132,7 @@ const noteImg=new Image();noteImg.src=NOTE_IMG;
 function readNote(){if(CS.on)return;INV.open=false;const p=camera.position.clone();csStart('read',()=>{},null);CS.cam.p.copy(p);CS.cam.l.set(P.x,1.3,P.z);CS.bars=0;CS.img=noteImg;CS.imgT=0;CS.onImgClose=()=>{CS.img=null;csEnd();try{renderer.domElement.requestPointerLock()}catch(_){}}}
 function startNoteCS(){P.csPose={p:POSE.kneel,w:1};const nt=itemModel('note');scene.add(nt);
  const close=()=>{scene.remove(nt);CS.img=null;csEnd();if(LV.winPending){LV.winPending=false;G.winT=1}};
- csStart('note',t=>{const H=CS.H;CS.bars=1;const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);
+ csStart('note',t=>{const H=CS.H;CS.bars=1;if(!P.csPose)P.csPose={p:POSE.kneel,w:1};const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);
   if(t<40)P.csPose.w=1;if(t>=20&&P.csPose.p===POSE.kneel)P.csPose.w=1-ek(t,20,60);
   if(t===60)P.csPose={p:POSE.read,w:0};if(P.csPose.p===POSE.read)P.csPose.w=ek(t,60,90);
   hero.arms.R.hand.getWorldPosition(tv1);hero.arms.L.hand.getWorldPosition(_tv2);nt.position.lerpVectors(tv1,_tv2,0.5);nt.position.y+=0.02;nt.rotation.set(-1.0,P.yaw+Math.PI,0);

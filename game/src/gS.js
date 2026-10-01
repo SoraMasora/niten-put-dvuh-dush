@@ -29,7 +29,7 @@ function csLights(){const s=[];for(const p of[gateP,csP])if(p.visible){p.getWorl
 function csPrecompile(on){for(const p of[gateP,csP]){p.visible=on;p.position.set(0,1.5,-2);p.scale.setScalar(1)}beam.visible=on}
 // ---------- движок
 function csSay(n,t,a,b){CS.subs.push({n,t,a,b})}
-function csStart(k,fn,skip){CS.card=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
+function csStart(k,fn,skip){for(const q of KILLS){q.life=0;q.m.visible=false}CS.card=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
  P.atk=null;P.buf=null;P.pendR=P.pendL=false;P.idleClip=null;P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;P.vx=P.vz=0;P.mvS=0;
  for(const k in K)K[k]=0;mdx=mdy=0}
 function csEnd(subs){CS.card=null;CS.img=null;CS.onImgClose=null;CS.on=false;CS.fn=CS.skip=null;CS.bars=0;CS.fade=0;CS.subs=[];P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;
