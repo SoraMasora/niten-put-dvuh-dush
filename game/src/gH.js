@@ -12,7 +12,7 @@ function hp(g,part,x,y,z,ry=0,s=1,pre='HO',mat){const o=new Group();o.position.s
 const unlit=m=>m&&m.name==='ho_shoji_lit'?hmat('shoji'):m;
 // ================================================================ ДВОР С КОЛОКОЛОМ: усадьба вместо дальнего зала
 const HX={z:-34,door:-28.95};
-function houseExt(g,env){const o=hp(g,'ext',0,0,HX.z);const dL=hp(g,'extdoorL',-0.6,0.62,HX.z+5.05),dR=hp(g,'extdoorR',0.6,0.62,HX.z+5.05);
+function houseExt(g,env){if(ASSET.mats.ho_shoji_lit)ASSET.mats.ho_shoji_lit.emissiveIntensity=0.5;const o=hp(g,'ext',0,0,HX.z);const dL=hp(g,'extdoorL',-0.6,0.62,HX.z+5.05),dR=hp(g,'extdoorR',0.6,0.62,HX.z+5.05);
  const glow=new Mesh(new THREE.PlaneGeometry(2.6,2.8),new MB({map:TX.dot,color:0xffb060,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));glow.position.set(0,2.0,HX.z+5.3);g.add(glow);
  const inner=new Mesh(new THREE.PlaneGeometry(2.4,2.5),new MB({color:0x7a5236}));inner.position.set(0,1.87,HX.z+4.9);inner.visible=false;g.add(inner);
  env.hdoor={L:dL,R:dR,glow,inner,open:0};
@@ -85,7 +85,7 @@ const HWAVES={
  garden:{en:[['musha',-5,11],['musha',5,12],['chochin',-2,13],['chochin',2,8.5],['moku',9.84,7.6,-Math.PI/2]],say:[['Юки','Снег в доме… это сад. Двери в додзё держат кости — очисти сад.']]},
  dojo:{boss:true,en:[['shogun',0,22]],say:[['Кагэмару','Ты принёс в этот дом кровь его сына.'],['Акира','Я пришёл за правдой. Отойди.'],['Кагэмару','Правда спит под этим полом. Ложись рядом с ней!']]}};
 // сундуки дома: x, z, yaw, комната, скрытый
-const HCH=[[-8.8,-10.25,0,'hall'],[17.6,-10.35,0,'store'],[11.3,4.3,Math.PI,'kitchen'],[0,23.7,Math.PI,'dojo'],
+const HCH=[[-8.8,-10.25,0,'hall'],[17.6,-10.35,0,'store'],[11.3,4.3,Math.PI,'kitchen'],[-7,24.0,Math.PI,'dojo'],
  [-19.35,-7,Math.PI/2,'study','shelf'],[-17.5,-1.2,Math.PI/2,'bed','tatami'],[8.0,13.6,Math.PI,'garden','snow']];
 CHESTS.house=HCH.map(c=>[c[0],c[1],c[2]]);
 const roomAt=(x,z,ins=0)=>HR.find(r=>x>r.x0+ins&&x<r.x1-ins&&z>r.z0+ins&&z<r.z1-ins)||null;
@@ -97,10 +97,10 @@ function camClip(T,C){const W=LV.walls;if(!W)return;let tm=1;const dx=C.x-T.x,dz
  for(const w of W){if(w.off||w.cam===false)continue;const e=0.2;let t0=-1e9,t1=1e9,miss=false;
   for(const [o,d,a,b] of[[T.x,dx,w.x0-e,w.x1+e],[T.z,dz,w.z0-e,w.z1+e]]){if(Math.abs(d)<1e-6){if(o<a||o>b){miss=true;break}}else{let u=(a-o)/d,v=(b-o)/d;if(u>v){const q=u;u=v;v=q}t0=Math.max(t0,u);t1=Math.min(t1,v)}}
   if(!miss&&t0<=t1&&t0>0.02&&t0<tm)tm=t0}
- const k=Math.max(0.14,tm-0.03),pk=G.camK??1;G.camK=k<pk?k:lerp(pk,k,0.07);C.x=T.x+dx*G.camK;C.z=T.z+dz*G.camK;C.y=T.y+(C.y-T.y)*Math.max(G.camK,0.45);
+ const k=Math.max(0.14,tm-0.03),pk=G.camK??1;G.camK=k<pk?k:lerp(pk,k,0.07);C.x=T.x+dx*G.camK;C.z=T.z+dz*G.camK;C.y=T.y+(C.y-T.y)*Math.max(G.camK,0.45)+(1-G.camK)*0.55;
  const r=roomAt(C.x,C.z)||roomAt(T.x,T.z);if(r&&r.h)C.y=Math.min(C.y,r.h-0.3)}
 // ---------- постройка
-function buildHouseEnv(g,env){const H=env.H={walls:[],open:[],lamps:[],spots:[],cases:[],koi:[],drifts:[],shelf:null,tatami:null,ext:null};const W=env.walls=H.walls;const T=0.2;
+function buildHouseEnv(g,env){const sn=ASSET.mats.ho_snow;if(sn&&!sn.userData.tw){sn.userData.tw=1;sn.map=null;sn.color.set(0xdfe7f0);if(sn.normalScale)sn.normalScale.set(0.6,0.6);sn.roughness=0.95;sn.needsUpdate=true}const H=env.H={walls:[],open:[],lamps:[],spots:[],cases:[],koi:[],drifts:[],shelf:null,tatami:null,ext:null};const W=env.walls=H.walls;const T=0.2;
  const col=(x0,x1,z0,z1,o={})=>{const w=Object.assign({x0,x1,z0,z1},o);W.push(w);return w};
  const lamp=(x,y,z,c=0xffa860,i=2.6,d=9)=>H.lamps.push([x,y,z,c,i,d]);
  // ---- стены
@@ -125,7 +125,7 @@ function buildHouseEnv(g,env){const H=env.H={walls:[],open:[],lamps:[],spots:[],
  HB.add('hinoki',7,0.05,2.6,0,0.025,-12.3);HB.add('post',7,0.12,0.14,0,0.06,-13.6);
  hp(g,'tansu',-3.1,0,-12.6,Math.PI/2);col(-3.4,-2.85,-13.25,-11.95,{cam:false});hp(g,'tansu',-3.1,0,-14.0,Math.PI/2);col(-3.4,-2.85,-14.65,-13.35,{cam:false});
  hp(g,'byobu',2.9,0,-15.2,-Math.PI/2,0.85);hp(g,'andon',2.9,0,-12.4);lamp(2.9,0.7,-12.4,0xffa050,2.2,8);
- hp(g,'tokonoma',-1.25,0,-11.48,Math.PI);col(-2.15,-0.35,-11.85,-11.1,{cam:false});hp(g,'pendant',0,3.2,-14.6);lamp(0,1.9,-14.6,0xffb070,2.8,9);
+ hp(g,'tokonoma',-1.25,0,-11.48,Math.PI);col(-2.15,-0.35,-11.85,-11.1,{cam:false});hp(g,'pendant',-1.9,3.2,-13.2);lamp(-1.9,1.9,-13.2,0xffb070,2.8,9);
  // ---- ЗАЛ ПРЕДКОВ: галерея, лестницы, витрины доспехов, драпировки
  HB.add('floor',20,0.14,2.5,0,3.38,-9.75);HB.add('post',20,0.28,0.24,0,3.3,-8.5);
  for(const x of[-3.2,3.2,-9.2,9.2]){HB.add('post',0.26,3.3,0.26,x,1.65,-8.5);col(x-0.15,x+0.15,-8.65,-8.35,{cam:false})}
@@ -244,11 +244,11 @@ function updHouse(ts){const H=LV.H;
 function houseSpot(s){const H=LV.H;if(s.k==='map'){startMapCS(s);return}if(s.k==='exit'){startExitCS();return}
  if(s.ch!=null){if(H.reveal)return;s.done=true;G.hreveal.add(s.k);const c=LV.chests[s.ch];H.reveal={k:s.k,t:0,ch:s.ch,x:s.x,z:s.z};c.g.position.y=s.k==='shelf'?0:-0.6;SFX.grab();if(s.k==='snow')for(let i=0;i<40;i++)FX.norm.add({x:c.x+rnd(-1,1),y:rnd(0.1,0.6),z:c.z+rnd(-1,1),vx:rnd(-1,1)/60,vy:rnd(0.5,1.5)/60,vz:rnd(-1,1)/60,life:rnd(40,80),s:rnd(0.04,0.08),r:0.9,gg:0.9,b:1,a:0.8,g:0.0002})}}
 // ================================================================ КАТСЦЕНЫ ДОМА
-function startHouseArrival(){const H=LV.H;const dr=H.open.find(o=>o.type==='door');dr.open=1;P.drawn=false;P.yaw=0;P.x=0;P.z=-15.9;
+function startHouseArrival(){const H=LV.H;const dr=H.open.find(o=>o.type==='door');dr.open=1;P.drawn=false;P.yaw=0;P.x=0;P.z=-14.6;
  csStart('arrive',t=>{CS.bars=1-ek(t,330,380);CS.fade=1-ek(t,0,60);dr.open=1-ek(t,40,110);if(t===100){SFX.clang();G.shake=0.08}
   if(t===40)G.card={t:30,title:LV.c.title,name:LV.c.name};
-  if(t<200)cam([0.9,1.5,-13.4],[0,1.35,-16.3],ek(t,0,200),[0.6,1.6,-13.9],[0,1.45,-16.3]);
-  else cam([-0.6,2.0,-18.6],[0.6,1.3,-12],ek(t,200,380),[-0.45,2.4,-20.2],[0,1.35,-14]);
+  if(t<200)cam([0.9,1.5,-12.0],[0,1.35,-15.4],ek(t,0,200),[0.6,1.6,-12.5],[0,1.45,-15.4]);
+  else cam([-1.2,1.9,-16.5],[0.6,1.3,-11],ek(t,200,380),[-0.4,2.3,-16.6],[0,1.4,-12]);
   if(t===120)csSay('Юки','Тепло… и пахнет ладаном. Здесь давно никто не живёт — но лампы горят.',120,250);
   if(t===255)csSay('Акира','Кто-то ждал гостей.',255,350);
   if(t>=380){dr.open=0;csEnd([['Юки','Зал впереди, за проходом справа. Осторожно.']])}},()=>{dr.open=0;CS.fade=0;csEnd()})}
@@ -322,7 +322,7 @@ function startMapCS(s){const H=LV.H;s.done=true;const mp=H.mapObj;if(P.drawn){P.
 function startExitCS(){const H=LV.H,ex=H.open.find(o=>o.type==='exit');if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}
  csStart('hexit',t=>{const C=CS.H;CS.bars=1;if(t===1){C.to=[0,24.0];C.spd=0.03;C.gait=0}
   cam([2.4,1.8,20.5],[0,1.6,25],ek(t,0,240),[0.8,1.7,22.6],[0,1.6,26]);
-  if(t>=70){ex.open=ek(t,70,140);if(t%8===0)flashL(0,1.6,25.4,0xfff0d8,4+ex.open*8,16)}if(t===72)SFX.bell();
+  if(t>=70){ex.open=ek(t,70,140);if(t%8===0)flashL(0,1.6,25.4,0xfff0d8,1.5+ex.open*3.5,12)}if(t===72)SFX.bell();
   if(t===150){C.to=[0,26.2];C.spd=0.022}
   CS.fadeC='255,248,236';CS.fade=ek(t,170,230);
   if(t===150)csSay('Акира','Сота… я узнаю, что здесь случилось.',150,230);
@@ -333,10 +333,10 @@ function houseBossDown(e){const H=LV.H;const ex=H.open.find(o=>o.type==='exit');
 // ================================================================ ЁКАИ ДОМА
 function redMat(n,c,em){const m=ASSET.mats[n];if(!m)return null;const k=m.clone();k.color.set(c);if(em!=null&&k.emissive){k.emissive.set(em)}return k}
 let _shogunMM=null;
-function rigMusha(boss){let mm={};if(boss){_shogunMM=_shogunMM||{MU_kozane:redMat('MU_kozane',0x9a2018),MU_eye:redMat('MU_eye',0xff5020,0xff4010),MU_kimono2:redMat('MU_kimono2',0x3a0c0a),MU_obi:redMat('MU_obi',0x5a1010)};mm=_shogunMM}
+function rigMusha(boss){const AM=ASSET.mats;if(AM.MU_eye&&!AM.MU_eye.userData.tw){AM.MU_eye.userData.tw=1;AM.MU_eye.emissiveIntensity=Math.min(AM.MU_eye.emissiveIntensity,4);if(AM.MU_ghost)AM.MU_ghost.emissiveIntensity=Math.min(AM.MU_ghost.emissiveIntensity,1.2)}let mm={};if(boss){_shogunMM=_shogunMM||{MU_kozane:redMat('MU_kozane',0x9a2018),MU_eye:redMat('MU_eye',0xff5020,0xff4010),MU_kimono2:redMat('MU_kimono2',0x3a0c0a),MU_obi:redMat('MU_obi',0x5a1010),MU_ghost:redMat('MU_ghost',0xff5030,0xff3010)};mm=_shogunMM}
  const h=makeHuman({set:'MU',scale:boss?1.28:1.03,matMap:mm,pants:M.sotaK,pants2:M.sotaK,kimono:M.sotaK,vest:M.sotaV,skin:M.sotaSkin,cape:null,tsR:M.sotaA,tsL:M.sotaA,armor:M.sotaA,obi:M.sotaA,eyes:true,horns:false,len:{R:boss?1.05:0.92,L:0.86}});
  h.arms.L.sw.visible=false;const gl=glintSprite();scene.add(gl);return{...h,root:h.root,tip:h.arms.R.sw.userData.tip,gl,mat:null,upper:h.torso,kind:'musha',human:h}}
-function rigChochin(){const root=new Group(),body=new Group();body.position.y=0.62;root.add(body);addPart(body,'TC','body');const eye=new Group();eye.position.set(0,0.09,0.27);body.add(eye);addPart(eye,'TC','eye');
+function rigChochin(){const root=new Group(),body=new Group();body.position.y=0.62;root.add(body);addPart(body,'TC','body');body.traverse(m=>{if(m.material&&m.material.emissive){m.material=m.material.clone();m.material.emissiveIntensity=Math.min(m.material.emissiveIntensity,1)*0.35}});const eye=new Group();eye.position.set(0,0.09,0.27);body.add(eye);addPart(eye,'TC','eye');
  const tg=new Group();tg.position.set(0,-0.14,0.27);body.add(tg);addPart(tg,'TC','tongue');const gl=glintSprite();scene.add(gl);return{root,body,eye,tg,tip:eye,gl,mat:null,upper:body,kind:'chochin'}}
 function rigMoku(){const root=new Group(),panel=new Group();root.add(panel);const pp=addPart(panel,'MK','panel');const iris=pp.all.filter(m=>m.material&&m.material.name==='mk_iris');
  const ic=iris.map(m=>{m.material=m.material.clone();return m.material});const tip=new THREE.Object3D();tip.position.set(0,1.3,0.1);panel.add(tip);const gl=glintSprite();scene.add(gl);return{root,panel,ic,tip,gl,mat:null,upper:panel,kind:'moku'}}

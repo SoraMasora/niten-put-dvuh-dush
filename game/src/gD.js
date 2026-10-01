@@ -93,7 +93,7 @@ function clearWorld(){for(const e of enemies)removeRig(e);for(const s of souls)s
 function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;const c=CH[i];const env=buildEnv(c.theme);
  env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));env.gate=makeGate(ENV,0,c.house?-90:16);
  LV={c,env,wave:0,waveT:0,started:false,done:false,walls:env.walls||null,house:!!c.house,H:env.H||null};G.subs=[];G.bossBar=null;G.rainFreeze=0;G.rainUp=false;G.issenFx=null;G.lock=null;M.sotaSkin.color.set(0x9c7b66);
- resetPlayer(0,c.house?-15.9:-12);G.camYaw=0;G.camK=1;
+ resetPlayer(0,c.house?-14.6:-12);G.camYaw=0;G.camK=1;
  if(cp){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
  else{G.cp={chap:i,wave:0,mi:0,oni:0};for(const s of c.start)say(s[0],s[1])}
  activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);
