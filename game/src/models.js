@@ -1,0 +1,91 @@
+import * as THREE from 'three';
+const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,CapsuleGeometry:Cap,BoxGeometry:Box,SphereGeometry:Sph,CylinderGeometry:Cyl,DoubleSide}=THREE;
+export const M={};
+const ms=(c,r=0.8,m=0,x={})=>new MS({color:c,roughness:r,metalness:m,...x});
+export function initMats(){
+ Object.assign(M,{skin:ms(0xb0806a,.6),kimono:ms(0x1f2227,.9),vest:ms(0x7a1c15,.85),cape:ms(0x3c4044,1,0,{side:DoubleSide}),pants:ms(0x25272d,.95,0,{side:DoubleSide}),pants2:ms(0x17181c,.95),
+ hair:ms(0x0e0c0b,.45),obi:ms(0x3b2f22,.9),dark:ms(0x0f0e0d,.9),blade:ms(0xdfe4ec,.15,1),handle:ms(0x15110e,.9),tsubaR:ms(0xc8a030,.35,1),tsubaL:ms(0x2a3552,.4,.9),
+ lapis:new MS({color:0x2a5aff,emissive:0x1a40ff,emissiveIntensity:1.5}),glove:ms(0xa49c8c,.3,1),gloveDark:ms(0x5a5446,.4,1),orb:new MB({color:0x9ad8ff}),
+ genma:new THREE.MeshPhysicalMaterial({color:0x06070c,roughness:.2,metalness:.3,clearcoat:1,clearcoatRoughness:.08,iridescence:1,iridescenceIOR:1.8,iridescenceThicknessRange:[250,700]}),
+ vein:new MB({color:0xd0102a}),rot:ms(0x3a2a1e,.9,.3),hat:ms(0x2c2823,.9),bone:ms(0xd2c29e,.55),wood:ms(0x3b2f25,.9),
+ sotaK:ms(0x140c0e,.8),sotaV:ms(0x5a0c10,.5,.4),sotaA:ms(0x2a0808,.4,.6),eye:new MB({color:0xff2a2a}),purple:new MB({color:0xb040ff}),chitin:ms(0x201028,.3,.4)});
+}
+export const mesh=(geo,mat,x=0,y=0,z=0,p)=>{const m=new Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;if(p)p.add(m);return m};
+function bladeGeo(len){const g=new Box(0.007,0.032,len,1,1,12);g.translate(0,0,len/2);const p=g.attributes.position;
+ for(let i=0;i<p.count;i++){const z=p.getZ(i),t=z/len;let y=p.getY(i);y*=1-0.55*t*t;if(t>0.94&&y>0)y*=(1-t)/0.06;p.setY(i,y+0.07*t*t);}g.computeVertexNormals();return g}
+export function makeSword(len,tsuba,lapis){const g=new Group();
+ mesh(new Cyl(0.017,0.017,0.26,6),M.handle,0,0,-0.07,g).rotation.x=Math.PI/2;
+ const ts=mesh(new Cyl(0.045,0.045,0.012,lapis?16:8),tsuba,0,0,0.07,g);ts.rotation.x=Math.PI/2;
+ if(lapis)mesh(new Sph(0.012,8,6),M.lapis,0,0.03,0.07,g);
+ const b=mesh(bladeGeo(len),M.blade,0,0,0.08,g);
+ const tip=new THREE.Object3D();tip.position.set(0,0.07,0.08+len);g.add(tip);const base=new THREE.Object3D();base.position.set(0,0,0.25);g.add(base);
+ g.userData={tip,base};return g}
+export function makeHuman(o){
+ const root=new Group(),hips=new Group();hips.position.y=0.92;root.add(hips);root.scale.setScalar(o.scale||1);
+ const legs=[];
+ for(const side of[-1,1]){const th=new Group();th.position.set(side*0.1,0,0);hips.add(th);
+  mesh(new Cap(0.07,0.32,4,8),o.pants,0,-0.22,0,th);const kn=new Group();kn.position.y=-0.44;th.add(kn);
+  mesh(new Cap(0.055,0.34,4,8),o.pants2,0,-0.21,0,kn);mesh(new Box(0.1,0.05,0.24),M.dark,0,-0.45,0.05,kn);legs.push({th,kn})}
+ mesh(new Cyl(0.21,0.36,0.6,14,1,true),o.pants,0,-0.28,0,hips);
+ const torso=new Group();hips.add(torso);
+ const ch=mesh(new Cap(0.15,0.3,4,12),o.kimono,0,0.3,0,torso);ch.scale.set(1.2,1,0.8);
+ if(o.vest){const v=mesh(new Cap(0.152,0.22,4,12),o.vest,0,0.33,0,torso);v.scale.set(1.25,1,0.86)}
+ if(o.armor){const a=mesh(new Box(0.36,0.2,0.26),o.armor,0,0.22,0,torso);for(const s of[-1,1]){const sp=mesh(new Box(0.14,0.04,0.2),o.armor,s*0.26,0.52,0,torso);sp.rotation.z=s*0.4}}
+ mesh(new Cyl(0.19,0.19,0.08,12),o.obi||M.obi,0,0.1,0,torso).scale.z=0.75;
+ const neck=new Group();neck.position.y=0.6;torso.add(neck);
+ mesh(new Sph(0.105,14,10),o.skin,0,0.1,0.01,neck);
+ const hr=mesh(new Sph(0.114,14,8,0,Math.PI*2,0,Math.PI*0.55),M.hair,0,0.115,-0.01,neck);hr.rotation.x=-0.35;
+ const pt=mesh(new Cap(0.028,0.24,3,6),M.hair,0,0.1,-0.17,neck);pt.rotation.x=0.9;
+ for(let i=0;i<5;i++){const s=mesh(new Cap(0.008,0.1,2,4),M.hair,-0.06+i*0.03,0.1,0.1,neck);s.rotation.x=-0.3}
+ if(o.eyes)for(const s of[-1,1])mesh(new Box(0.03,0.012,0.01),M.eye,s*0.038,0.11,0.1,neck);
+ const horns=[];if(o.horns)for(const s of[-1,1]){const h=mesh(new THREE.ConeGeometry(0.03,0.22,6),M.chitin,s*0.06,0.22,-0.02,neck);h.rotation.set(-0.5,0,s*-0.4);h.visible=false;horns.push(h)}
+ const arms={};
+ for(const [k,side] of[['R',-1],['L',1]]){const sh=new Group();sh.rotation.order='YXZ';sh.position.set(side*0.22,0.5,0);torso.add(sh);
+  const up=mesh(new Cap(0.055,0.22,4,8),o.kimono,0,-0.14,0,sh);up.scale.set(1.35,1,1.35);
+  const el=new Group();el.position.y=-0.29;sh.add(el);
+  const glove=k==='L'&&o.glove;
+  mesh(new Cap(0.042,0.2,4,8),glove?M.glove:o.skin,0,-0.13,0,el);
+  if(glove){for(let i=0;i<4;i++){const r=mesh(new THREE.TorusGeometry(0.05,0.012,6,12),M.gloveDark,0,-0.05-i*0.055,0,el);r.rotation.x=Math.PI/2}}
+  const hand=new Group();hand.position.y=-0.28;el.add(hand);mesh(new Sph(0.045,8,6),glove?M.glove:o.skin,0,0,0,hand);
+  let orb=null;if(glove){orb=mesh(new Sph(0.035,10,8),M.orb,0,-0.02,0.04,hand);orb.castShadow=false}
+  const sw=makeSword(o.len[k],k==='R'?o.tsR:o.tsL,k==='L'&&o.lapis);hand.add(sw);
+  arms[k]={sh,el,hand,sw,orb}}
+ let cape=null;
+ if(o.cape){const g=new THREE.CylinderGeometry(0.25,0.34,0.95,10,8,true,Math.PI*0.62,Math.PI*0.76);g.translate(0,-0.475,0);cape=mesh(g,o.cape,0,0.6,0.02,torso);cape.userData.base=g.attributes.position.array.slice();
+  const hood=mesh(new THREE.TorusGeometry(0.17,0.05,6,12,Math.PI*1.2),o.cape,0,0.58,-0.02,torso);hood.rotation.set(Math.PI/2,0,-Math.PI*0.1+Math.PI);}
+ return{root,hips,torso,neck,legs,arms,cape,horns}}
+// ---------- poses
+// arm: [shoulderPitch, across(yaw), abduct, elbow, bladePitchTotal]
+export const POSE={
+ crane:{c:0.08,tx:0.05,ty:0.3,R:[-2.35,0.25,0.3,-0.7,-0.5],L:[0.35,0.1,0.25,-0.3,2.5]},
+ tiger:{c:0.32,tx:0.35,ty:0.1,R:[-0.45,0.25,0.25,-0.3,0.95],L:[-0.4,0.25,0.25,-0.3,1.0]},
+ water:{c:0.14,tx:0.1,ty:0,R:[-1.3,0.55,0.1,-0.9,-1.2],L:[-1.2,0.55,0.1,-0.9,-1.95]},
+ rUp:{c:0.1,tx:-0.12,ty:0.55,R:[-3.0,0.1,0.3,-0.5,-3.7],L:[0.3,0.1,0.3,-0.3,2.5]},
+ rDown:{c:0.32,tx:0.45,ty:-0.55,R:[-0.6,0.7,0.15,-0.1,0.95],L:[0.4,0.1,0.3,-0.3,2.5]},
+ lBack:{c:0.16,tx:0.05,ty:0.5,R:[-2.7,0.2,0.3,-0.4,-0.55],L:[0.6,0.1,0.2,-2.1,0]},
+ lThrust:{c:0.26,tx:0.3,ty:-0.45,R:[-2.7,0.2,0.3,-0.4,-0.55],L:[-1.5,0.2,0,-0.05,0]},
+ nUp:{c:0.1,tx:-0.15,ty:0,R:[-2.9,0.25,0.15,-0.4,-3.5],L:[-2.9,0.25,0.15,-0.4,-3.4]},
+ nDown:{c:0.36,tx:0.5,ty:0,R:[-0.8,0.45,0.1,-0.1,0.8],L:[-0.8,0.45,0.1,-0.1,0.85]},
+ block:{c:0.26,tx:0.15,ty:0,R:[-1.3,0.6,0.1,-1.0,-0.9],L:[-1.25,0.6,0.1,-1.0,-2.2]},
+ dodge:{c:0.55,tx:0.5,ty:0,R:[0.5,0,0.4,-0.2,1.9],L:[0.5,0,0.4,-0.2,1.9]},
+ absorb:{c:0.16,tx:0.1,ty:-0.5,R:[-2.7,0.2,0.3,-0.4,-0.55],L:[-1.55,0.1,0,0,1.5]},
+ issen:{c:0.5,tx:0.45,ty:-0.8,R:[-1.45,-0.9,0.35,0,0.05],L:[0.5,0.1,0.3,-0.3,2.5]},
+ hurt:{c:0.2,tx:-0.35,ty:0.2,R:[-0.35,0,0.5,-0.4,0.9],L:[-0.35,0,0.5,-0.4,0.9]},
+ dead:{c:0.62,tx:0.9,ty:0,R:[0.2,0,0.3,-0.2,1.4],L:[0.2,0,0.3,-0.2,1.4]},
+ eat:{c:0.1,tx:0,ty:0,R:[-2.7,0.2,0.3,-0.4,-0.55],L:[-2.0,0.6,0,-2.1,1.3]},
+ spinA:{c:0.4,tx:0.3,ty:1.3,R:[-1.6,-1.3,0.1,0,0],L:[-1.6,-1.3,0.1,0,0]},
+ spinB:{c:0.4,tx:0.3,ty:-1.3,R:[-1.6,-1.3,0.1,0,0],L:[-1.6,-1.3,0.1,0,0]},
+ iai:{c:0.5,tx:0.4,ty:0.6,R:[-0.4,0.6,0.2,-1.2,2.84],L:[-0.3,0.6,0.2,-1.2,2.8]}
+};
+export function mixPose(a,b,t){const r={c:a.c+(b.c-a.c)*t,tx:a.tx+(b.tx-a.tx)*t,ty:a.ty+(b.ty-a.ty)*t,R:[],L:[]};for(let i=0;i<5;i++){r.R[i]=a.R[i]+(b.R[i]-a.R[i])*t;r.L[i]=a.L[i]+(b.L[i]-a.L[i])*t}return r}
+export function applyPose(h,p,walk=0,ph=0,t=0){
+ h.hips.position.y=0.92-p.c*0.28;h.torso.rotation.set(p.tx,p.ty,0);h.hips.rotation.y=-p.ty*0.3;
+ const sw=Math.sin(ph)*0.7*walk;
+ h.legs[0].th.rotation.x=-sw-p.c*0.9;h.legs[0].kn.rotation.x=p.c*1.6+Math.max(0,-Math.cos(ph))*walk*0.9;
+ h.legs[1].th.rotation.x=sw-p.c*0.6+p.c*0.1;h.legs[1].kn.rotation.x=p.c*1.3+Math.max(0,Math.cos(ph))*walk*0.9;
+ h.legs[0].th.rotation.z=-0.06-p.c*0.15;h.legs[1].th.rotation.z=0.06+p.c*0.15;
+ const A=h.arms;const r=p.R,l=p.L;
+ A.R.sh.rotation.set(r[0],r[1],-r[2]);A.R.el.rotation.x=r[3];A.R.hand.rotation.x=r[4]-r[0]-r[3];
+ A.L.sh.rotation.set(l[0],-l[1],l[2]);A.L.el.rotation.x=l[3];A.L.hand.rotation.x=l[4]-l[0]-l[3];
+ if(h.cape){const g=h.cape.geometry,pa=g.attributes.position,b=h.cape.userData.base;for(let i=0;i<pa.count;i++){const y=b[i*3+1],x=b[i*3],d=-y;pa.array[i*3+2]=b[i*3+2]-d*d*(0.12+walk*0.35)-Math.sin(t*3+x*4+d*3)*0.025*d-p.c*d*0.2}pa.needsUpdate=true;g.computeVertexNormals()}
+}
