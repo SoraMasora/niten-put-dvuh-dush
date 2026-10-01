@@ -26,20 +26,20 @@ function heroClips(){let cn=null,ct=0,atk=false;
   if(P.drawn||!S){_bp.copy(_hp);_bq.copy(_hq)}else{_bp.set(S[0],S[1],S[2]);_bq.set(S[3],S[4],S[5],S[6])}
   if(HC.w>0.001&&clipSword(HC.name,s,HC.t,swS)){swS.p.lerp(_hp,swS.a);swS.q.slerp(_hq,swS.a);_bp.lerp(swS.p,HC.w);_bq.slerp(swS.q,HC.w)}
   sw.position.copy(_bp);sw.quaternion.copy(_bq);sw.updateMatrixWorld(true)}}
-function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.csLook!=null?P.csLook:P.idleClip?0:lk,lockL:!P.drawn});hero.root.visible=!P.csHide;{const s=P.csScale;hero.root.scale.set(1.02*(s?s[0]:1),1.02*(s?s[1]:1),1.02*(s?s[2]:1))}hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
+function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.csLook!=null?P.csLook:P.idleClip?0:lk,lockL:!P.drawn});hero.root.visible=!P.csHide;{const s=P.csScale;hero.root.scale.set(1.02*(s?s[0]:1),1.02*(s?s[1]:1),1.02*(s?s[2]:1))}hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.order='YXZ';hero.root.rotation.y=P.yaw;
  heroClips();stepTilt(P.tl,1);if(P.tl){hero.torso.rotateX(P.tl.x*0.8);hero.torso.rotateZ(P.tl.z*0.8)}
  P.ldv=(P.ldv||0)+(-0.12*(P.ld||0)-0.2*(P.ldv||0));P.ld=(P.ld||0)+P.ldv;hero.hips.position.y+=P.ld;
- hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
+ hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):(P.csRx||0);hero.arms.L.sw.visible=!(G.oneBlade||P.hideL);
  heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
  const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:G.buf&&G.buf.dmg>0?0x6a2a08:0x000000);
  hero.arms.L.orb.scale.setScalar(1+Math.sin(t*6)*0.15+(P.absorbing?0.8:0));
- const attacking=P.state==='atk'||P.state==='issen';updTrail(trails.R,hero.arms.R.sw,attacking&&P.atk&&P.atk.type!=='L'||P.state==='issen');updTrail(trails.L,hero.arms.L.sw,attacking&&P.atk&&P.atk.type!=='R');
+ const attacking=P.state==='atk'||P.state==='issen';updTrail(trails.R,hero.arms.R.sw,attacking&&P.atk&&P.atk.type!=='L'||P.state==='issen');updTrail(trails.L,hero.arms.L.sw,attacking&&P.atk&&P.atk.type!=='R'&&!G.oneBlade);
  for(const [i,g] of ghosts.entries()){g.visible=P.muso>0;if(g.visible){const a=t*3+i*Math.PI;g.position.set(P.x-fwdX(P.yaw)*0.4+Math.cos(a)*0.5,1.5+Math.sin(a*1.3)*0.3,P.z-fwdZ(P.yaw)*0.4+Math.sin(a)*0.5);g.rotation.set(-0.8+Math.sin(a)*0.5,P.yaw+Math.cos(a),0)}}
  // absorb bolts
  const pos=[];if(P.absorbing){hero.arms.L.orb.getWorldPosition(glV);for(let i=0;i<7;i++){let x=glV.x,y=glV.y,z=glV.z;const tgt=souls[i%Math.max(1,souls.length)];for(let k=0;k<5;k++){const nx=tgt&&!tgt.black?lerp(x,tgt.x,0.35)+rnd(-.15,.15):x+fwdX(P.yaw)*0.4+rnd(-.2,.2),ny=tgt?lerp(y,tgt.y,0.35)+rnd(-.15,.15):y+rnd(-.2,.2),nz=tgt&&!tgt.black?lerp(z,tgt.z,0.35)+rnd(-.15,.15):z+fwdZ(P.yaw)*0.4+rnd(-.2,.2);pos.push(x,y,z,nx,ny,nz);x=nx;y=ny;z=nz}}}
  bolts.geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));bolts.visible=pos.length>0}
 function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.atk.wind):0,act=e.state==='act',rec=e.state==='rec';
- if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.order='YXZ';const T=e.tl;r.root.rotation.set(T?T.x:0,e.yaw,T?T.z:0)}
+ if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.order='YXZ';const T=e.tl;r.root.rotation.set((T?T.x:0)+(e.csRx||0),e.yaw,T?T.z:0)}
  if(r.mat){r.mat.emissive.set(e.flash>0?0x606060:e.frozen>0?0x103060:e.burn>0?0x401000:0x000000)}
  const mv=(e.state==='move'||e.state==='enter')?1:0,ph=e.anim*0.11;
  if(e.dead){r.gl.visible=false;return}
@@ -50,9 +50,10 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
  else if(r.kind==='kama'){r.legs.forEach((l,i)=>l.rotation.x=Math.sin(ph*1.6+i*1.6)*0.8*mv);r.hips.rotation.x=e.y>0.05?-0.4:0;r.arm.rotation.x=wind?-0.9*k:act?0.9:0}
  else if(r.kind==='yumi'){const ext=wind?k*1.2:rec?1.2*(1-Math.min(1,e.st/40)):act?1.2:0;r.neck.forEach((n,i)=>{n.position.set(Math.sin(t*2+i)*0.05*ext,0.35+i*(0.08+ext*0.17),0.05+Math.sin(i*0.8)*0.1*ext)});
   const top=r.neck[6].position;r.head.position.set(top.x,top.y+0.12,top.z);r.head.lookAt(tv1.set(P.x,1.5,P.z));}
- else if(r.kind==='sota'){let p=POSE.crane;const a=e.atk;
-  if(wind&&a){p=a.k==='iai'?mixPose(POSE.crane,POSE.iai,k):mixPose(POSE.crane,POSE.nUp,k)}else if(act||rec){p=a&&a.k==='iai'?POSE.issen:POSE.nDown}else if(e.state==='stag'||e.state==='trans')p=POSE.hurt;
-  e.pose=mixPose(e.pose||POSE.crane,p,0.35);applyPose(r.human,e.pose,mv,ph*1.2,t,{run:0.8,idle:e.state==='idle'||e.state==='circle'?1:0.4,seed:1.7,look:Math.sin(t*0.4)*0.2})}
+ else if(r.kind==='chochin'||r.kind==='moku')syncHouseEnemy(e,t);
+ else if(r.kind==='sota'||r.kind==='musha'){let p=POSE.crane;const a=e.atk;
+  if(wind&&a){p=a.k==='iai'?mixPose(POSE.crane,POSE.iai,k):mixPose(POSE.crane,POSE.nUp,k)}else if(act||rec){p=a&&a.k==='iai'?POSE.issen:POSE.nDown}else if(e.state==='stag'||e.state==='trans')p=POSE.hurt;if(e.csPose)p=e.csPose;
+  e.pose=mixPose(e.pose||POSE.crane,p,e.csPose?0.5:0.35);applyPose(r.human,e.pose,mv,ph*1.2,t,{run:0.8,idle:e.state==='idle'||e.state==='circle'?1:0.4,seed:1.7,look:Math.sin(t*0.4)*0.2})}
  const tele=wind&&e.atk.wind-e.st<=30;r.gl.visible=tele;if(tele){r.tip.getWorldPosition(tv1);r.gl.position.copy(tv1);const kk=1-(e.atk.wind-e.st)/30,sc=0.25+kk*0.7;r.gl.scale.set(sc,sc,1);
   r.gl.material.color.set(e.atk.k==='grab'?glintCols.purple:e.atk.k==='iai'?glintCols.blue:glintCols.red);r.gl.material.rotation=t*2}}
 const iaiLine=new Mesh(new THREE.BoxGeometry(0.06,0.06,1),new MB({color:0x80c8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false}));iaiLine.visible=false;scene.add(iaiLine);
@@ -68,7 +69,7 @@ function syncWorld(t){
  if(P.absorbing){hero.arms.L.orb.getWorldPosition(tv1);src.push([tv1.x,tv1.y,tv1.z,0x50a8ff,6,7])}
  for(const l of csLights())src.push(l);
  for(const f of flashes)src.push([f.x,f.y,f.z,f.col,f.int*f.life/f.max,9]);
- for(const p of proj)if(p.k==='fire')src.push([p.x,p.y,p.z,0xff7030,6,9]);
+ for(const p of proj)if(p.k==='fire')src.push([p.x,p.y,p.z,0xff7030,6,9]);else if(p.k==='orb')src.push([p.x,p.y,p.z,0xb050ff,2.5,5]);
  const ss=souls.filter(s=>!s.black).slice(0,3);for(const s of ss)src.push([s.x,s.y,s.z,s.c==='r'?0xff3020:s.c==='b'?0x2a8aff:s.c==='y'?0xffc030:0xb050ff,1.5,4]);
  if(P.muso>0)src.push([P.x,1.5,P.z,0xff8040,3,6]);
  src.sort((a,b)=>b[4]-a[4]);
@@ -97,4 +98,4 @@ function updCamera(){
  let tx=P.x,tz=P.z;if(G.lock){tx=lerp(P.x,G.lock.x,0.25);tz=lerp(P.z,G.lock.z,0.25)}
  const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
  const rx=-Math.cos(G.camYaw)*0.45,rz=Math.sin(G.camYaw)*0.45;camera.position.x+=rx;camera.position.z+=rz;
- tv1.set(tx+rx,1.35+P.y*0.6,tz+rz);if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}
+ tv1.set(tx+rx,1.35+P.y*0.6,tz+rz);if(LV.house)camClip(tv1,camera.position);if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}

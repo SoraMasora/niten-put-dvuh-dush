@@ -21,11 +21,19 @@ const ITEMS={
  bento:{n:'Дзюбако с онигири',r:'c',type:'Еда',max:5,w:0.7,cost:20,desc:'Пополняет запас онигири на 2 (не больше 3).',lore:'Лаковая коробка в два яруса, перевязанная шнуром. Рис ещё тёплый.',stats:[['Онигири','+2']],
   use(){if(P.food>=3)return'Запас онигири полон';P.food=Math.min(3,P.food+2);fxUse(0xfff0d0);return true}},
  key:{n:'Бронзовый ключ',r:'c',type:'Ключ',max:9,w:0.1,cost:5,desc:'Открывает сундук, запечатанный о-фуда. Тратится при открытии.',lore:'Гэнма носили его в смоле вместо сердца. Бронза ещё тёплая.',stats:[['Открывает','1 сундук']],use(){return'Подойди к сундуку и нажми X'}},
- note:{n:'Записка брата',r:'q',type:'Записка',max:1,w:0.01,cost:0,desc:'Последние слова Соты и старая фотография. Можно перечитать.',lore:'Бумага промокла от дождя у колокола.',stats:[['Можно','прочитать']],use(){readNote(false);return 'keep'}}};
+ note:{n:'Записка брата',r:'q',type:'Записка',max:1,w:0.01,cost:0,desc:'Последние слова Соты и старая фотография. Можно перечитать.',lore:'Бумага промокла от дождя у колокола.',stats:[['Можно','прочитать']],use(){readNote(false);return 'keep'}},
+ map:{n:'План Забытого дома',r:'q',type:'Карта',max:1,w:0.1,cost:0,desc:'План усадьбы с пометками «?» — там спрятано ценное. M — открыть карту.',lore:'Тушь выцвела, но пометки свежие. Кто-то хотел, чтобы их нашли.',stats:[['Клавиша','M']],use(){if(LV&&LV.house){INV.open=false;G.mapOpen=true;return'keep'}return'Карта нужна только в доме'}},
+ housekey:{n:'Ключ от Забытого дома',r:'q',type:'Ключ',max:1,w:0.3,cost:0,desc:'Кованый ключ с родовым моном. Открывает дверь дома за двором колокола.',lore:'Сота носил его на шнуре у сердца.',stats:[['Открывает','дверь дома']],use(){return'Подойди к двери дома и нажми X'}},
+ yoihilt:{n:'Рукоять Ёи',r:'q',type:'Реликвия',max:1,w:0.4,cost:0,desc:'Всё, что осталось от левой катаны. Лазурит в навершии ещё тёплый.',lore:'Ёи сломалась, пронзив Мукуро-муся. Отец говорил: клинок отдаёт себя один раз.',stats:[['Клинок','сломан']],use(){return'Ёи не вернуть… пока'}},
+ tea:{n:'Чаша маття «Тихий сад»',r:'c',type:'Зелье',max:5,w:0.3,cost:25,desc:'20 секунд восстанавливает по 3 здоровья в секунду.',lore:'Горький, густой, ещё тёплый — будто заварили минуту назад.',stats:[['Реген','3 / с'],['Действует',sec(1200)]],use(){if(P.hp>=P.max)return'Здоровье и так полное';G.buf.tea=1200;fxUse(0x80d060);return true}},
+ smoke:{n:'Дымовая бомба «Ночной туман»',r:'r',type:'Бомба',max:5,w:0.3,cost:40,desc:'Оглушает всех врагов в радиусе 6 м на 3 секунды (босса — на 1,5).',lore:'Порох, перец и пепел в глиняной скорлупе. Ниндзя звали это «ладонью ночи».',stats:[['Оглушение',sec(180)],['Радиус','6 м']],use(){if(!enemies.some(e=>!e.dead&&Math.hypot(e.x-P.x,e.z-P.z)<6))return'Рядом никого нет';for(const e of enemies)if(!e.dead&&Math.hypot(e.x-P.x,e.z-P.z)<6&&e.state!=='intro'&&e.state!=='trans'&&e.state!=='cs'){e.state='stag';e.st=0;e.stagT=e.d.boss?90:180;e.atk=e.atk||{k:'none',wind:1,act:1,rec:1}}smokeFx();return true}},
+ ofuda:{n:'О-фуда Райдзина',r:'r',type:'Талисман',max:3,w:0.05,cost:70,desc:'Следующие 6 ударов на 40% сильнее и бьют молнией.',lore:'Печать громовержца. Бумага трещит, если поднести её к стали.',stats:[['Урон','+40%'],['Ударов','6']],use(){G.buf.ofuda=6;fxUse(0x9ad0ff);SFX.thunder&&SFX.thunder(0.6);return true}},
+ sake:{n:'Токкури «Кровь Они»',r:'e',type:'Усиление',max:2,w:0.6,cost:110,desc:'40 секунд: урон +40%, но получаемый урон +20%.',lore:'Саке, настоянное на рогах. Его пьют перед последним боем.',stats:[['Урон','+40%'],['Защита','−20%'],['Действует',sec(2400)]],use(){G.buf.sake=2400;fxUse(0xff3020);return true}}};
+const HOUSE_POOL=[['tea',3],['smoke',2.2],['ofuda',2],['sake',1.2]];
 const LOOT_POOL=[['gourd',3],['flask',3],['omamori',2],['whetstone',1.4],['censer',2],['scroll',1.4],['mask',0.8],['bento',3]];
 const CHESTS={ash:[[8.5,3.5],[-7.5,10.5]],forest:[[9.5,-3.5],[-9,7],[6,12]],duel:[[5.8,-8.5]]};
-G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0};G.opened={};G.maxB=0;
-function invReset(){G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0};G.opened={};G.maxB=0;G.noteRead=false}
+G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;
+function invReset(){G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;G.noteRead=false;G.hcleared=new Set();G.hreveal=new Set();G.hseen=new Set();G.hasMap=false;G.oneBlade=false;G.ambushDone=false;G.mapOpen=false}
 function invCount(id){return G.inv.reduce((a,s)=>a+(s&&s.id===id?s.n:0),0)}
 function addItem(id,n=1){const D=ITEMS[id];for(const s of G.inv)if(s&&s.id===id&&s.n<D.max){const k=Math.min(n,D.max-s.n);s.n+=k;n-=k;if(!n)return 0}
  while(n>0){const i=G.inv.indexOf(null);if(i<0)break;const k=Math.min(n,D.max);G.inv[i]={id,n:k};n-=k}return n}
@@ -52,28 +60,28 @@ function clearWI(){while(WI.length)removeWI(WI[0])}
 function obbPush(o,r,c){const s=Math.sin(c.yaw),co=Math.cos(c.yaw),dx=o.x-c.x,dz=o.z-c.z,lx=dx*co-dz*s,lz=dx*s+dz*co,hx=0.5+r,hz=0.36+r;
  if(Math.abs(lx)>=hx||Math.abs(lz)>=hz)return null;const px=hx-Math.abs(lx),pz=hz-Math.abs(lz);let nx=0,nz=0;if(px<pz){nx=Math.sign(lx)||1;o.x+=(nx*px)*co;o.z+=-(nx*px)*s}else{nz=Math.sign(lz)||1;o.x+=(nz*pz)*s;o.z+=(nz*pz)*co}
  return[nx*co+nz*s,-nx*s+nz*co]}
-function solidPush(o,r){if(!LV||!LV.chests)return;for(const c of LV.chests)obbPush(o,r,c)}
+function solidPush(o,r){if(!LV||!LV.chests)return;for(const c of LV.chests)if(c.state!=='hidden')obbPush(o,r,c)}
 function updWI(ts){for(const o of WI){o.t+=ts;o.vy-=0.006*ts;o.x+=o.vx*ts;o.y+=o.vy*ts;o.z+=o.vz*ts;
   if(o.y<=0){o.y=0;if(o.vy<-0.02){o.vy=-o.vy*0.38;o.av*=0.7;if(o.vy>0.012)dust(o.x,o.z,1)}else o.vy=0;o.vx*=Math.pow(0.82,ts);o.vz*=Math.pow(0.82,ts);o.av*=Math.pow(0.85,ts)}else{o.vx*=0.995;o.vz*=0.995}
   o.yaw+=o.av*ts;o.tilt=o.y>0.02?o.tilt+o.av*0.6*ts:lerp(o.tilt,0,0.2);
   // коллизии: герой, враги, сундуки, другие предметы, край арены
   const bodies=[[P,0.35,P.vx+fwdX(P.yaw)*(P.mvS||0),P.vz+fwdZ(P.yaw)*(P.mvS||0)]];for(const e of enemies)if(!e.dead)bodies.push([e,e.d.rad,e.vx,e.vz]);
   for(const [b,br,bvx,bvz] of bodies){const dx=o.x-b.x,dz=o.z-b.z,d=Math.hypot(dx,dz),m=br+o.r;if(d<m&&o.y<1.6){const nx=d>1e-4?dx/d:1,nz=d>1e-4?dz/d:0;o.x=b.x+nx*m;o.z=b.z+nz*m;const vn=o.vx*nx+o.vz*nz;const k=Math.max(0.012,(bvx*nx+bvz*nz)*1.3);if(vn<k){o.vx+=nx*(k-vn);o.vz+=nz*(k-vn);o.av+=rnd(-0.08,0.08)}}}
-  if(LV.chests)for(const c of LV.chests){const n=obbPush(o,o.r,c);if(n){const vn=o.vx*n[0]+o.vz*n[1];if(vn<0){o.vx-=1.5*vn*n[0];o.vz-=1.5*vn*n[1]}}}
+  if(LV.chests)for(const c of LV.chests){if(c.state==='hidden')continue;const n=obbPush(o,o.r,c);if(n){const vn=o.vx*n[0]+o.vz*n[1];if(vn<0){o.vx-=1.5*vn*n[0];o.vz-=1.5*vn*n[1]}}}
   for(const q of WI){if(q===o)continue;const dx=o.x-q.x,dz=o.z-q.z,d=Math.hypot(dx,dz),m=o.r+q.r;if(d<m&&d>1e-4&&Math.abs(o.y-q.y)<0.2){const p=(m-d)*0.5;o.x+=dx/d*p;o.z+=dz/d*p;q.x-=dx/d*p;q.z-=dz/d*p}}
   arenaClamp(o,o.r+0.3);
   o.obj.position.set(o.x,o.y,o.z);o.obj.rotation.set(o.tilt*0.6,o.yaw,o.tilt*0.3);const pulse=0.5+0.5*Math.sin(G.frame*0.08+o.yaw);o.gl.position.set(o.x,o.y+o.h+0.18+pulse*0.05,o.z);o.gl.material.opacity=0.35+pulse*0.45;o.gl.scale.setScalar(0.35+pulse*0.15)}}
 // ---------- сундуки
-function lootPick(n){const pool=LOOT_POOL.slice(),out=[];for(let i=0;i<n;i++){let s=pool.reduce((a,p)=>a+p[1]*(ITEMS[p[0]].r==='e'?1+G.chap*0.6:1),0)*Math.random();let k=0;for(;k<pool.length-1;k++){s-=pool[k][1]*(ITEMS[pool[k][0]].r==='e'?1+G.chap*0.6:1);if(s<=0)break}out.push(pool[k][0]);pool.splice(k,1)}return out}
-function makeChest(x,z,i,item,opened){const yaw=Math.atan2(-x,-z),g=new Group();g.position.set(x,0,z);g.rotation.y=yaw;ENV.add(g);
+function lootPick(n){const pool=LOOT_POOL.concat(CH[G.chap]&&CH[G.chap].house?HOUSE_POOL:[]),out=[];for(let i=0;i<n;i++){let s=pool.reduce((a,p)=>a+p[1]*(ITEMS[p[0]].r==='e'?1+G.chap*0.6:1),0)*Math.random();let k=0;for(;k<pool.length-1;k++){s-=pool[k][1]*(ITEMS[pool[k][0]].r==='e'?1+G.chap*0.6:1);if(s<=0)break}out.push(pool[k][0]);pool.splice(k,1)}return out}
+function makeChest(x,z,i,item,opened,yw){const yaw=yw??Math.atan2(-x,-z),g=new Group();g.position.set(x,0,z);g.rotation.y=yaw;ENV.add(g);
  const lid=new Group();lid.position.set(0,0.52,-0.3);g.add(lid);const seal=new Group();g.add(seal);
  if(ASSET.ok&&ASSET.parts.LT){addPart(g,'LT','chest');addPart(lid,'LT','lid');addPart(seal,'LT','seal')}else{mesh(new THREE.BoxGeometry(0.9,0.5,0.6),M.tsubaR,0,0.27,0,g);mesh(new THREE.BoxGeometry(0.9,0.18,0.6),M.tsubaR,0,0.09,0.3,lid)}
  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
  const glow=new Mesh(new THREE.PlaneGeometry(0.8,0.5),new MB({map:glintTex,color:0xffc070,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));glow.rotation.x=-Math.PI/2;glow.position.y=0.42;g.add(glow);
  const c={i,x,z,yaw,g,lid,seal,glow,item,state:opened?'open':'sealed',open:opened?1:0,keyObj:null};if(opened){lid.rotation.x=-1.95;seal.visible=false}return c}
 function setupChests(cp){const th=LV.c.theme,pos=CHESTS[th]||[];const op=G.opened[G.chap]=G.opened[G.chap]||{};if(!G.lootPlan||G.lootPlan.chap!==G.chap)G.lootPlan={chap:G.chap,items:lootPick(pos.length)};
- for(const o of ENV.children.slice()){for(const [x,z] of pos)if(Math.hypot(o.position.x-x,o.position.z-z)<2.1&&!o.isLight){const b=new THREE.Box3().setFromObject(o);if(b.isEmpty()||Math.max(b.max.x-b.min.x,b.max.z-b.min.z)<4.5){ENV.remove(o);break}}}
- LV.chests=pos.map(([x,z],i)=>makeChest(x,z,i,G.lootPlan.items[i],!!op[i]));
+ if(!LV.house)for(const o of ENV.children.slice()){for(const [x,z] of pos)if(Math.hypot(o.position.x-x,o.position.z-z)<2.1&&!o.isLight){const b=new THREE.Box3().setFromObject(o);if(b.isEmpty()||Math.max(b.max.x-b.min.x,b.max.z-b.min.z)<4.5){ENV.remove(o);break}}}
+ LV.chests=pos.map(([x,z,yw],i)=>makeChest(x,z,i,G.lootPlan.items[i],!!op[i],yw));
  const waves=LV.c.waves.slice(cp?cp.wave:0),total=waves.reduce((a,w)=>a+w.en.length,0),need=Math.max(0,LV.chests.filter(c=>c.state!=='open').length-invCount('key'));
  const idx=[...Array(total).keys()].sort(()=>Math.random()-0.5).slice(0,need);LV.keyAt=new Set(idx);LV.killN=0;LV.unsealed=false}
 function lootOnKill(e){if(!LV||!LV.keyAt)return;const k=LV.killN++;if(LV.keyAt.has(k)){spawnWI('key',e.x,1.1,e.z,rnd(-0.03,0.03),0.09,rnd(-0.03,0.03));pop('Из Гэнма выпал ключ!','#ffd27a');SFX.iai()}}
@@ -88,11 +96,14 @@ function updChests(ts){if(!LV.chests)return;for(const c of LV.chests){
 // ---------- взаимодействие (X)
 const INV={open:false,sel:-1,hover:-1,drag:null,mx:0,my:0,msg:null,lastClick:0};
 function nearInteract(){if(!LV)return null;let best=null,bd=1.45;for(const o of WI){const d=Math.hypot(o.x-P.x,o.z-P.z);if(d<bd&&o.y<0.6){bd=d;best={k:'item',o}}}
- if(LV.chests)for(const c of LV.chests){if(c.state==='open')continue;const fx=c.x+Math.sin(c.yaw)*0.9,fz=c.z+Math.cos(c.yaw)*0.9,d=Math.hypot(fx-P.x,fz-P.z);if(d<Math.min(bd,1.4)){bd=d;best={k:'chest',c}}}return best}
-function promptText(n){if(!n)return null;if(n.k==='item')return'X — подобрать: '+ITEMS[n.o.id].n;const c=n.c;if(c.state==='sealed')return'Сундук запечатан — сначала зачисти локацию';return invCount('key')?'X — открыть сундук ключом':'Сундук заперт — нужен ключ'}
-function interact(){const n=nearInteract();if(!n)return;if(n.k==='item'){const o=n.o;if(o.id==='note'){removeWI(o);addItem('note');startNoteCS();return}const left=addItem(o.id);if(left){INV.msg=['Инвентарь полон',90];pop('Инвентарь полон','#c9a0a0');return}removeWI(o);pop('Подобрано: '+ITEMS[o.id].n,RAR[ITEMS[o.id].r][1]);SFX.soul()}
+ if(LV.H)for(const s of LV.H.spots){if(s.done)continue;const d=Math.hypot(s.x-P.x,s.z-P.z);if(d<Math.min(bd,s.r||1.4)){bd=d;best={k:'spot',s}}}
+ if(LV.duelOpen&&Math.hypot(P.x,P.z+26.6)<1.9)best={k:'door'};
+ if(LV.chests)for(const c of LV.chests){if(c.state==='open'||c.state==='hidden')continue;const fx=c.x+Math.sin(c.yaw)*0.9,fz=c.z+Math.cos(c.yaw)*0.9,d=Math.hypot(fx-P.x,fz-P.z);if(d<Math.min(bd,1.4)){bd=d;best={k:'chest',c}}}return best}
+function promptText(n){if(!n)return null;if(n.k==='spot')return n.s.label;if(n.k==='door')return invCount('housekey')?'X — отпереть дверь дома':'Дверь заперта';if(n.k==='item')return'X — подобрать: '+ITEMS[n.o.id].n;const c=n.c;if(c.state==='sealed')return'Сундук запечатан — сначала зачисти локацию';return invCount('key')?'X — открыть сундук ключом':'Сундук заперт — нужен ключ'}
+function interact(){const n=nearInteract();if(!n)return;if(n.k==='spot'){houseSpot(n.s);return}if(n.k==='door'){if(invCount('housekey'))startDoorCS();else pop('Нужен ключ','#c9a0a0');return}
+ if(n.k==='item'&&n.o.id==='housekey'){const o=n.o;removeWI(o);startHouseKeyCS(o.x,o.z);return}if(n.k==='item'){const o=n.o;if(o.id==='note'){removeWI(o);addItem('note');startNoteCS();return}const left=addItem(o.id);if(left){INV.msg=['Инвентарь полон',90];pop('Инвентарь полон','#c9a0a0');return}removeWI(o);pop('Подобрано: '+ITEMS[o.id].n,RAR[ITEMS[o.id].r][1]);SFX.soul()}
  else{const c=n.c;if(c.state==='sealed'){pop('Печать держит, пока рядом Гэнма','#c9a0a0');return}if(!invCount('key')){pop('Нужен ключ — его носят Гэнма','#c9a0a0');return}startChestCS(c)}}
-function updItems(ts){updWI(ts);updChests(ts);for(const k of['def','dmg','spd'])if(G.buf[k]>0)G.buf[k]-=ts;
+function updItems(ts){updWI(ts);updChests(ts);for(const k of['def','dmg','spd','tea','sake'])if(G.buf[k]>0)G.buf[k]-=ts;if(G.buf.tea>0&&P.state!=='dead'){P.hp=Math.min(P.max,P.hp+0.05*ts);if(G.frame%20===0)FX.add.add({x:P.x+rnd(-.3,.3),y:rnd(0.3,1.6),z:P.z+rnd(-.3,.3),vx:0,vy:0.01,vz:0,life:40,s:0.05,r:0.8,gg:1.8,b:0.6,a:0.6})}
  if(!CS.on&&P.state!=='dead'){G.prompt=promptText(nearInteract());if(hit('KeyX'))interact()}else G.prompt=null;
  if(G.buf.dmg>0){M.blade.emissive.set(0x803010)}}
 // ---------- катсцена: открыть сундук ключом, достать предмет и осмотреть его
@@ -127,7 +138,7 @@ function startChestCS(c){const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),S=[c.x+fx*0
   if(t>=372)item.scale.setScalar(Math.max(0.001,1-ek(t,372,388)));
   if(t>=410){CS.card=null;done()}},()=>{c.open=1;CS.card=null;done()})}
 // ---------- босс пал: записка у колокола
-function bossDown(e){LV.winPending=true;spawnWI('note',e.x,1.3,e.z,rnd(-0.01,0.01),0.05,rnd(-0.01,0.01));setTimeout(()=>{},0);say('Юки','Он что-то обронил… Бумага. Подбери её (X).')}
+function bossDown(e){if(e.t==='shogun')return houseBossDown(e);spawnWI('note',e.x,1.3,e.z,rnd(-0.01,0.01),0.05,rnd(-0.01,0.01));spawnWI('housekey',e.x+0.5,1.1,e.z+0.3,0.015,0.06,0.01);say('Юки','Он что-то обронил… Бумага и ключ. Подбери их (X).')}
 const noteImg=new Image();noteImg.src=NOTE_IMG;
 function readNote(){if(CS.on)return;INV.open=false;const p=camera.position.clone();csStart('read',()=>{},null);CS.cam.p.copy(p);CS.cam.l.set(P.x,1.3,P.z);CS.bars=0;CS.img=noteImg;CS.imgT=0;CS.onImgClose=()=>{CS.img=null;csEnd();try{renderer.domElement.requestPointerLock()}catch(_){}}}
 function startNoteCS(){P.csPose={p:POSE.kneel,w:1};const nt=itemModel('note');scene.add(nt);

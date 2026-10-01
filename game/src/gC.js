@@ -15,10 +15,15 @@ const ET={
  kama:{name:'Кама-итати',hp:30,spd:5.5,range:1.9,rad:0.35,h:0.6,atk:[{k:'leap',wind:26,act:18,rec:34,dmg:8,reach:1.2}],souls:[['r',2],['b',1]],poise:0},
  yumi:{name:'Юми-они',hp:40,spd:1.5,range:17,keep:10,rad:0.45,h:1.2,atk:[{k:'shoot',wind:56,act:1,rec:70,dmg:10}],souls:[['r',2],['b',2]],poise:0},
  gasa:{name:'Хитоцумэ Гаса',hp:180,spd:1.7,range:2.4,rad:0.55,h:2.1,atk:[{k:'slash',wind:40,act:8,rec:36,dmg:20,reach:3.0},{k:'grab',wind:44,act:8,rec:50,dmg:35,reach:1.9}],souls:[['r',5],['b',2],['y',2]],poise:45},
- sota:{name:'Сота, Падший Брат',hp:600,spd:3.8,range:2.2,rad:0.45,h:1.9,boss:true,souls:[['r',12],['p',5],['y',3]],poise:60}
+ sota:{name:'Сота, Падший Брат',hp:600,spd:3.8,range:2.2,rad:0.45,h:1.9,boss:true,souls:[['r',12],['p',5],['y',3]],poise:60},
+ musha:{name:'Мукуро-муся',hp:150,spd:3.0,range:2.2,rad:0.45,h:1.85,human:true,dm:0.7,block:0.22,ai:updMusha,souls:[['r',5],['b',2],['y',1]],poise:40},
+ chochin:{name:'Тётин-обакэ',hp:38,spd:3.3,range:1.7,rad:0.38,h:1.0,atk:[{k:'leap',wind:32,act:18,rec:38,dmg:9,reach:1.3}],souls:[['r',2],['b',2]],poise:0},
+ moku:{name:'Мокумокурэн',hp:90,spd:0,range:14,rad:0.5,h:2.0,ai:updMoku,souls:[['r',3],['b',3],['p',1]],poise:30},
+ shogun:{name:'Кагэмару, Страж Дома',hp:900,spd:3.4,range:2.4,rad:0.6,h:2.3,boss:true,human:true,dm:1.0,block:0.33,ai:updMusha,souls:[['r',14],['p',5],['y',3]],poise:70}
 };
 const ATK={R:{s:18,a:6,r:22,dmg:[24,32],reach:2.4,arc:-0.1,st:15,knock:3,type:'R'},R3:{s:16,a:10,r:26,dmg:[50,50],reach:2.7,arc:-2,st:15,knock:10,type:'R',spin:true,gb:true},
- L:{s:10,a:4,r:12,dmg:[12,16],reach:2.7,arc:0.45,st:7,knock:1,type:'L'},N:{s:14,a:6,r:20,dmg:[45,45],reach:2.6,arc:0.15,st:25,knock:9,type:'N',gb:true},X:{s:8,a:6,r:18,dmg:[45,45],reach:2.6,arc:0.15,st:10,knock:4,type:'N',gb:true,launch:true}};
+ L:{s:10,a:4,r:12,dmg:[12,16],reach:2.7,arc:0.45,st:7,knock:1,type:'L'},N:{s:14,a:6,r:20,dmg:[45,45],reach:2.6,arc:0.15,st:25,knock:9,type:'N',gb:true},X:{s:8,a:6,r:18,dmg:[45,45],reach:2.6,arc:0.15,st:10,knock:4,type:'N',gb:true,launch:true},
+ LG:{s:9,a:5,r:14,dmg:[8,11],reach:1.9,arc:0.45,st:6,knock:3,type:'L'}};
 const CH=[
  {title:'ПРОЛОГ',name:'Пепел Ивате',theme:'ash',mirrors:[[-4.5,-9,Math.PI/2],[-10,2,Math.PI/2]],
   start:[['Юки','Акира… они идут. Правая катана — ЛКМ, левая — ПКМ. Мышь — камера, WASD — шаг.']],
@@ -30,8 +35,9 @@ const CH=[
   waves:[{en:['kama','kama','kama'],say:[['Юки','Кама-итати! Смеются, как дети… Стойка Воды (3) — против стаи.']]},
    {en:['yumi','ash','ash','yumi'],say:[['Юки','Лучники! Держи блок (Q) — клинки отобьют стрелы.']]},
    {en:['gasa','kama','yumi','ash'],say:[['Акира','…Сколько же вас.'],['Юки','Шкала Они полна? R — Мусо Нитэн.']]}]},
- {title:'ГЛАВА 4',name:'Двор с колоколом',theme:'duel',mirrors:[[-3.5,-12,Math.PI/2]],start:[],
-  waves:[{en:['sota'],boss:true,say:[['Сота','Ты пришёл, брат. С отцовским мечом… и с моим.'],['Акира','Я пришёл забрать тебя домой.'],['Сота','Дом сгорел. Умри!']]}]}
+ {title:'ГЛАВА 4',name:'Двор с колоколом',theme:'duel',noGate:true,mirrors:[[-3.5,-12,Math.PI/2]],start:[],
+  waves:[{en:['sota'],boss:true,say:[['Сота','Ты пришёл, брат. С отцовским мечом… и с моим.'],['Акира','Я пришёл забрать тебя домой.'],['Сота','Дом сгорел. Умри!']]}]},
+ {title:'ГЛАВА 5',name:'Забытый дом',theme:'house',house:true,mirrors:[[-2.95,-15.4,Math.PI/2],[-9.1,7.2,Math.PI/2]],start:[],waves:[]}
 ];
 const G={mode:'title',diff:1,frame:0,chap:0,slow:0,slowTs:1,freeze:0,hitstop:0,shake:0,fov:55,fovT:55,camYaw:0,camPitch:0.28,camDist:4.6,card:null,subs:[],pops:[],
  souls:{r:0,b:0,p:0},stats:{kills:0,issen:0,time:0,deaths:0},issenFx:null,flashRed:0,tarScreen:0,rainFreeze:0,rainUp:false,winT:0,deadT:0,cp:null,bossBar:null,paused:false,menuSel:1,reviveHint:false,lock:null,wave:0,waveT:0,trans:0,exposureT:1};
@@ -67,11 +73,12 @@ function updTrail(t,sw,on){const H=t.hist;if(on){sw.userData.base.getWorldPositi
  t.g.attributes.position.needsUpdate=true;t.g.attributes.color.needsUpdate=true;t.m.visible=H.length>1}
 const bolts=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x9ad8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false}));bolts.frustumCulled=false;scene.add(bolts);
 const crescent=new Mesh(new THREE.RingGeometry(2.4,2.9,48,1,0,0.1),new MB({color:0xffffff,transparent:true,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false}));crescent.renderOrder=20;crescent.visible=false;scene.add(crescent);
-function resetPlayer(x,z){Object.assign(P,{x,z,y:0,vy:0,yaw:0,vx:0,vz:0,hp:120+(G.maxB||0),max:120+(G.maxB||0),st:100,stMax:100,oni:0,mana:40,state:'idle',t:0,atk:null,hitList:null,combo:'',comboT:0,buf:null,stance:1,stanceFx:0,muso:0,exhaust:0,iss:0,blockTap:-999,pdWin:0,air:false,food:3,tar:0,rT:-99,lT:-99,pendR:false,pendL:false,clinch:null,clT:0,hurtT:0,invT:0,dodgeLen:24,swung:false,absorbing:false,atkSpd:1,eatDone:false,walkPh:0,walk:0,gait:1,idleT:0,pose:POSE.sheath,drawn:false,drawSpd:1,idleClip:null,clipName:null})}
+function resetPlayer(x,z){Object.assign(P,{x,z,y:0,vy:0,yaw:0,vx:0,vz:0,hp:120+(G.maxB||0),max:120+(G.maxB||0),st:100,stMax:100,oni:0,mana:40,state:'idle',t:0,atk:null,hitList:null,combo:'',comboT:0,buf:null,stance:1,stanceFx:0,muso:0,exhaust:0,iss:0,blockTap:-999,pdWin:0,air:false,food:3,tar:0,rT:-99,lT:-99,pendR:false,pendL:false,clinch:null,clT:0,hurtT:0,invT:0,dodgeLen:24,swung:false,absorbing:false,atkSpd:1,eatDone:false,walkPh:0,walk:0,gait:1,idleT:0,pose:POSE.sheath,drawn:false,drawSpd:1,idleClip:null,clipName:null,csRx:0,hideL:false})}
 const fwdX=y=>Math.sin(y),fwdZ=y=>Math.cos(y);
 function say(n,t){G.subs.push({n,t,d:Math.max(170,t.length*4.2),a:0})}
 function pop(t,col='#e8dcc0'){G.pops.push({t,col,life:110})}
-function arenaClamp(o,r=0){const R=LV.env.R-r,d=Math.hypot(o.x,o.z);if(d>R){o.x*=R/d;o.z*=R/d}}
+function arenaClamp(o,r=0){if(LV.walls)wallPush(o,Math.max(0.28,r*0.75));if(LV.house){o.x=clamp(o.x,-19.7,19.7);o.z=clamp(o.z,-16.7,24.7);return}
+ const R=LV.env.R-r,d=Math.hypot(o.x,o.z);if(d>R){if(LV.duelOpen&&o===P&&o.z<-11&&Math.abs(o.x)<3.4){o.x=clamp(o.x,-2.3,2.3);o.z=Math.max(o.z,-26.6);return}o.x*=R/d;o.z*=R/d}}
 function setStance(k){if(P.stance===k)return;P.stance=k;P.stanceFx=14;SFX.stance(k)}
 function nearest(r,dirYaw=null,cone=-1){let b=null,bd=r;for(const e of enemies){if(e.dead||e.inv)continue;const dx=e.x-P.x,dz=e.z-P.z,d=Math.hypot(dx,dz);if(d>=bd)continue;if(dirYaw!=null&&(dx*fwdX(dirYaw)+dz*fwdZ(dirYaw))/(d||1)<cone)continue;bd=d;b=e}return b}
 function aimAt(e){P.yaw=Math.atan2(e.x-P.x,e.z-P.z)}
@@ -79,7 +86,7 @@ function inputDir(){const f=(down('KeyW')||down('ArrowUp')?1:0)-(down('KeyS')||d
  const x=Math.sin(cy)*f-Math.cos(cy)*s,z=Math.cos(cy)*f+Math.sin(cy)*s;return Math.atan2(x,z)}
 function startAttack(k,dirY){
  if(P.pdWin>0&&k==='R'){const e=nearest(9);if(e){P.pdWin=0;const d=Math.hypot(e.x-P.x,e.z-P.z)||1;P.x=e.x-(e.x-P.x)/d*1.2;P.z=e.z-(e.z-P.z)/d*1.2;doIssen(e);return}}
- const pc=P.combo;let a;if(k==='R'){if(P.combo.endsWith('LLL')){a=ATK.X;P.combo=''}else if(P.combo.endsWith('RR')){a=ATK.R3;P.combo=''}else{a=ATK.R;P.combo+='R'}}else if(k==='L'){a=ATK.L;P.combo+='L'}else{a=ATK.N;P.combo=''}
+ const pc=P.combo;let a;if(k==='R'){if(P.combo.endsWith('LLL')){a=ATK.X;P.combo=''}else if(P.combo.endsWith('RR')){a=ATK.R3;P.combo=''}else{a=ATK.R;P.combo+='R'}}else if(k==='L'){a=G.oneBlade?ATK.LG:ATK.L;P.combo+='L'}else{a=ATK.N;P.combo=''}
  const tgt=G.lock&&!G.lock.dead?G.lock:nearest(5.5,dirY!=null?dirY:P.yaw,-0.2);if(tgt){aimAt(tgt);P.lunge=clamp(Math.hypot(tgt.x-P.x,tgt.z-P.z)-a.reach*0.75,0,1.6)}else{if(dirY!=null)P.yaw=dirY;P.lunge=0.5}
  P.clipName=a===ATK.X?'X':a===ATK.R3?'R3':a===ATK.R?(pc.endsWith('R')?'R2':'R1'):a===ATK.L?['L1','L2','L3'][pc.match(/L*$/)[0].length%3]:'N';P.drawn=true;
  P.st=Math.max(-10,P.st-a.st);P.state='atk';P.atk=a;P.t=0;P.swung=false;P.hitList=new Set();P.buf=null;
@@ -87,11 +94,13 @@ function startAttack(k,dirY){
 function startDraw(d,buf=null){const n=d?'draw':'sheathe';P.state=n;P.t=0;P.buf=buf;P.drawSpd=buf?1.6:1;P.idleClip=null;(SFX.draw||(()=>{}))(d)}
 function startDodge(dirY){const fr=G.buf&&G.buf.spd>0;if(P.st<20&&!fr){pop('Нет выносливости','#c9a0a0');return}if(!fr)P.st-=20;P.state='dodge';P.t=0;const y=dirY!=null?dirY:P.yaw+Math.PI;P.dodgeYaw=y;if(dirY!=null)P.yaw=dirY;
  P.dodgeLen=P.stance===0?19:P.stance===2?28:24;P.dodgeSpd=(P.stance===2?7.5:9)/60}
-function doHits(a){const mul=(P.stance===0?1.3:P.stance===2?0.8:1)*(P.muso>0?1.5:1)*(P.exhaust>0?0.7:1)*(G.buf&&G.buf.dmg>0?1.3:1),fx=fwdX(P.yaw),fz=fwdZ(P.yaw);
+function doHits(a){const mul=(P.stance===0?1.3:P.stance===2?0.8:1)*(P.muso>0?1.5:1)*(P.exhaust>0?0.7:1)*(G.buf&&G.buf.dmg>0?1.3:1)*(G.buf&&G.buf.sake>0?1.4:1)*(G.buf&&G.buf.ofuda>0?1.4:1),fx=fwdX(P.yaw),fz=fwdZ(P.yaw);let ofHit=false;
  for(const e of enemies){if(e.dead||P.hitList.has(e))continue;const dx=e.x-P.x,dz=e.z-P.z,d=Math.hypot(dx,dz)||0.01;
   const both=a.both||(P.stance===2&&a.type==='L');if(!both&&(dx*fx+dz*fz)/d<a.arc)continue;if(d>a.reach+e.d.rad||Math.abs(e.y-P.y)>1.5)continue;
   P.hitList.add(e);dmgEnemy(e,Math.round(rnd(a.dmg[0],a.dmg[1])*mul),dx/d,dz/d,{knock:a.knock,stop:a.type==='N'?7:4,gb:a.gb,launch:a.launch});
-  if(P.muso>0){e.burn=Math.max(e.burn,120);if(Math.random()<0.25)e.frozen=Math.max(e.frozen,40)}if(!e.dead)P.oni=Math.min(100,P.oni+1)}}
+  if(G.buf&&G.buf.ofuda>0){ofHit=true;sparks(e.x,1.2,e.z,50,[0.6,0.8,1]);flashL(e.x,1.6,e.z,0x9ad0ff,7,10)}
+  if(P.muso>0){e.burn=Math.max(e.burn,120);if(Math.random()<0.25)e.frozen=Math.max(e.frozen,40)}if(!e.dead)P.oni=Math.min(100,P.oni+1)}
+ if(ofHit){G.buf.ofuda--;SFX.thunder&&SFX.thunder(0.4)}}
 function castFire(){if(P.mana<20){pop('Мало синих душ','#8fb8ff');return}P.mana-=20;SFX.fire();const m=new Mesh(new THREE.TorusGeometry(1.1,0.06,6,24,Math.PI*0.9),new MB({color:0xff7a30,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false}));
  m.rotation.order='YXZ';m.rotation.set(Math.PI/2,P.yaw+Math.PI*0.05,0);scene.add(m);proj.push({k:'fire',x:P.x+fwdX(P.yaw),z:P.z+fwdZ(P.yaw),y:0.9,vx:fwdX(P.yaw)*0.22,vz:fwdZ(P.yaw)*0.22,life:55,hit:new Set(),m});
  P.state='atk';P.clipName=null;P.atk={s:6,a:1,r:18,dmg:[0,0],reach:0,arc:2,st:0,type:'R'};P.t=0;P.hitList=new Set();P.atkSpd=1;P.swung=true}
@@ -102,7 +111,7 @@ function startMuso(){if(P.muso>0)return;if(P.oni<100){pop('Шкала Они н�
 function eat(){if(P.food<=0){pop('Онигири кончились','#c9a0a0');return}if(P.hp>=P.max)return;P.state='eat';P.t=0;P.eatDone=false}
 function perfectDodge(){G.slow=72;G.slowTs=0.3;P.oni=Math.min(100,P.oni+10);P.pdWin=50;SFX.heart();pop('Идеальный уворот — ЛКМ: Иссэн-рывок','#bfe3ff')}
 function toward(src){const dx=src.x-P.x,dz=src.z-P.z,d=Math.hypot(dx,dz)||1;return(dx*fwdX(P.yaw)+dz*fwdZ(P.yaw))/d>0.35}
-function hitPlayer(src,dmg,o={}){if(G.buf&&G.buf.def>0)dmg=Math.round(dmg*0.65);
+function hitPlayer(src,dmg,o={}){if(G.buf&&G.buf.def>0)dmg=Math.round(dmg*0.65);if(G.buf&&G.buf.sake>0)dmg=Math.round(dmg*1.2);
  if(P.state==='dead'||P.invT>0||P.state==='issen')return'none';
  if(P.state==='dodge'&&P.t<P.dodgeLen-4){if(P.t<=8&&!o.proj)perfectDodge();return'dodge'}
  if(o.issen&&src.d&&P.stance!==0&&G.frame-P.blockTap<=DIFF[G.diff].win&&P.iss<=0){doIssen(src);return'issen'}
