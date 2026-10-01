@@ -43,10 +43,23 @@ const hero=makeHuman({set:'AK',matMap:{AK_skin:heroMats.skin},scale:1.02,pants:M
 scene.add(hero.root);hero.root.traverse(o=>{if(o.isMesh)o.castShadow=true});
 const ghostMat=new MB({color:0xffa060,transparent:true,opacity:0.35,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
 const ghosts=[0,1].map(()=>{const s=makeSword(0.85,M.tsubaR,false);s.traverse(o=>{if(o.isMesh){o.material=ghostMat;o.castShadow=false}});s.visible=false;scene.add(s);return s});
-function makeTrail(col){const n=12,g=new THREE.BufferGeometry(),pos=new Float32Array(n*2*3),c=new Float32Array(n*2*3),idx=[];for(let i=0;i<n-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
+function makeTrail(col){const n=22,g=new THREE.BufferGeometry(),pos=new Float32Array(n*2*3),c=new Float32Array(n*2*3),idx=[];for(let i=0;i<n-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
  g.setIndex(idx);g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(c,3));
  const m=new Mesh(g,new MB({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));m.frustumCulled=false;scene.add(m);return{m,g,pos,c,hist:[],col,n}}
-const trails={R:makeTrail([1.6,0.55,0.15]),L:makeTrail([0.4,0.9,1.8])};
+const trails={R:makeTrail([2.2,0.75,0.2]),L:makeTrail([0.5,1.2,2.4])};
+// ---------- эффекты ударов: вспышка-разрез, искры, брызги смолы, серп добивания
+const slashTex=(()=>{const c=document.createElement('canvas');c.width=256;c.height=32;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,256,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(0.5,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');
+ x.fillStyle=g;x.beginPath();x.moveTo(0,16);x.quadraticCurveTo(128,-6,256,16);x.quadraticCurveTo(128,30,0,16);x.fill();const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t})();
+const SLASH=[...Array(8)].map(()=>{const m=new Mesh(new THREE.PlaneGeometry(1,0.12),new MB({map:slashTex,color:0xffffff,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));m.visible=false;m.renderOrder=15;scene.add(m);return{m,life:0,max:1,w:1}});
+const KILLS=[...Array(4)].map(()=>{const m=new Mesh(new THREE.RingGeometry(0.9,1.08,40,1,0,Math.PI*1.15),new MB({color:0xffe8d0,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));m.visible=false;m.renderOrder=16;scene.add(m);return{m,life:0}});
+let slashI=0,killI=0;
+function hitFx(x,y,z,dx,dz,o={}){const s=SLASH[slashI++%SLASH.length];s.life=s.max=o.big?14:10;s.w=o.big?2.0:1.3;s.m.position.set(x,y,z);s.m.rotation.set(0,0,0);s.m.userData.roll=(o.roll!=null?o.roll:rnd(-0.9,0.9));s.m.material.color.set(o.col||0xffffff);s.m.visible=true;
+ sparks(x,y,z,o.big?40:20,o.sc||[1,0.7,0.35]);
+ for(let i=0;i<(o.big?26:14);i++){const v=rnd(1.5,5);FX.norm.add({x,y:y+rnd(-.1,.1),z,vx:(dx+rnd(-.5,.5))*v/60,vy:rnd(0.5,3.5)/60,vz:(dz+rnd(-.5,.5))*v/60,g:0.2/60,stick:true,life:rnd(100,220),s:rnd(0.03,0.09),r:0.01,gg:0.01,b:0.03,a:0.95})}}
+function killFx(e,dx,dz){const k=KILLS[killI++%KILLS.length];k.life=20;k.m.position.set(e.x,e.d.h*0.55,e.z);k.m.visible=true;k.m.userData={yaw:Math.atan2(dx,dz),roll:rnd(-0.6,0.6),s:e.d.h*0.9};
+ flashL(e.x,1.2,e.z,0xffc890,9,14);for(let i=0;i<24;i++)embers(e.x+rnd(-.3,.3),rnd(0.3,e.d.h),e.z+rnd(-.3,.3),1,[1,0.35,0.08])}
+function updHitFx(){for(const s of SLASH){if(s.life<=0){s.m.visible=false;continue}s.life--;const k=1-s.life/s.max;s.m.lookAt(camera.position);s.m.rotateZ(s.m.userData.roll);s.m.scale.set(s.w*(0.4+0.9*Math.min(1,k*3)),1+2.5*k,1);s.m.material.opacity=Math.min(0.7,(1-k)*1.2)}
+ for(const q of KILLS){if(q.life<=0){q.m.visible=false;continue}q.life--;const k=1-q.life/20,u=q.m.userData;q.m.rotation.set(0,u.yaw+Math.PI/2,0);q.m.rotateX(u.roll);q.m.rotateZ(-0.4-k*1.2);q.m.scale.setScalar(u.s*(0.7+0.6*k));q.m.material.opacity=Math.min(1,(1-k)*1.8)}}
 const tv1=new V3(),tv2=new V3();
 function updTrail(t,sw,on){const H=t.hist;if(on){sw.userData.base.getWorldPosition(tv1);sw.userData.tip.getWorldPosition(tv2);H.unshift([tv1.x,tv1.y,tv1.z,tv2.x,tv2.y,tv2.z]);if(H.length>t.n)H.pop()}else if(H.length)H.pop();
  for(let i=0;i<t.n;i++){const h=H[Math.min(i,H.length-1)];const a=H.length>1?Math.max(0,1-i/(H.length-1)):0;if(h){t.pos.set(h.slice(0,3),i*6);t.pos.set(h.slice(3,6),i*6+3)}
