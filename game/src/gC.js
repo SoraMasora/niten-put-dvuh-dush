@@ -96,7 +96,7 @@ function hitPlayer(src,dmg,o={}){
  if(P.state==='block'&&toward(src)&&!o.unblock){P.st-=Math.max(8,dmg*1.3);const hx=P.x+fwdX(P.yaw)*0.5,hz=P.z+fwdZ(P.yaw)*0.5;sparks(hx,1.35,hz,o.proj?60:220);SFX.clang();P.vx-=fwdX(P.yaw)*0.05;P.vz-=fwdZ(P.yaw)*0.05;
   P.hp-=Math.round(dmg*0.2);if(P.st<=0){P.st=0;P.state='hurt';P.t=0;P.hurtT=45;pop('Блок сломан','#ff9a8a')}checkDeath();return'block'}
  if(P.state==='absorb'){let lost=0;for(const s of souls)if(s.pulled&&Math.random()<0.5){s.gone=true;lost++;if(s.owner)s.owner.pending--}if(lost)pop('Поглощение прервано','#ff9a8a')}
- P.hp-=dmg;P.oni=Math.max(0,P.oni-20);const dx=P.x-src.x,dz=P.z-src.z,d=Math.hypot(dx,dz)||1;
+ P.hp-=dmg;P.oni=Math.max(0,P.oni-20);const dx=P.x-src.x,dz=P.z-src.z,d=Math.hypot(dx,dz)||1;{const T=P.tl||(P.tl={x:0,z:0,vx:0,vz:0}),sy=Math.sin(P.yaw),cy=Math.cos(P.yaw),f=(dx*sy+dz*cy)/d,s=(dx*cy-dz*sy)/d,im=0.035+dmg*0.0012;T.vx+=f*im;T.vz-=s*im}
  if(P.muso<=0){P.state='hurt';P.t=0;P.hurtT=18;P.vx=dx/d*0.08;P.vz=dz/d*0.08;P.clinch=null}
  P.invT=20;G.shake=Math.max(G.shake,0.18);G.flashRed=12;SFX.hurt();petals(P.x,1.3,P.z,14);checkDeath();return'hit'}
 function checkDeath(){if(P.hp<=0&&P.state!=='dead'){P.hp=0;P.state='dead';P.t=0;G.deadT=0;G.stats.deaths++;G.slow=90;G.slowTs=0.3}}
@@ -106,7 +106,7 @@ function doIssen(e){G.stats.issen++;P.drawn=true;P.idleClip=null;P.iss=30;P.stat
  SFX.issen();P.oni=Math.min(100,P.oni+15);
  if(e.d.boss)dmgEnemy(e,150,0,0,{stop:0,noBlock:true,stagT:55,force:true});else killEnemy(e,fwdX(P.yaw),fwdZ(P.yaw),{issen:true});
  for(const o of enemies)if(o!==e&&!o.dead&&!o.d.boss&&o.state==='wind'&&Math.hypot(o.x-e.x,o.z-e.z)<4.5){killEnemy(o,fwdX(P.yaw),fwdZ(P.yaw),{issen:true});G.stats.issen++}}
-function land(){if(P.state==='dive'){P.state='idle';P.t=0;G.shake=0.3;SFX.taiko(1.4);SFX.cross();dust(P.x,P.z,30);
+function land(){P.ldv=(P.ldv||0)-Math.min(0.06,Math.abs(P.vyL||0.1)*0.35);if(P.state==='dive'){P.state='idle';P.t=0;G.shake=0.3;SFX.taiko(1.4);SFX.cross();dust(P.x,P.z,30);
  for(let i=0;i<40;i++){const a=i/40*Math.PI*2;FX.add.add({x:P.x+Math.cos(a)*0.3,y:0.1,z:P.z+Math.sin(a)*0.3,vx:Math.cos(a)*0.08,vy:0,vz:Math.sin(a)*0.08,life:24,s:0.08,r:1.5,gg:1.3,b:1.1})}
  for(const e of enemies){const d=Math.hypot(e.x-P.x,e.z-P.z);if(!e.dead&&d<3.2)dmgEnemy(e,35,(e.x-P.x)/(d||1),(e.z-P.z)/(d||1),{knock:8,stagT:40,gb:true})}}}
 function updPlayer(ts){
@@ -117,7 +117,7 @@ function updPlayer(ts){
  if(inR()){P.pendR=true;P.rT=G.frame}if(inL()){P.pendL=true;P.lT=G.frame}
  let act=null;if(hit('KeyL')){act='N';P.pendR=P.pendL=false}else if(P.pendR&&P.pendL){act='N';P.pendR=P.pendL=false}else if(P.pendR&&G.frame-P.rT>=4){act='R';P.pendR=false}else if(P.pendL&&G.frame-P.lT>=4){act='L';P.pendL=false}
  if(P.state!=='dead'){if(hit('Digit1'))setStance(0);if(hit('Digit2'))setStance(1);if(hit('Digit3'))setStance(2);if(hit('KeyQ')&&P.iss<=0)P.blockTap=G.frame}
- if(P.state!=='issen')P.vy-=0.0075*ts;P.y+=P.vy*ts;if(P.y<=0){P.y=0;P.vy=0;if(P.air){P.air=false;land()}}else P.air=true;
+ P.vyL=P.vy;if(P.state!=='issen')P.vy-=0.0075*ts;P.y+=P.vy*ts;if(P.y<=0){P.y=0;P.vy=0;if(P.air){P.air=false;land()}}else P.air=true;
  let mv=0;
  switch(P.state){
  case'idle':case'run':
@@ -154,6 +154,7 @@ function updPlayer(ts){
   else if(P.clT<=0){P.clinch=null;e.state='rec';e.st=0;P.hp-=35;P.tar=1;G.tarScreen=120;G.flashRed=14;G.shake=0.3;SFX.hurt();P.oni=Math.max(0,P.oni-20);P.state='hurt';P.t=0;P.hurtT=24;checkDeath()}
   break;}
  }
+ P.mvS=lerp(P.mvS||0,mv,1-Math.pow(mv>(P.mvS||0)?0.8:0.72,ts));if(P.mvS<0.0005)P.mvS=0;mv=P.mvS;
  P.x+=fwdX(P.yaw)*mv*ts+P.vx*ts;P.z+=fwdZ(P.yaw)*mv*ts+P.vz*ts;P.vx*=0.85;P.vz*=0.85;arenaClamp(P,0.5);
  for(const e of enemies){if(e.dead)continue;const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz),min=e.d.rad+0.35;if(d<min&&d>0.001&&P.state!=='dodge'){P.x=e.x+dx/d*min;P.z=e.z+dz/d*min}}
  if(P.idleClip){if(P.state!=='idle'||P.drawn||dirY!=null)P.idleClip=null;else{P.idleClip.t+=ts;if(P.idleClip.t>=((ANIMS.clips.toss||{n:1}).n)){P.idleClip=null;P.idleT=-200}}}

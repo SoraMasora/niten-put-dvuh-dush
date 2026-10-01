@@ -4,19 +4,25 @@ function mkEnemy(t,x,z){const d=ET[t],hp=Math.round(d.hp*DIFF[G.diff].hp),rig=bu
  return{t,d,x,z,y:0,vy:0,vx:0,vz:0,yaw:Math.atan2(P.x-x,P.z-z),hp,max:hp,state:t==='sota'?'intro':'enter',st:0,cd:rnd(40,100),atk:null,hitDone:false,frozen:0,burn:0,burnAcc:0,poiseDmg:0,
   revived:false,anim:rnd(0,99),dead:false,deathT:0,pending:0,blackIn:0,flash:0,inv:0,phase:1,comboN:0,hits:0,rig,upV:null}}
 function removeRig(e){scene.remove(e.rig.root);if(e.rig.upper.parent)e.rig.upper.parent.remove(e.rig.upper);scene.remove(e.rig.gl)}
+// ---------- физика: пружинный наклон от удара, падение тела «рэгдолл-лайт», расталкивание
+function hitTilt(e,dx,dz,imp){const T=e.tl||(e.tl={x:0,z:0,vx:0,vz:0}),sy=Math.sin(e.yaw),cy=Math.cos(e.yaw),f=dx*sy+dz*cy,s=dx*cy-dz*sy;T.vx+=f*imp;T.vz-=s*imp}
+function stepTilt(T,ts){if(!T)return;const k=0.028,c=0.16;T.vx+=(-k*T.x-c*T.vx)*ts;T.vz+=(-k*T.z-c*T.vz)*ts;T.x+=T.vx*ts;T.z+=T.vz*ts;T.x=clamp(T.x,-0.7,0.7);T.z=clamp(T.z,-0.7,0.7)}
+function separate(){for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.dead)continue;for(let j=i+1;j<enemies.length;j++){const b=enemies[j];if(b.dead)continue;
+ const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad;if(d<m&&d>0.0001){const p=(m-d)*0.5,ux=dx/d,uz=dz/d,wa=b.d.boss?0.9:a.d.boss?0.1:0.5;a.x-=ux*p*wa*2*0.5;a.z-=uz*p*wa*2*0.5;b.x+=ux*p*(1-wa);b.z+=uz*p*(1-wa)}}}}
 function dmgEnemy(e,dmg,dx,dz,o={}){
  if(e.dead||(e.inv&&!o.force))return;
  if(e.t==='sota'&&e.state==='move'&&!o.noBlock&&!o.gb&&P.muso<=0&&Math.random()<0.4){sparks((e.x+P.x)/2,1.4,(e.z+P.z)/2,180);SFX.clang();e.cd=Math.min(e.cd,12);P.vx-=dx*0.06;P.vz-=dz*0.06;G.hitstop=3;pop('Сота блокирует','#bba');return}
  e.hp-=dmg;G.hitstop=Math.max(G.hitstop,o.stop==null?4:o.stop);e.flash=6;tar(e.x,e.d.h*0.6,e.z,10);SFX.hit();P.tar=Math.min(1,P.tar+0.03);G.shake=Math.max(G.shake,0.06);
  if(e.hp<=0)return killEnemy(e,dx,dz,o);
- const kb=(o.knock||2)*0.012;e.vx+=dx*kb;e.vz+=dz*kb;if(o.launch&&!e.d.boss)e.vy=0.12;
+ const ms=e.d.boss?2.2:e.d.poise?1.7:1,kb=(o.knock||2)*0.014/ms;e.vx+=dx*kb;e.vz+=dz*kb;hitTilt(e,dx,dz,(0.012+(o.knock||2)*0.004)/ms);if(o.launch&&!e.d.boss)e.vy=0.12;
  e.poiseDmg+=dmg;if(e.state!=='hold'&&(e.poiseDmg>=(e.d.poise||0)||o.stagT)){e.poiseDmg=0;if(!(e.d.boss&&e.state==='act')){e.state='stag';e.st=0;e.stagT=o.stagT||(e.d.boss?22:20)}}}
 function killEnemy(e,dx,dz,o={}){
  if(e.t==='sota'&&e.phase===1){e.phase=2;e.hp=e.max=Math.round(800*DIFF[G.diff].hp);e.state='trans';e.st=0;e.inv=1;G.rainFreeze=200;SFX.bell();G.shake=0.3;
   for(const h of e.rig.horns)h.visible=true;if(!ASSET.ok)e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
   say('Сота','…Ты всегда был медленнее, брат.');say('Юки','Он снял маску… Синяя вспышка — только уворот!');tar(e.x,1.2,e.z,60,2);return}
  e.dead=true;e.hp=0;e.deathT=0;G.stats.kills++;if(P.clinch===e){P.clinch=null;P.state='idle'}if(G.lock===e)G.lock=null;
- const up=e.rig.upper;scene.attach(up);e.upV={vx:dx*0.05+rnd(-.02,.02),vy:rnd(0.06,0.1),vz:dz*0.05+rnd(-.02,.02),rx:rnd(-.15,.15),rz:rnd(-.15,.15)};
+ const up=e.rig.upper;scene.attach(up);const kn=(o.knock||3);e.upV={vx:dx*(0.04+kn*0.004)+rnd(-.02,.02),vy:rnd(0.06,0.1),vz:dz*(0.04+kn*0.004)+rnd(-.02,.02),rx:rnd(-.15,.15),rz:rnd(-.15,.15)};
+ {const sy=Math.sin(e.yaw),cy=Math.cos(e.yaw);e.fall={a:0.05,v:0.02+kn*0.003,f:dx*sy+dz*cy,s:dx*cy-dz*sy,sx:dx*(0.02+kn*0.003),sz:dz*(0.02+kn*0.003),n:0};const L=Math.hypot(e.fall.f,e.fall.s)||1;e.fall.f/=L;e.fall.s/=L;if(!(dx||dz)){e.fall.f=-1;e.fall.s=0}}
  e.rig.gl.visible=false;tar(e.x,e.d.h*0.55,e.z,40,1.5);if(!o.issen)G.hitstop=Math.max(G.hitstop,6);
  spawnSouls(e);if(e.d.boss){G.winT=1;G.bossBar=null;SFX.bell()}}
 const soulGeo=new THREE.SphereGeometry(0.07,10,8),soulMats={r:new MB({color:0xff3020,toneMapped:false}),b:new MB({color:0x2a9aff,toneMapped:false}),y:new MB({color:0xffd93a,toneMapped:false}),p:new MB({color:0xb050ff,toneMapped:false}),k:new MB({color:0x0a0510})};
@@ -38,8 +44,9 @@ function enemyActive(e){const a=e.atk,dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz)|
   hitPlayer(e,a.dmg,{issen:true})}}
 function updEnemy(e,ts){
  e.anim+=ts;if(e.flash>0)e.flash-=ts;
- if(e.dead){e.deathT+=ts;const u=e.upV,up=e.rig.upper;if(u){up.position.x+=u.vx*ts;up.position.z+=u.vz*ts;up.position.y+=u.vy*ts;u.vy-=0.006*ts;up.rotation.x+=u.rx*ts;up.rotation.z+=u.rz*ts;if(up.position.y<0.15){up.position.y=0.15;u.vx*=0.7;u.vz*=0.7;u.vy=0;u.rx*=0.6;u.rz*=0.6}}
-  const lo=e.rig.root;lo.rotation.x=lerp(lo.rotation.x,-1.2,0.04);if(e.deathT>420){lo.position.y-=0.004*ts;up.position.y-=0.004*ts}return}
+ if(e.dead){e.deathT+=ts;const u=e.upV,up=e.rig.upper;if(u){up.position.x+=u.vx*ts;up.position.z+=u.vz*ts;up.position.y+=u.vy*ts;u.vy-=0.006*ts;up.rotation.x+=u.rx*ts;up.rotation.z+=u.rz*ts;if(up.position.y<0.15){up.position.y=0.15;const fr=0.72;u.vx*=fr;u.vz*=fr;u.vy=Math.abs(u.vy)>0.02?-u.vy*0.32:0;u.rx*=0.55;u.rz*=0.55;if(Math.abs(u.vy)>0.01)dust(up.position.x,up.position.z,4)}}
+  const lo=e.rig.root,F=e.fall;if(F){F.v+=0.0042*Math.sin(F.a+0.25)*ts;F.a+=F.v*ts;if(F.a>1.5){F.a=1.5;F.v=Math.abs(F.v)>0.006?-F.v*0.28:0;if(!F.n++){dust(lo.position.x+F.sx*20,lo.position.z+F.sz*20,10);G.shake=Math.max(G.shake,0.04)}}
+   lo.position.x+=F.sx*ts;lo.position.z+=F.sz*ts;const fr=Math.pow(F.a>1.3?0.82:0.95,ts);F.sx*=fr;F.sz*=fr;lo.rotation.order='YXZ';lo.rotation.set(F.a*F.f,e.yaw,-F.a*F.s)}else lo.rotation.x=lerp(lo.rotation.x,-1.2,0.04);if(e.deathT>420){lo.position.y-=0.004*ts;up.position.y-=0.004*ts}return}
  if(e.burn>0){e.burn-=ts;e.burnAcc+=ts;if(Math.random()<0.4)embers(e.x,rnd(0.2,e.d.h),e.z);if(e.burnAcc>=60){e.burnAcc-=60;dmgEnemy(e,5,0,0,{stop:0,knock:0});if(e.dead)return}}
  if(e.inv&&e.state!=='trans'&&e.state!=='intro')e.inv=0;
  if(e.frozen>0){e.frozen-=ts;return}
@@ -102,7 +109,7 @@ function updChapter(ts){
  const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<1.8&&!G.trans)G.trans=1}
  if(G.rainFreeze>0){G.rainFreeze-=ts;if(G.rainFreeze<=0)G.rainUp=true}}
 function updWorld(ts){
- for(const e of enemies)updEnemy(e,ts);
+ for(const e of enemies){updEnemy(e,ts);stepTilt(e.tl,ts)}separate();
  for(let i=0;i<enemies.length;i++)for(let j=i+1;j<enemies.length;j++){const a=enemies[i],b=enemies[j];if(a.dead||b.dead)continue;const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad+0.2;if(d<m&&d>0.001){const p=(m-d)*0.1;a.x-=dx/d*p;a.z-=dz/d*p;b.x+=dx/d*p;b.z+=dz/d*p}}
  enemies=enemies.filter(e=>{if(e.dead&&e.pending<=0&&e.deathT>700){removeRig(e);return false}return true});
  const orb=hero.arms.L.orb;orb.getWorldPosition(tv1);const gx=tv1.x,gy=tv1.y,gz=tv1.z;

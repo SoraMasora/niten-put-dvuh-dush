@@ -26,7 +26,8 @@ function heroClips(){let cn=null,ct=0,atk=false;
   if(HC.w>0.001&&clipSword(HC.name,s,HC.t,swS)){swS.p.lerp(_hp,swS.a);swS.q.slerp(_hq,swS.a);_bp.lerp(swS.p,HC.w);_bq.slerp(swS.q,HC.w)}
   sw.position.copy(_bp);sw.quaternion.copy(_bq);sw.updateMatrixWorld(true)}}
 function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.idleClip?0:lk,lockL:!P.drawn});hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
- heroClips();
+ heroClips();stepTilt(P.tl,1);if(P.tl){hero.torso.rotateX(P.tl.x*0.8);hero.torso.rotateZ(P.tl.z*0.8)}
+ P.ldv=(P.ldv||0)+(-0.12*(P.ld||0)-0.2*(P.ldv||0));P.ld=(P.ld||0)+P.ldv;hero.hips.position.y+=P.ld;
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
  heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
  const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:0x000000);
@@ -37,7 +38,7 @@ function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Ma
  const pos=[];if(P.absorbing){hero.arms.L.orb.getWorldPosition(glV);for(let i=0;i<7;i++){let x=glV.x,y=glV.y,z=glV.z;const tgt=souls[i%Math.max(1,souls.length)];for(let k=0;k<5;k++){const nx=tgt&&!tgt.black?lerp(x,tgt.x,0.35)+rnd(-.15,.15):x+fwdX(P.yaw)*0.4+rnd(-.2,.2),ny=tgt?lerp(y,tgt.y,0.35)+rnd(-.15,.15):y+rnd(-.2,.2),nz=tgt&&!tgt.black?lerp(z,tgt.z,0.35)+rnd(-.15,.15):z+fwdZ(P.yaw)*0.4+rnd(-.2,.2);pos.push(x,y,z,nx,ny,nz);x=nx;y=ny;z=nz}}}
  bolts.geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));bolts.visible=pos.length>0}
 function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.atk.wind):0,act=e.state==='act',rec=e.state==='rec';
- if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.y=e.yaw}
+ if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.order='YXZ';const T=e.tl;r.root.rotation.set(T?T.x:0,e.yaw,T?T.z:0)}
  if(r.mat){r.mat.emissive.set(e.flash>0?0x606060:e.frozen>0?0x103060:e.burn>0?0x401000:0x000000)}
  const mv=(e.state==='move'||e.state==='enter')?1:0,ph=e.anim*0.11;
  if(e.dead){r.gl.visible=false;return}
