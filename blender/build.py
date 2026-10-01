@@ -22,6 +22,8 @@ collection('Kama');demons.build_ka(M,(5.4,0,0.2))
 collection('Yumi');demons.build_yu(M,(6.8,0,0))
 collection('Props');PM=props.M_props();props.build_lantern(PM,(8.2,0,0));props.build_torii(PM,(11,0,0));props.build_bell(PM,(14.5,2.2,0))
 env.build_all(0.0)
+import anim
+anim.build([os.path.join(HERE,'..','game','src','anims.js'),'/data/n3d/src/anims.js'])
 nv=sum(len(o.data.vertices) for o in bpy.data.objects if o.type=='MESH');print('built %.1fs objects=%d verts=%d'%(time.time()-t0,len(bpy.data.objects),nv))
 bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'niten_characters.blend'),compress=True)

@@ -1,5 +1,5 @@
 // ---------- visual sync
-function heroPose(){const st=P.stance,base=[POSE.tiger,POSE.crane,POSE.water][st];let p=base;const s=P.state;
+function heroPose(){const st=P.stance,base=P.drawn?[POSE.tiger,POSE.crane,POSE.water][st]:POSE.sheath;let p=base;const s=P.state;
  if(s==='atk'){const a=P.atk,T=P.t*P.atkSpd,k1=ease(T/a.s),k2=ease((T-a.s)/a.a),k3=ease((T-a.s-a.a)/a.r);
   if(a.spin){p=T<a.s?mixPose(base,POSE.spinA,k1):T<a.s+a.a?mixPose(POSE.spinA,POSE.spinB,k2):mixPose(POSE.spinB,base,k3)}
   else if(a.type==='R'){p=T<a.s?mixPose(base,POSE.rUp,k1):T<a.s+a.a?mixPose(POSE.rUp,POSE.rDown,k2):mixPose(POSE.rDown,base,k3)}
@@ -7,10 +7,26 @@ function heroPose(){const st=P.stance,base=[POSE.tiger,POSE.crane,POSE.water][st
   else{p=T<a.s?mixPose(base,POSE.nUp,k1):T<a.s+a.a?mixPose(POSE.nUp,POSE.nDown,k2):mixPose(POSE.nDown,base,k3)}}
  else if(s==='block'||s==='clinch')p=POSE.block;else if(s==='dodge')p=POSE.dodge;else if(s==='absorb')p=POSE.absorb;else if(s==='issen')p=POSE.issen;else if(s==='hurt')p=POSE.hurt;else if(s==='dead')p=POSE.dead;else if(s==='eat')p=POSE.eat;else if(s==='dive')p=POSE.nDown;
  else if(s==='idle'&&P.st<30)p=mixPose(base,POSE.hurt,0.3);
- else if(s==='idle'&&P.idleT>300)p=mixPose(base,POSE.rest,Math.min(1,(P.idleT-300)/60));
+ else if(s==='idle'&&P.idleT>300&&P.drawn)p=mixPose(base,POSE.rest,Math.min(1,(P.idleT-300)/60));
  P.pose=mixPose(P.pose,p,s==='atk'||s==='issen'?0.7:0.25);return P.pose}
 const glV=new V3();
-function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:lk});hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
+// клипы Blender поверх процедурной позы + мечи (ножны / рука / полёт)
+const HC={name:null,t:0,w:0},swS={p:new V3(),q:new THREE.Quaternion(),a:0},_hm=new THREE.Matrix4(),_hi=new THREE.Matrix4(),_hp=new V3(),_hq=new THREE.Quaternion(),_hs=new V3(),_bp=new V3(),_bq=new THREE.Quaternion();
+function heroClips(){let cn=null,ct=0,atk=false;
+ if(P.state==='atk'&&P.clipName){cn=P.clipName;ct=P.t*P.atkSpd;atk=true}else if(P.state==='draw'||P.state==='sheathe'){cn=P.state;ct=P.t*P.drawSpd}else if(P.idleClip){cn='toss';ct=P.idleClip.t}
+ if(window.__clip){cn=__clip[0];ct=__clip[1];if(__clip[2]!=null)P.drawn=__clip[2]}
+ const C=cn&&ANIMS.clips[cn];
+ if(C){const nw=HC.name!==cn||ct<HC.t-1;HC.name=cn;HC.t=ct;let w=Math.min(1,ct/(atk?5:4));if(atk)w*=clamp((C.n-ct)/9,0,1);HC.w=nw?Math.min(w,0.35):lerp(HC.w,w,0.6)}
+ else HC.w=Math.max(0,HC.w-0.14);
+ if(HC.w>0.001)applyClip(hero,HC.name,HC.t,HC.w,HC.w*(1-0.75*P.walk));
+ hero.root.updateMatrixWorld(true);_hi.copy(hero.hips.matrixWorld).invert();
+ for(const s of['R','L']){const A=hero.arms[s],sw=A.sw;if(sw.parent!==hero.hips){hero.hips.add(sw)}
+  _hm.multiplyMatrices(_hi,A.hand.matrixWorld).decompose(_hp,_hq,_hs);const S=ANIMS.sockets&&ANIMS.sockets[s];
+  if(P.drawn||!S){_bp.copy(_hp);_bq.copy(_hq)}else{_bp.set(S[0],S[1],S[2]);_bq.set(S[3],S[4],S[5],S[6])}
+  if(HC.w>0.001&&clipSword(HC.name,s,HC.t,swS)){swS.p.lerp(_hp,swS.a);swS.q.slerp(_hq,swS.a);_bp.lerp(swS.p,HC.w);_bq.slerp(swS.q,HC.w)}
+  sw.position.copy(_bp);sw.quaternion.copy(_bq);sw.updateMatrixWorld(true)}}
+function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.idleClip?0:lk,lockL:!P.drawn});hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
+ heroClips();
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
  heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
  const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:0x000000);

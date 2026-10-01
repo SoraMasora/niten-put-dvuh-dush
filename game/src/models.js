@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {ASSET,addPart} from './assets.js';
-export {ASSET};
+import {ANIMS} from './anims.js';
+export {ASSET,ANIMS};
 const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,CapsuleGeometry:Cap,BoxGeometry:Box,SphereGeometry:Sph,CylinderGeometry:Cyl,DoubleSide}=THREE;
 export const M={};
 const ms=(c,r=0.8,m=0,x={})=>new MS({color:c,roughness:r,metalness:m,...x});
@@ -90,6 +91,7 @@ export function makeHuman(o){if(ASSET.ok&&o.set)return makeHumanA(o);
 // ---------- poses
 // arm: [shoulderPitch, across(yaw), abduct, elbow, bladePitchTotal]
 export const POSE={
+ sheath:{c:0.05,tx:0.03,ty:0.08,R:[0.06,0.05,0.14,-0.22,-0.16],L:[-0.3,0.3,0.1,-1.2,-1.5]},
  crane:{c:0.12,tx:0.08,ty:0.12,R:[-0.3,0.02,0.36,-0.5,1.05],L:[-0.6,0.12,0.38,-0.65,-0.3]},
  tiger:{c:0.32,tx:0.35,ty:0.1,R:[-0.45,0.25,0.25,-0.3,0.95],L:[-0.4,0.25,0.25,-0.3,1.0]},
  water:{c:0.14,tx:0.1,ty:0,R:[-1.3,0.55,0.1,-0.9,-1.2],L:[-1.2,0.55,0.1,-0.9,-1.95]},
@@ -111,6 +113,16 @@ export const POSE={
  rest:{c:0.06,tx:0.07,ty:0.06,R:[-0.22,0.02,0.38,-0.45,1.0],L:[-0.2,0.02,0.38,-0.4,1.05]},
  iai:{c:0.5,tx:0.4,ty:0.6,R:[-0.4,0.6,0.2,-1.2,2.84],L:[-0.3,0.6,0.2,-1.2,2.8]}
 };
+// ---------- клипы из Blender (blender/anim.py -> anims.js)
+const _q=new THREE.Quaternion(),_q2=new THREE.Quaternion(),_v=new THREE.Vector3(),_v2=new THREE.Vector3();
+export function heroJoints(h){return[h.hips,h.torso,h.neck,h.legs[0].th,h.legs[0].kn,h.legs[1].th,h.legs[1].kn,h.arms.R.sh,h.arms.R.el,h.arms.R.hand,h.arms.L.sh,h.arms.L.el,h.arms.L.hand]}
+function clipIdx(C,t){const ns=C.h.length/3,f=Math.max(0,Math.min(C.n,t))/ANIMS.step,i=Math.min(ns-1,Math.floor(f));return[i,Math.min(ns-1,i+1),f-i]}
+export function applyClip(h,name,t,w,legW=w){const C=ANIMS.clips[name];if(!C||w<=0.001)return;const [i,j,k]=clipIdx(C,t),J=h.J||(h.J=heroJoints(h)),q=C.q;
+ for(let n=0;n<13;n++){const a=(i*13+n)*4,b=(j*13+n)*4;_q.set(q[a],q[a+1],q[a+2],q[a+3]);_q2.set(q[b],q[b+1],q[b+2],q[b+3]);if(_q.dot(_q2)<0)_q2.set(-_q2.x,-_q2.y,-_q2.z,-_q2.w);_q.slerp(_q2,k);J[n].quaternion.slerp(_q,n>=3&&n<=6?legW:w)}
+ const hp=C.h;_v.set(hp[i*3],hp[i*3+1],hp[i*3+2]).lerp(_v2.set(hp[j*3],hp[j*3+1],hp[j*3+2]),k);h.hips.position.lerp(_v,legW)}
+// меч из клипа: {p,q,a} в пространстве бёдер (a=1 — «в руке»)
+export function clipSword(name,side,t,out){const C=ANIMS.clips[name];const S=C&&C.sw&&C.sw[side];if(!S)return null;const [i,j,k]=clipIdx(C,t),a=i*8,b=j*8;
+ out.p.set(S[a],S[a+1],S[a+2]).lerp(_v2.set(S[b],S[b+1],S[b+2]),k);out.q.set(S[a+3],S[a+4],S[a+5],S[a+6]);_q2.set(S[b+3],S[b+4],S[b+5],S[b+6]);if(out.q.dot(_q2)<0)_q2.set(-_q2.x,-_q2.y,-_q2.z,-_q2.w);out.q.slerp(_q2,k);out.a=S[a+7]+(S[b+7]-S[a+7])*k;return out}
 export function mixPose(a,b,t){const r={c:a.c+(b.c-a.c)*t,tx:a.tx+(b.tx-a.tx)*t,ty:a.ty+(b.ty-a.ty)*t,R:[],L:[]};for(let i=0;i<5;i++){r.R[i]=a.R[i]+(b.R[i]-a.R[i])*t;r.L[i]=a.L[i]+(b.L[i]-a.L[i])*t}return r}
 export function applyPose(h,p,walk=0,ph=0,t=0,o={}){
  const run=o.run??1,idle=(o.idle??0)*(1-walk),A1=0.36+0.26*run,K1=0.55+0.75*run;
@@ -127,6 +139,6 @@ export function applyPose(h,p,walk=0,ph=0,t=0,o={}){
   L.th.rotation.z=side*(0.06+p.c*0.15)+(i?-1:1)*idle*sway*0.03*side}
  const Ar=h.arms;const r=p.R,l=p.L,as=Math.sin(ph)*walk*(0.12+0.1*run);
  Ar.R.sh.rotation.set(r[0]+as,r[1],-r[2]-idle*br*0.02);Ar.R.el.rotation.x=r[3]-walk*run*0.15;Ar.R.hand.rotation.x=r[4]-r[0]-r[3]-as*0.5;
- Ar.L.sh.rotation.set(l[0]-as,-l[1],l[2]+idle*br*0.02);Ar.L.el.rotation.x=l[3]-walk*run*0.15;Ar.L.hand.rotation.x=l[4]-l[0]-l[3]+as*0.5;
+ const asL=o.lockL?as*0.15:as;Ar.L.sh.rotation.set(l[0]-asL,-l[1],l[2]+idle*br*0.02);Ar.L.el.rotation.x=l[3]-walk*run*0.15;Ar.L.hand.rotation.x=l[4]-l[0]-l[3]+asL*0.5;
  if(h.cape){const g=h.cape.geometry,pa=g.attributes.position,b=h.cape.userData.base;for(let i=0;i<pa.count;i++){const y=b[i*3+1],x=b[i*3],d=-y;pa.array[i*3+2]=b[i*3+2]-d*d*(0.12+walk*0.35)-Math.sin(t*3+x*4+d*3)*0.025*d-p.c*d*0.2}pa.needsUpdate=true;g.computeVertexNormals()}
 }
