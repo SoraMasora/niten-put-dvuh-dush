@@ -21,12 +21,12 @@ function killEnemy(e,dx,dz,o={}){
  if(e.t==='sota'&&e.phase===1){e.phase=2;e.hp=e.max=Math.round(800*DIFF[G.diff].hp);e.state='trans';e.st=0;e.inv=1;G.rainFreeze=200;SFX.bell();G.shake=0.3;
   for(const h of e.rig.horns)h.visible=true;if(!ASSET.ok)e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
   say('Сота','…Ты всегда был медленнее, брат.');say('Юки','Он снял маску… Синяя вспышка — только уворот!');tar(e.x,1.2,e.z,60,2);return}
- e.dead=true;e.hp=0;e.deathT=0;G.stats.kills++;if(P.clinch===e){P.clinch=null;P.state='idle'}if(G.lock===e)G.lock=null;
+ e.dead=true;e.hp=0;e.deathT=0;G.stats.kills++;lootOnKill(e);if(P.clinch===e){P.clinch=null;P.state='idle'}if(G.lock===e)G.lock=null;
  const up=e.rig.upper;scene.attach(up);const kn=(o.knock||3);e.upV={vx:dx*(0.04+kn*0.004)+rnd(-.02,.02),vy:rnd(0.06,0.1),vz:dz*(0.04+kn*0.004)+rnd(-.02,.02),rx:rnd(-.15,.15),rz:rnd(-.15,.15)};
  {const sy=Math.sin(e.yaw),cy=Math.cos(e.yaw);e.fall={a:0.05,v:0.02+kn*0.003,f:dx*sy+dz*cy,s:dx*cy-dz*sy,sx:dx*(0.02+kn*0.003),sz:dz*(0.02+kn*0.003),n:0};const L=Math.hypot(e.fall.f,e.fall.s)||1;e.fall.f/=L;e.fall.s/=L;if(!(dx||dz)){e.fall.f=-1;e.fall.s=0}}
  e.rig.gl.visible=false;tar(e.x,e.d.h*0.55,e.z,40,1.5);if(!o.issen)G.hitstop=Math.max(G.hitstop,6);
  killFx(e,dx,dz);if(!o.issen){const last=!enemies.some(x=>!x.dead&&x!==e);G.slow=Math.max(G.slow,last?50:14);G.slowTs=last?0.25:0.4;if(last){G.fovT=46;G.fovHold=30;G.shake=Math.max(G.shake,0.2)}}
- spawnSouls(e);if(e.d.boss){G.winT=1;G.bossBar=null;SFX.bell()}}
+ spawnSouls(e);if(e.d.boss){G.bossBar=null;SFX.bell();bossDown(e)}}
 const soulGeo=new THREE.SphereGeometry(0.07,10,8),soulMats={r:new MB({color:0xff3020,toneMapped:false}),b:new MB({color:0x2a9aff,toneMapped:false}),y:new MB({color:0xffd93a,toneMapped:false}),p:new MB({color:0xb050ff,toneMapped:false}),k:new MB({color:0x0a0510})};
 const soulCol={r:[1,0.2,0.1],b:[0.2,0.6,1],y:[1,0.85,0.2],p:[0.7,0.3,1]};
 function spawnSouls(e){let n=0;const list=[...e.d.souls];if(Math.random()<0.3)list.push(['y',1]);
@@ -54,7 +54,7 @@ function updEnemy(e,ts){
  if(e.inv&&e.state!=='trans'&&e.state!=='intro')e.inv=0;
  if(e.frozen>0){e.frozen-=ts;return}
  e.vy-=0.0075*ts;e.y+=e.vy*ts;if(e.y<0){e.y=0;e.vy=0}
- e.x+=e.vx*ts;e.z+=e.vz*ts;const fr=Math.pow(0.86,ts);e.vx*=fr;e.vz*=fr;arenaClamp(e,0.5);
+ e.x+=e.vx*ts;e.z+=e.vz*ts;const fr=Math.pow(0.86,ts);e.vx*=fr;e.vz*=fr;arenaClamp(e,0.5);solidPush(e,e.d.rad);
  const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz)||1,ty=Math.atan2(dx,dz);
  if(e.t==='sota')return updSota(e,ts,d,ty);
  e.st+=ts;const sp=e.d.spd/60;
@@ -90,13 +90,13 @@ function updSota(e,ts,d,ty){e.st+=ts;const sp=e.phase===2?1.3:1;
  case'stag':if(e.st>=e.stagT){e.state='move';e.st=0;e.cd=20}break;}}
 // ---------- chapters
 function clearWorld(){for(const e of enemies)removeRig(e);for(const s of souls)scene.remove(s.m);for(const p of proj)scene.remove(p.m);enemies=[];souls=[];proj=[];lines=[];FX.add.list.length=0;FX.norm.list.length=0}
-function loadChapter(i,cp){clearWorld();G.chap=i;const c=CH[i];const env=buildEnv(c.theme);
+function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;const c=CH[i];const env=buildEnv(c.theme);
  env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));env.gate=makeGate(ENV,0,16);
  LV={c,env,wave:0,waveT:0,started:false,done:false};G.subs=[];G.bossBar=null;G.rainFreeze=0;G.rainUp=false;G.issenFx=null;G.lock=null;M.sotaSkin.color.set(0x9c7b66);
  resetPlayer(0,-12);G.camYaw=0;
  if(cp){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
  else{G.cp={chap:i,wave:0,mi:0,oni:0};for(const s of c.start)say(s[0],s[1])}
- activateMirror(env.mirrors[0],true);
+ activateMirror(env.mirrors[0],true);setupChests(cp);
  G.card={t:0,title:c.title,name:c.name}}
 function activateMirror(m,silent){if(m.act)return;m.act=true;m.face.material=M.mirrorOn;m.lant.material=M.lampOn;if(!silent){P.food=3;P.hp=P.max;pop('Зеркало-сакр: путь сохранён','#e6c98a');SFX.bell()}}
 function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s[1]);
@@ -109,7 +109,7 @@ function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){
 function updChapter(ts){
  if(!LV.started){LV.waveT+=ts;if(LV.waveT>300||Math.hypot(P.x,P.z+12)>4){LV.started=true;LV.waveT=150}}
  else if(!LV.active&&LV.wave<LV.c.waves.length){LV.waveT+=ts;if(LV.waveT>180&&!G.subs.length||LV.waveT>420){spawnWave();LV.waveT=0}}
- else if(LV.active&&!enemies.some(e=>!e.dead)){LV.active=false;LV.wave++;LV.waveT=0;if(LV.wave>=LV.c.waves.length){if(G.chap<CH.length-1){LV.env.gate.t.visible=true;say('Юки','Путь открыт. Иди к вратам.');SFX.bell()}}else pop('Волна отбита','#cfc6b0')}
+ else if(LV.active&&!enemies.some(e=>!e.dead)){LV.active=false;LV.wave++;LV.waveT=0;if(LV.wave>=LV.c.waves.length){unsealChests();if(G.chap<CH.length-1){LV.env.gate.t.visible=true;say('Юки','Путь открыт. Иди к вратам.');SFX.bell()}}else pop('Волна отбита','#cfc6b0')}
  if(LV.active&&G.frame%30===0)SFX.taiko(G.frame%120===0?1:0.55);
  for(const [i,m] of LV.env.mirrors.entries())if(!m.act&&Math.hypot(P.x-m.x,P.z-m.z)<1.8){activateMirror(m);G.cp={chap:G.chap,wave:LV.wave+(LV.active?0:0),mi:i,oni:P.oni}}
  const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<2.6&&!G.trans&&!CS.on&&P.state!=='dead')startPortalExit()}
@@ -139,7 +139,7 @@ function updWorld(ts){
  FX.add.update(ts);FX.norm.update(ts);
  for(const f of flashes)f.life-=ts;for(let i=flashes.length-1;i>=0;i--)if(flashes[i].life<=0)flashes.splice(i,1);
  for(const l of lines)l.life-=ts;lines=lines.filter(l=>l.life>0);
- if(!CS.on)updChapter(ts);updGate();
+ if(!CS.on)updChapter(ts);updGate();updItems(ts);
  if(LV.env.theme==='ash'&&G.frame%2===0)FX.norm.add({x:P.x+rnd(-12,12),y:0,z:P.z+rnd(-12,12),vx:rnd(-.3,.3)/60,vy:rnd(0.3,0.9)/60,vz:rnd(-.3,.3)/60,life:rnd(200,400),s:rnd(0.03,0.06),r:0.55,gg:0.52,b:0.5,a:0.7});
  if(LV.env.theme==='ash'&&G.frame%3===0)embers(P.x+rnd(-10,10),rnd(0,1),P.z+rnd(-10,10));
  if(LV.env.theme==='forest'&&G.frame%5===0)FX.add.add({x:P.x+rnd(-10,10),y:rnd(0.3,2.5),z:P.z+rnd(-10,10),vx:rnd(-.2,.2)/60,vy:rnd(-.1,.1)/60,vz:rnd(-.2,.2)/60,life:rnd(160,300),s:0.04,r:0.9,gg:1.6,b:0.5,pulse:rnd(0,6),fade:false,sw:rnd(0,6)});

@@ -29,10 +29,10 @@ function csLights(){const s=[];for(const p of[gateP,csP])if(p.visible){p.getWorl
 function csPrecompile(on){for(const p of[gateP,csP]){p.visible=on;p.position.set(0,1.5,-2);p.scale.setScalar(1)}beam.visible=on}
 // ---------- движок
 function csSay(n,t,a,b){CS.subs.push({n,t,a,b})}
-function csStart(k,fn,skip){CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
+function csStart(k,fn,skip){CS.card=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
  P.atk=null;P.buf=null;P.pendR=P.pendL=false;P.idleClip=null;P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;P.vx=P.vz=0;P.mvS=0;
  for(const k in K)K[k]=0;mdx=mdy=0}
-function csEnd(subs){CS.on=false;CS.fn=CS.skip=null;CS.bars=0;CS.fade=0;CS.subs=[];P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;
+function csEnd(subs){CS.card=null;CS.img=null;CS.onImgClose=null;CS.on=false;CS.fn=CS.skip=null;CS.bars=0;CS.fade=0;CS.subs=[];P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;
  csP.userData.open=0;csP.visible=false;beam.visible=false;if(P.state!=='draw'&&P.state!=='sheathe'){P.state='idle';P.t=0}
  G.csBlend={p:camera.position.clone(),l:CS.cam.l.clone(),t:0};G.camYaw=P.yaw;G.camPitch=0.28;G.fov=G.fovT=55;
  G.subs=[];if(subs)for(const s of subs)say(s[0],s[1]);for(const k in K)K[k]=0}
@@ -47,6 +47,7 @@ function csHero(ts){const H=CS.H;P.t+=ts;P.idleT=0;let mv=0;
  P.walk=lerp(P.walk,mv>0.002?1:0,0.2);P.walkPh+=mv*ts*(4.4-1.8*P.gait)}
 function csTick(){mdx=mdy=0;CS.t++;
  if(CS.skip&&CS.t>15&&(hit('Enter')||hit('Space'))){const f=CS.skip;CS.skip=null;f();if(!CS.on)return}
+ if(CS.img){CS.imgT++;if(CS.onImgClose&&CS.imgT>40&&(hit('Enter')||hit('Space')||MP[0]||hit('KeyX')||hit('Escape'))){CS.onImgClose();return}}
  CS.fn(CS.t);if(!CS.on)return;
  csHero(1);updWorld(1);updPortal(csP);
  const sh=G.shake;camera.position.set(CS.cam.p.x+rnd(-sh,sh)*0.3,CS.cam.p.y+rnd(-sh,sh)*0.3,CS.cam.p.z);camera.lookAt(CS.cam.l);
@@ -56,7 +57,9 @@ function drawCS(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const b=CS.bars*H*0.
  if(G.card){const c=G.card,a=c.t<40?c.t/40:c.t>150?1-(c.t-150)/40:1;X.globalAlpha=clamp(a,0,1);X.fillStyle='rgba(0,0,0,0.45)';X.fillRect(0,H*0.24-62,W,112);X.fillStyle='#b9a27a';X.font='18px Georgia';X.fillText(c.title,W*0.5,H*0.24-22);X.fillStyle='#f0e8da';X.font='44px Georgia,serif';X.fillText(c.name,W/2,H*0.24+28);X.globalAlpha=1}
  for(const s of CS.subs){if(CS.t<s.a||CS.t>s.b)continue;const a=Math.min(1,(CS.t-s.a)/14,(s.b-CS.t)/14);X.globalAlpha=a;X.font='bold 18px Georgia,serif';const nw=X.measureText(s.n).width;X.font='21px Georgia,serif';const tw=X.measureText(s.t).width,x0=W/2-(nw+tw+22)/2,y=H-Math.max(b*0.42,60);
   X.textAlign='left';X.font='bold 18px Georgia,serif';X.fillStyle='#e6c26a';X.fillText(s.n,x0,y);X.font='21px Georgia,serif';X.fillStyle='#f2ede4';X.fillText(s.t,x0+nw+22,y);X.textAlign='center';X.globalAlpha=1;break}
+ if(CS.card)itemCard(CS.card,850,130,370,450,1);
  if(CS.fade>0.001){X.fillStyle=`rgba(${CS.fadeC},${Math.min(1,CS.fade)})`;X.fillRect(0,0,W,H)}
+ if(CS.img&&CS.img.complete){X.drawImage(CS.img,0,0,W,H);if(CS.imgT>40){X.textAlign='right';X.font='14px Georgia,serif';X.fillStyle='rgba(240,230,210,0.7)';X.fillText('Enter / клик — закрыть',W-26,H-18)}X.textAlign='left';return}
  if(CS.skip&&CS.t>15){X.textAlign='right';X.font='13px Georgia,serif';X.fillStyle='rgba(230,220,200,0.45)';X.fillText('Enter — пропустить',W-26,H-16)}X.textAlign='left'}
 // ---------- 1) пролог: Мусаси выбрасывает из разлома в незнакомую горящую деревню, на него сразу нападают Гэнма
 function startIntro(){const c=LV.c;G.subs=[];G.card=null;resetPlayer(0,-12);P.drawn=false;P.y=8.6;P.csHide=true;

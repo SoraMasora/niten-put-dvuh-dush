@@ -26,6 +26,7 @@ function drawHUD(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);X.textBaseline='alp
  X.textAlign='center';G.pops.forEach((p,i)=>{X.globalAlpha=clamp(p.life/30,0,1);X.font='18px Georgia,serif';X.fillStyle=p.col;X.fillText(p.t,W/2,H*0.3+i*26)});X.globalAlpha=1;
  if(P.state==='clinch'){X.font='bold 30px Georgia';X.fillStyle=`rgba(255,210,120,${0.6+Math.sin(G.frame*0.5)*0.4})`;X.fillText('ЛКМ + ПКМ',W/2,H*0.42)}
  if(G.card){const c=G.card,a=c.t<40?c.t/40:c.t>150?1-(c.t-150)/40:1;X.globalAlpha=clamp(a,0,1);X.fillStyle='rgba(0,0,0,0.55)';X.fillRect(0,H/2-80,W,150);X.fillStyle='#b9a27a';X.font='18px Georgia';X.fillText(c.title,W/2,H/2-30);X.fillStyle='#f0e8da';X.font='44px Georgia,serif';X.fillText(c.name,W/2,H/2+25);X.globalAlpha=1}
+ drawItemHUD();
  if(G.trans){X.fillStyle=`rgba(0,0,0,${G.trans/60})`;X.fillRect(0,0,W,H)}
  X.textAlign='left'}
 function panel(title,lines,foot){X.fillStyle='rgba(0,0,0,0.72)';X.fillRect(0,0,W,H);X.fillStyle='#e7dcc4';X.fillRect(W/2-360,80,720,H-160);X.fillStyle='#5a3a1a';X.fillRect(W/2-372,70,744,14);X.fillRect(W/2-372,H-84,744,14);
@@ -40,9 +41,11 @@ function drawTitle(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const gr=X.create
 // ---------- loop
 function update(){G.frame++;
  if(G.mode==='title'){if(hit('ArrowUp')||hit('KeyW'))G.menuSel=(G.menuSel+2)%3;if(hit('ArrowDown')||hit('KeyS'))G.menuSel=(G.menuSel+1)%3;
-  if(hit('Enter')||hit('Space')){G.diff=G.menuSel;G.souls={r:0,b:0,p:0};G.stats={kills:0,issen:0,time:0,deaths:0};G.mode='play';loadChapter(0);startIntro();try{renderer.domElement.requestPointerLock()}catch(_){}}
+  if(hit('Enter')||hit('Space')){G.diff=G.menuSel;G.souls={r:0,b:0,p:0};G.stats={kills:0,issen:0,time:0,deaths:0};invReset();G.lootPlan=null;G.mode='play';loadChapter(0);startIntro();try{renderer.domElement.requestPointerLock()}catch(_){}}
   P.yaw+=0.004;return}
  if(G.mode==='victory'||G.mode==='dead'){if(hit('Enter')||MP[0]){if(G.mode==='dead'){G.mode='play';loadChapter(G.cp.chap,G.cp)}else{G.mode='title';loadChapter(1);resetPlayer(0,0)}}return}
+ if(INV.open){invUpdate();return}
+ if(hit('KeyI')&&!CS.on&&P.state!=='dead'&&!G.paused){invToggle(true);return}
  if(hit('Escape')&&!document.pointerLockElement)G.paused=!G.paused;if(G.paused){if(hit('Enter')){G.paused=false;try{renderer.domElement.requestPointerLock()}catch(_){}}return}
  if(G.card){G.card.t++;if(G.card.t>190)G.card=null}
  const s=G.subs[0];if(s){s.a++;if(s.a>s.d)G.subs.shift()}
@@ -64,7 +67,7 @@ function frame(now){requestAnimationFrame(frame);if(!lastT)lastT=now;acc+=Math.m
  if(G.mode==='title'){camera.position.set(P.x+Math.sin(t*0.1)*4.5,1.6,P.z+Math.cos(t*0.1)*4.5);camera.lookAt(P.x,1.2,P.z);P.state='idle';P.walk=0}
  syncHero(t);for(const e of enemies)syncEnemy(e,t);syncWorld(t);
  composer.render();
- if(G.mode==='title')drawTitle();else if(CS.on&&G.mode==='play'){drawCS();if(G.paused)panel('Свиток. Пауза',CTRL,'Клик или Enter — продолжить')}else{drawHUD();
+ if(G.mode==='title')drawTitle();else if(CS.on&&G.mode==='play'){drawCS();if(G.paused)panel('Свиток. Пауза',CTRL,'Клик или Enter — продолжить')}else if(INV.open){drawHUD();drawInv()}else{drawHUD();
   if(G.paused)panel('Свиток. Пауза',CTRL,'Клик или Enter — продолжить');
   if(G.mode==='dead')panel('Путь оборван',[['Акира пал. Но зеркало помнит его.'],[''],['Убито Генма: '+G.stats.kills],['Иссэн: '+G.stats.issen],[''],['Совет: красный блеск — жми Q в последний миг.',1],['Синяя вспышка Соты — только уворот (Shift).',1]],'Enter — вернуться к зеркалу');
   if(G.mode==='victory'){const m=Math.floor(G.stats.time/3600),sec=Math.floor(G.stats.time/60)%60;panel('Путь Меча',[['Сота пал от руки брата. Колокол звонит в последний раз.'],['Акацуки и Ёи скрещены — врата Ёми дрогнули.'],[''],['Сложность: '+DIFF[G.diff].n],['Время: '+m+':'+String(sec).padStart(2,'0')],['Убито Генма: '+G.stats.kills],['Иссэн: '+G.stats.issen,1],['Красных душ: '+G.souls.r+' · фиолетовых: '+G.souls.p],['Смертей: '+G.stats.deaths],[''],['Продолжение следует: Путь Души и Путь Пустоты.']],'Enter — в главное меню')}}}
@@ -76,7 +79,8 @@ addEventListener('resize',resize);resize();
    for(const e of enemies)syncEnemy(e,0);syncHero(0);syncWorld(0);
    csPrecompile(true);if(renderer.compileAsync)await renderer.compileAsync(scene,camera);
    for(const c of cams){camera.position.set(c[0],c[1],c[2]);camera.lookAt(c[3],c[4],c[5]);composer.render()}csPrecompile(false)}catch(err){console.warn('precompile',err)}}
+ try{renderIcons()}catch(err){console.warn('icons',err)}
  if(ld)ld.remove()}
 loadChapter(1);G.card=null;G.subs=[];resetPlayer(0,0);
-window.__G=G;window.__P=P;window.__hero=hero;window.__rain=rain;window.__scene=scene;window.__cam0=camera;window.__E=()=>enemies;window.__load=loadChapter;window.__K=K;window.__KP=KP;window.__mk=(t,x,z)=>{const e=mkEnemy(t,x,z);e.state='move';enemies.push(e);return e};window.__S=()=>souls;window.__LV=()=>LV;window.__CS=CS;window.__upd=n=>{for(let i=0;i<n;i++){update();for(const k in KP)delete KP[k]}};window.__intro=()=>{G.mode='play';loadChapter(0);startIntro()};window.__exit=()=>{LV.env.gate.t.visible=true;startPortalExit()};
+window.__G=G;window.__P=P;window.__hero=hero;window.__rain=rain;window.__scene=scene;window.__cam0=camera;window.__E=()=>enemies;window.__load=loadChapter;window.__K=K;window.__KP=KP;window.__mk=(t,x,z)=>{const e=mkEnemy(t,x,z);e.state='move';enemies.push(e);return e};window.__S=()=>souls;window.__LV=()=>LV;window.__CS=CS;window.__INV=INV;window.__WI=WI;window.__add=addItem;window.__chestCS=i=>startChestCS(LV.chests[i]);window.__unseal=unsealChests;window.__note=startNoteCS;window.__spawnWI=spawnWI;window.__upd=n=>{for(let i=0;i<n;i++){update();for(const k in KP)delete KP[k]}};window.__intro=()=>{G.mode='play';loadChapter(0);startIntro()};window.__exit=()=>{LV.env.gate.t.visible=true;startPortalExit()};
 requestAnimationFrame(frame);

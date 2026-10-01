@@ -31,7 +31,7 @@ function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Ma
  P.ldv=(P.ldv||0)+(-0.12*(P.ld||0)-0.2*(P.ldv||0));P.ld=(P.ld||0)+P.ldv;hero.hips.position.y+=P.ld;
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
  heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
- const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:0x000000);
+ const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:G.buf&&G.buf.dmg>0?0x6a2a08:0x000000);
  hero.arms.L.orb.scale.setScalar(1+Math.sin(t*6)*0.15+(P.absorbing?0.8:0));
  const attacking=P.state==='atk'||P.state==='issen';updTrail(trails.R,hero.arms.R.sw,attacking&&P.atk&&P.atk.type!=='L'||P.state==='issen');updTrail(trails.L,hero.arms.L.sw,attacking&&P.atk&&P.atk.type!=='R');
  for(const [i,g] of ghosts.entries()){g.visible=P.muso>0;if(g.visible){const a=t*3+i*Math.PI;g.position.set(P.x-fwdX(P.yaw)*0.4+Math.cos(a)*0.5,1.5+Math.sin(a*1.3)*0.3,P.z-fwdZ(P.yaw)*0.4+Math.sin(a)*0.5);g.rotation.set(-0.8+Math.sin(a)*0.5,P.yaw+Math.cos(a),0)}}

@@ -13,6 +13,8 @@ function bake(mesh){const g=new THREE.BufferGeometry();for(const k of['position'
 function b64ToBuf(s){const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer}
 export async function loadAssets(){
  const src=(window.__NITEN_ASSETS_PARTS||[]).join('')||window.__NITEN_ASSETS;if(!src)return false;
+ const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);return ok}
+async function loadGLB(src){
  try{const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf=await new Promise((res,rej)=>loader.parse(b64ToBuf(src),'',res,rej));
   const groups={};gltf.scene.updateMatrixWorld(true);
