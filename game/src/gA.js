@@ -4,7 +4,9 @@ import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
-import {initMats,M,mesh,makeHuman,makeSword,POSE,mixPose,applyPose} from './models.js';
+import {initMats,M,mesh,makeHuman,makeSword,POSE,mixPose,applyPose,ASSET} from './models.js';
+import {loadAssets,addPart} from './assets.js';
+await loadAssets();{const l=document.getElementById('ld');if(l)l.remove()}
 import {audioInit,SFX} from './audio.js';
 const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,Vector3:V3}=THREE;
 const rnd=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
@@ -19,7 +21,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.
 document.body.appendChild(renderer.domElement);
 const hud=document.createElement('canvas');hud.width=W;hud.height=H;hud.id='hud';document.body.appendChild(hud);const X=hud.getContext('2d');
 const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(55,16/9,0.1,300);
-initMats();
+initMats();if(ASSET.ok&&ASSET.mats.blade_steel){M.blade=ASSET.mats.blade_steel}
 {const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;scene.environmentIntensity=0.35}
 const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));
 const bloom=new UnrealBloomPass(new THREE.Vector2(W/2,H/2),0.9,0.5,0.82);composer.addPass(bloom);composer.addPass(new OutputPass());

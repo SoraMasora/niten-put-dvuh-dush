@@ -11,7 +11,7 @@ function heroPose(){const st=P.stance,base=[POSE.tiger,POSE.crane,POSE.water][st
 const glV=new V3();
 function syncHero(t){const p=heroPose();applyPose(hero,p,P.walk,P.walkPh,t);hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.y=P.yaw;
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):0;
- heroMats.skin.color.setRGB(0.69*(1-P.tar*0.7),0.5*(1-P.tar*0.7),0.41*(1-P.tar*0.7));
+ heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
  const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:0x000000);
  hero.arms.L.orb.scale.setScalar(1+Math.sin(t*6)*0.15+(P.absorbing?0.8:0));
  const attacking=P.state==='atk'||P.state==='issen';updTrail(trails.R,hero.arms.R.sw,attacking&&P.atk&&P.atk.type!=='L'||P.state==='issen');updTrail(trails.L,hero.arms.L.sw,attacking&&P.atk&&P.atk.type!=='R');
@@ -70,4 +70,4 @@ function updCamera(){
  let tx=P.x,tz=P.z;if(G.lock){tx=lerp(P.x,G.lock.x,0.25);tz=lerp(P.z,G.lock.z,0.25)}
  const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
  const rx=-Math.cos(G.camYaw)*0.45,rz=Math.sin(G.camYaw)*0.45;camera.position.x+=rx;camera.position.z+=rz;
- camera.lookAt(tx+rx,1.35+P.y*0.6,tz+rz)}
+ camera.lookAt(tx+rx,1.35+P.y*0.6,tz+rz);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}

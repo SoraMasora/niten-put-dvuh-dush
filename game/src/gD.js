@@ -13,7 +13,7 @@ function dmgEnemy(e,dmg,dx,dz,o={}){
  e.poiseDmg+=dmg;if(e.state!=='hold'&&(e.poiseDmg>=(e.d.poise||0)||o.stagT)){e.poiseDmg=0;if(!(e.d.boss&&e.state==='act')){e.state='stag';e.st=0;e.stagT=o.stagT||(e.d.boss?22:20)}}}
 function killEnemy(e,dx,dz,o={}){
  if(e.t==='sota'&&e.phase===1){e.phase=2;e.hp=e.max=Math.round(800*DIFF[G.diff].hp);e.state='trans';e.st=0;e.inv=1;G.rainFreeze=200;SFX.bell();G.shake=0.3;
-  for(const h of e.rig.horns)h.visible=true;e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
+  for(const h of e.rig.horns)h.visible=true;if(!ASSET.ok)e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
   say('Сота','…Ты всегда был медленнее, брат.');say('Юки','Он снял маску… Синяя вспышка — только уворот!');tar(e.x,1.2,e.z,60,2);return}
  e.dead=true;e.hp=0;e.deathT=0;G.stats.kills++;if(P.clinch===e){P.clinch=null;P.state='idle'}if(G.lock===e)G.lock=null;
  const up=e.rig.upper;scene.attach(up);e.upV={vx:dx*0.05+rnd(-.02,.02),vy:rnd(0.06,0.1),vz:dz*0.05+rnd(-.02,.02),rx:rnd(-.15,.15),rz:rnd(-.15,.15)};

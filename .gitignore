@@ -1,0 +1,7 @@
+node_modules/
+blender/tex/*.png
+blender/out/
+game/src/game.js
+*.blend1
+__pycache__/
+NITEN_3D_single.html

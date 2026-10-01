@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {ASSET,addPart} from './assets.js';
+export {ASSET};
 const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,CapsuleGeometry:Cap,BoxGeometry:Box,SphereGeometry:Sph,CylinderGeometry:Cyl,DoubleSide}=THREE;
 export const M={};
 const ms=(c,r=0.8,m=0,x={})=>new MS({color:c,roughness:r,metalness:m,...x});
@@ -13,14 +15,35 @@ export function initMats(){
 export const mesh=(geo,mat,x=0,y=0,z=0,p)=>{const m=new Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;if(p)p.add(m);return m};
 function bladeGeo(len){const g=new Box(0.007,0.032,len,1,1,12);g.translate(0,0,len/2);const p=g.attributes.position;
  for(let i=0;i<p.count;i++){const z=p.getZ(i),t=z/len;let y=p.getY(i);y*=1-0.55*t*t;if(t>0.94&&y>0)y*=(1-t)/0.06;p.setY(i,y+0.07*t*t);}g.computeVertexNormals();return g}
-export function makeSword(len,tsuba,lapis){const g=new Group();
+const SWL={SW_A:0.74,SW_Y:0.69,SW_S:0.9,SW_G:1.2};
+function makeSwordA(len,tsuba){const g=new Group();const pre=len>1.05?'SW_G':tsuba===M.tsubaR?'SW_A':tsuba===M.tsubaL?'SW_Y':'SW_S';
+ const inner=new Group();g.add(inner);inner.scale.z=len/SWL[pre];
+ for(const p of Object.keys(ASSET.parts[pre]||{}))addPart(inner,pre,p,{mat:m=>m&&m.name==='blade_steel'?M.blade:m});
+ const tip=new THREE.Object3D();tip.position.copy(ASSET.tips[pre]||new THREE.Vector3(0,0.035,0.085+SWL[pre]));inner.add(tip);const base=new THREE.Object3D();base.position.set(0,0,0.25);inner.add(base);
+ g.userData={tip,base};return g}
+export function makeSword(len,tsuba,lapis){if(ASSET.ok)return makeSwordA(len,tsuba);const g=new Group();
  mesh(new Cyl(0.017,0.017,0.26,6),M.handle,0,0,-0.07,g).rotation.x=Math.PI/2;
  const ts=mesh(new Cyl(0.045,0.045,0.012,lapis?16:8),tsuba,0,0,0.07,g);ts.rotation.x=Math.PI/2;
  if(lapis)mesh(new Sph(0.012,8,6),M.lapis,0,0.03,0.07,g);
  const b=mesh(bladeGeo(len),M.blade,0,0,0.08,g);
  const tip=new THREE.Object3D();tip.position.set(0,0.07,0.08+len);g.add(tip);const base=new THREE.Object3D();base.position.set(0,0,0.25);g.add(base);
  g.userData={tip,base};return g}
-export function makeHuman(o){
+function makeHumanA(o){const pre=o.set;const mm=m=>(o.matMap&&m&&o.matMap[m.name])||m;const add=(g,p)=>addPart(g,pre,p,{mat:mm});
+ const root=new Group(),hips=new Group();hips.position.y=0.92;root.add(hips);root.scale.setScalar(o.scale||1);add(hips,'hips');
+ const legs=[];for(const [sd,k] of[[-1,'R'],[1,'L']]){const th=new Group();th.position.set(sd*0.1,0,0);hips.add(th);add(th,'thigh'+k);const kn=new Group();kn.position.y=-0.44;th.add(kn);add(kn,'shin'+k);legs.push({th,kn})}
+ const torso=new Group();hips.add(torso);add(torso,'torso');
+ const neck=new Group();neck.position.y=0.6;torso.add(neck);const nk=add(neck,'neck');
+ const horns=[];for(const h of['horn0','horn2'])if(nk.special[h]){nk.special[h].visible=false;horns.push(nk.special[h])}
+ const arms={};
+ for(const [k,side] of[['R',-1],['L',1]]){const sh=new Group();sh.rotation.order='YXZ';sh.position.set(side*0.22,0.5,0);torso.add(sh);add(sh,'upperArm'+k);
+  const el=new Group();el.position.y=-0.29;sh.add(el);add(el,'foreArm'+k);
+  const hand=new Group();hand.position.y=-0.28;el.add(hand);const hp=add(hand,'hand'+k);let orb=hp.special.orb||null;
+  if(orb){orb.castShadow=false}else if(k==='L'&&o.glove){orb=new THREE.Object3D();orb.position.set(0.044,0.025,0);hand.add(orb)}
+  const sw=makeSword(o.len[k],k==='R'?o.tsR:o.tsL,k==='L'&&o.lapis);hand.add(sw);
+  arms[k]={sh,el,hand,sw,orb}}
+ let cape=null;const cp=addPart(torso,pre,'cape',{mat:mm});if(cp.special.cape){cape=cp.special.cape;cape.userData.base=cape.geometry.attributes.position.array.slice()}
+ return{root,hips,torso,neck,legs,arms,cape,horns}}
+export function makeHuman(o){if(ASSET.ok&&o.set)return makeHumanA(o);
  const root=new Group(),hips=new Group();hips.position.y=0.92;root.add(hips);root.scale.setScalar(o.scale||1);
  const legs=[];
  for(const side of[-1,1]){const th=new Group();th.position.set(side*0.1,0,0);hips.add(th);
