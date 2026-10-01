@@ -58,7 +58,8 @@ const iaiLine=new Mesh(new THREE.BoxGeometry(0.06,0.06,1),new MB({color:0x80c8ff
 const tmpC=new THREE.Color();
 function windGust(t){return clamp(0.45+0.35*Math.sin(t*0.21)+0.25*Math.sin(t*0.53+1.3)+0.18*Math.sin(t*1.37+0.4),0,1)}
 function syncWorld(t){
- updHitFx();G.wind=windGust(t);if(G.frame%6===0){if(G.mode==='play')SFX.wind(LV.env.theme,G.wind);else SFX.windOff()}
+ updHitFx();G.wind=windGust(t);WU.uT.value=t;WU.uW.value=G.wind;GRADE.uniforms.uT.value=t;
+ if(LV.env.rays)for(const r of LV.env.rays){r.rotation.set(0,Math.atan2(camera.position.x-r.position.x,camera.position.z-r.position.z),0);r.rotateZ(r.userData.tilt);r.material.opacity=r.userData.op*(0.6+0.4*Math.sin(t*0.3+r.userData.ph))}if(G.frame%6===0){if(G.mode==='play')SFX.wind(LV.env.theme,G.wind);else SFX.windOff()}
  for(const f of flames){const k=0.85+Math.sin(t*9+f.ph)*0.1+Math.sin(t*23+f.ph)*0.05;f.s.scale.set(0.6*f.b*k,1.1*f.b*(2-k),1);if(Math.random()<0.05*f.b)embers(f.x,f.y+0.5*f.b,f.z)}
  for(const l of STATIC)if(l.userData.base)l.intensity=l.userData.base*(0.85+Math.sin(t*11+l.position.x)*0.08+Math.random()*0.07);
  // dynamic lights

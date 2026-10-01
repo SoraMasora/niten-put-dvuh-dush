@@ -25,7 +25,7 @@ function ringPos(rmin,rmax){const a=rnd(0,Math.PI*2),r=Math.sqrt(rnd(rmin*rmin,r
 // ---------- Blender-окружение (EV__*), с откатом на процедурные формы
 const EVok=p=>ASSET.ok&&!!(ASSET.parts.EV&&ASSET.parts.EV[p]);
 function evAdd(g,part,x,y,z,ry=0,sc=1){const o=new Group();o.position.set(x,y,z);o.rotation.y=ry;if(sc.length)o.scale.set(...sc);else o.scale.setScalar(sc);g.add(o);addPart(o,'EV',part);return o}
-function evInst(g,part,n,fn,shadow=true){const L=ASSET.parts.EV[part];const d=new THREE.Object3D();const ms=L.map(it=>{const m=new THREE.InstancedMesh(it.geo,it.mat,n);m.castShadow=shadow;m.receiveShadow=true;g.add(m);return m});
+function evInst(g,part,n,fn,shadow=true){const L=ASSET.parts.EV[part];{const k={grass:0.5,bamboo:0.0011,bambooleaf:0.0011}[part];if(k)for(const it of L)addSway(it.mat,k)}const d=new THREE.Object3D();const ms=L.map(it=>{const m=new THREE.InstancedMesh(it.geo,it.mat,n);m.castShadow=shadow;m.receiveShadow=true;g.add(m);return m});
  for(let i=0;i<n;i++){fn(d,i);d.updateMatrix();for(const m of ms)m.setMatrixAt(i,d.matrix)}return ms}
 function groundMat(name,rep){const m=ASSET.ok&&ASSET.mats[name];if(!m)return null;const c=m.clone();for(const k of['map','normalMap','roughnessMap','metalnessMap']){if(c[k]){c[k]=c[k].clone();c[k].wrapS=c[k].wrapT=THREE.RepeatWrapping;c[k].repeat.set(rep,rep);c[k].anisotropy=8;c[k].needsUpdate=true}}return c}
 // ---------- GPU rain: instanced streaks + ground ripples (all animated in shaders)
@@ -59,6 +59,11 @@ function puddleTex(){const c=document.createElement('canvas');c.width=c.height=5
  for(let i=0;i<70;i++){const px=Math.random()*512,py=Math.random()*512,r=20+Math.random()*70;const gr=x.createRadialGradient(px,py,0,px,py,r);gr.addColorStop(0,'rgba(70,70,70,0.9)');gr.addColorStop(0.6,'rgba(90,90,90,0.55)');gr.addColorStop(1,'rgba(216,216,216,0)');x.fillStyle=gr;
   for(const dx of[-512,0,512])for(const dy of[-512,0,512]){x.save();x.translate(dx,dy);x.beginPath();x.ellipse(px,py,r,r*(0.5+Math.random()*0.5),Math.random()*3,0,7);x.fill();x.restore()}}
  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(18,18);return t}
+// лучи света (god rays): мягкие аддитивные полосы, повёрнутые к камере вокруг своей оси
+const rayTex=(()=>{const c=document.createElement('canvas');c.width=64;c.height=256;const x=c.getContext('2d');for(let i=0;i<64;i++){const e=Math.pow(Math.sin(Math.PI*i/63),2.2);const gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,`rgba(255,255,255,${0.9*e})`);gr.addColorStop(0.7,`rgba(255,255,255,${0.35*e})`);gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(i,0,1,256)}return new THREE.CanvasTexture(c)})();
+function godRays(g,theme){if(theme==='duel')return[];const col=theme==='ash'?0xffa070:0xc8f0d8,n=theme==='forest'?9:5,out=[];
+ for(let i=0;i<n;i++){const m=new Mesh(new THREE.PlaneGeometry(1,1),new MB({map:rayTex,color:col,transparent:true,opacity:theme==='forest'?0.075:0.05,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,side:THREE.DoubleSide}));
+  const a=rnd(0,Math.PI*2),r=rnd(4,16),w=rnd(1.2,3.2),h=rnd(9,15);m.scale.set(w,h,1);m.position.set(Math.cos(a)*r,h*0.45,Math.sin(a)*r);m.userData={tilt:theme==='forest'?0.28:0.4,ph:rnd(0,6),op:m.material.opacity};m.renderOrder=3;g.add(m);out.push(m)}return out}
 function buildEnv(theme){
  if(ASSET.ok&&ASSET.mats.ev_kawara&&!ASSET.mats.ev_kawara.userData.fx){const k=ASSET.mats.ev_kawara;k.userData.fx=1;k.metalness=0;k.envMapIntensity=0.25;k.roughness=0.8;k.color.multiplyScalar(0.55)}
  if(ENV){scene.remove(ENV);ENV.traverse(o=>{if(o.geometry)o.geometry.dispose()})}flames.length=0;for(const l of STATIC){l.intensity=0;l.userData.base=0}
@@ -66,7 +71,8 @@ function buildEnv(theme){
  scene.background=new THREE.Color(T.bg);scene.fog=new THREE.FogExp2(T.fog,T.dens);hemi.color.set(T.hemi[0]);hemi.groundColor.set(T.hemi[1]);hemi.intensity=T.hemi[2];moon.color.set(T.moon[0]);moon.intensity=T.moon[1];
  const gm=groundMat({ash:'ground_ash',forest:'ground_moss',duel:'ground_paving'}[theme],theme==='duel'?44:40)||new MS({map:TX[T.ground],roughness:theme==='duel'?0.75:0.95,metalness:theme==='duel'?0.05:0});if(theme==='duel'){gm.roughnessMap=puddleTex();gm.roughness=0.8;gm.envMapIntensity=0.55;gm.color.multiplyScalar(0.85)}const gr=new Mesh(new THREE.PlaneGeometry(160,160),gm);gr.rotation.x=-Math.PI/2;gr.receiveShadow=true;g.add(gr);
  const moonS=new THREE.Sprite(new THREE.SpriteMaterial({map:TX.dot,color:theme==='ash'?0xff9060:0xd8e4ff,fog:false,toneMapped:false}));moonS.material.opacity=0.55;moonS.material.transparent=true;moonS.position.set(-50,55,70);moonS.scale.set(6,6,1);g.add(moonS);
- const env={mirrors:[],gate:null};
+ const env={mirrors:[],gate:null};setGrade(theme);
+ env.rays=godRays(g,theme);
  if(theme==='ash'){
   const houses=[];for(let i=0;i<14;i++){const a=i/14*Math.PI*2+rnd(-.1,.1),r=rnd(24,30);houses.push([Math.cos(a)*r,Math.sin(a)*r,a])}
   if(EVok('minka')){houses.forEach(([x,z,a],i)=>{const burnt=i%2===0,s=rnd(0.9,1.12);evAdd(g,burnt?'minkab':'minka',x,0,z,-a-Math.PI/2+rnd(-.15,.15),s);if(burnt)addFire(g,x*0.97,3.4*s,z*0.97,2.2,i/2|0);

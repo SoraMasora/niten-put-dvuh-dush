@@ -3,6 +3,7 @@ import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer.j
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js';
+import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {initMats,M,mesh,makeHuman,makeSword,POSE,mixPose,applyPose,ASSET,ANIMS,applyClip,clipSword} from './models.js';
 if(ANIMS.poses&&ANIMS.poses.sheath)POSE.sheath=ANIMS.poses.sheath;
@@ -26,6 +27,27 @@ initMats();if(ASSET.ok&&ASSET.mats.blade_steel){M.blade=ASSET.mats.blade_steel}
 {const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;scene.environmentIntensity=0.35}
 const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));
 const bloom=new UnrealBloomPass(new THREE.Vector2(W/2,H/2),0.9,0.5,0.82);composer.addPass(bloom);composer.addPass(new OutputPass());
+// цветокоррекция + виньетка + плёночное зерно (после тонмаппинга, в sRGB)
+const GRADE=new ShaderPass({uniforms:{tDiffuse:{value:null},uTint:{value:new THREE.Vector3(1,1,1)},uShadow:{value:new THREE.Vector3(0,0,0)},uSat:{value:1},uCon:{value:1},uVig:{value:0.35},uGrain:{value:0.035},uT:{value:0}},
+ vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+ fragmentShader:`uniform sampler2D tDiffuse;uniform vec3 uTint,uShadow;uniform float uSat,uCon,uVig,uGrain,uT;varying vec2 vUv;
+ float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+ void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;float l=dot(c,vec3(0.299,0.587,0.114));c=mix(vec3(l),c,uSat);c=(c-0.5)*uCon+0.5;
+  c=c*uTint+uShadow*(1.0-smoothstep(0.0,0.45,l));vec2 d=vUv-0.5;c*=1.0-uVig*smoothstep(0.25,0.85,length(d*vec2(1.25,1.0)));
+  c+=(h(vUv*vec2(1931.0,1377.0)+fract(uT*7.13))-0.5)*uGrain;gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`});
+composer.addPass(GRADE);
+const GRADES={ash:{t:[1.06,0.97,0.88],s:[0.025,0.008,0.0],sat:0.88,con:1.07},forest:{t:[0.95,1.04,1.0],s:[0.0,0.015,0.012],sat:0.92,con:1.05},duel:{t:[0.92,0.97,1.08],s:[0.0,0.006,0.03],sat:0.78,con:1.1}};
+function setGrade(th){const q=GRADES[th]||GRADES.ash,U=GRADE.uniforms;U.uTint.value.set(...q.t);U.uShadow.value.set(...q.s);U.uSat.value=q.sat;U.uCon.value=q.con}
+// ветер для травы/бамбука (vertex shader)
+const WU={uT:{value:0},uW:{value:0.5}};
+function addSway(m,k){if(!m||m.userData.sway)return;m.userData.sway=k;m.onBeforeCompile=sh=>{sh.uniforms.uT=WU.uT;sh.uniforms.uW=WU.uW;sh.vertexShader='uniform float uT;uniform float uW;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+ #ifdef USE_INSTANCING
+  vec4 wp0=modelMatrix*instanceMatrix*vec4(position,1.0);
+ #else
+  vec4 wp0=modelMatrix*vec4(position,1.0);
+ #endif
+  float hh=max(wp0.y,0.0),sw=sin(uT*1.6+wp0.x*0.35+wp0.z*0.27)+0.4*sin(uT*3.1+wp0.x*1.3+wp0.z*0.7);
+  transformed.x+=sw*hh*hh*${k.toFixed(4)}*(0.35+uW);transformed.z+=0.6*cos(uT*1.3+wp0.z*0.31)*hh*hh*${k.toFixed(4)}*(0.35+uW);`)};m.customProgramCacheKey=()=>'sway'+k;m.needsUpdate=true}
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);composer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();
  const s=Math.min(w/W,h/H);hud.style.width=W*s+'px';hud.style.height=H*s+'px';PU.scale.value=h/(2*Math.tan(camera.fov*Math.PI/360))}
 // ---------- lights
@@ -54,11 +76,12 @@ class PSys{constructor(n,additive){this.n=n;this.list=[];const g=new THREE.Buffe
  this.pts=new THREE.Points(g,this.mat);this.pts.frustumCulled=false;scene.add(this.pts);this.g=g}
  add(p){if(this.list.length>=this.n)this.list.shift();p.max=p.max||p.life;this.list.push(p)}
  update(ts){const L=this.list;let j=0;for(let i=0;i<L.length;i++){const p=L[i];p.life-=ts;if(p.life<=0)continue;
+  if(p.w){const w=(typeof G!=='undefined'?G.wind:0.5)||0;p.vx+=(0.0016*w-p.vx*0.02)*p.w*ts;p.vz+=(0.0006*w-p.vz*0.02)*p.w*ts}if(p.sw){p.x+=Math.sin(p.life*0.07+p.sw)*0.006*ts;p.z+=Math.cos(p.life*0.05+p.sw)*0.004*ts}
   p.vy-=(p.g||0)*ts;p.vx*=p.drag||1;p.vz*=p.drag||1;p.vy*=p.drag||1;p.x+=p.vx*ts;p.y+=p.vy*ts;p.z+=p.vz*ts;
   if(p.y<0.02&&p.g){p.y=0.02;if(p.stick){p.vx=p.vz=p.vy=0;p.g=0}else{p.vy*=-0.35;p.vx*=0.6;p.vz*=0.6}}
   L[j++]=p}L.length=j;
   for(let i=0;i<this.n;i++){if(i<L.length){const p=L[i],a=clamp(p.life/p.max,0,1);this.pos[i*3]=p.x;this.pos[i*3+1]=p.y;this.pos[i*3+2]=p.z;
-   const f=p.fade===false?1:a;this.col[i*4]=p.r;this.col[i*4+1]=p.gg;this.col[i*4+2]=p.b;this.col[i*4+3]=(p.a==null?1:p.a)*f;this.size[i]=p.s*(p.grow?1+(1-a)*p.grow:1)}else{this.size[i]=0;this.col[i*4+3]=0}}
+   const f=(p.fade===false?1:a)*(p.pulse?0.25+0.75*Math.max(0,Math.sin(p.life*0.09+p.pulse)):1);this.col[i*4]=p.r;this.col[i*4+1]=p.gg;this.col[i*4+2]=p.b;this.col[i*4+3]=(p.a==null?1:p.a)*f;this.size[i]=p.s*(p.grow?1+(1-a)*p.grow:1)}else{this.size[i]=0;this.col[i*4+3]=0}}
   this.g.attributes.position.needsUpdate=true;this.g.attributes.col.needsUpdate=true;this.g.attributes.size.needsUpdate=true}}
 const FX={add:new PSys(2500,true),norm:new PSys(2000,false)};
 function sparks(x,y,z,n,col=[1,0.6,0.25]){for(let i=0;i<n;i++){const a=rnd(0,Math.PI*2),e=rnd(-0.2,1.2),v=rnd(2,9);FX.add.add({x,y,z,vx:Math.cos(a)*Math.cos(e)*v/60,vy:Math.sin(e)*v/60,vz:Math.sin(a)*Math.cos(e)*v/60,g:0.003,life:rnd(30,70),s:rnd(0.03,0.07),r:col[0]*2,gg:col[1]*2,b:col[2]*2,drag:0.985})}flashL(x,y,z,0xff9a50,6,10)}

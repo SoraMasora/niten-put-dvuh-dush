@@ -139,4 +139,7 @@ function updWorld(ts){
  updChapter(ts);
  if(LV.env.theme==='ash'&&G.frame%2===0)FX.norm.add({x:P.x+rnd(-12,12),y:0,z:P.z+rnd(-12,12),vx:rnd(-.3,.3)/60,vy:rnd(0.3,0.9)/60,vz:rnd(-.3,.3)/60,life:rnd(200,400),s:rnd(0.03,0.06),r:0.55,gg:0.52,b:0.5,a:0.7});
  if(LV.env.theme==='ash'&&G.frame%3===0)embers(P.x+rnd(-10,10),rnd(0,1),P.z+rnd(-10,10));
- if(LV.env.theme==='forest'&&G.frame%6===0)FX.add.add({x:P.x+rnd(-10,10),y:rnd(0.3,2.5),z:P.z+rnd(-10,10),vx:rnd(-.2,.2)/60,vy:rnd(-.1,.1)/60,vz:rnd(-.2,.2)/60,life:rnd(120,240),s:0.035,r:0.9,gg:1.6,b:0.5})}
+ if(LV.env.theme==='forest'&&G.frame%5===0)FX.add.add({x:P.x+rnd(-10,10),y:rnd(0.3,2.5),z:P.z+rnd(-10,10),vx:rnd(-.2,.2)/60,vy:rnd(-.1,.1)/60,vz:rnd(-.2,.2)/60,life:rnd(160,300),s:0.04,r:0.9,gg:1.6,b:0.5,pulse:rnd(0,6),fade:false,sw:rnd(0,6)});
+ // падающие листья (лес) и пепел сверху (деревня) — их сносит ветер
+ if(LV.env.theme==='forest'&&G.frame%4===0){const y=Math.random()<0.5;FX.norm.add({x:P.x+rnd(-12,12),y:rnd(4,8),z:P.z+rnd(-12,12),vx:0,vy:-rnd(0.35,0.6)/60,vz:0,life:rnd(500,800),s:rnd(0.05,0.08),r:y?0.32:0.12,gg:y?0.26:0.2,b:y?0.08:0.06,a:0.9,sw:rnd(0,6),w:1,g:0.00001,stick:true})}
+ if(LV.env.theme==='ash'&&G.frame%2===0)FX.norm.add({x:P.x+rnd(-14,10),y:rnd(5,9),z:P.z+rnd(-12,12),vx:0,vy:-rnd(0.25,0.5)/60,vz:0,life:rnd(500,800),s:rnd(0.025,0.05),r:0.42,gg:0.4,b:0.38,a:0.75,sw:rnd(0,6),w:1.4,g:0.00001,stick:true})}
