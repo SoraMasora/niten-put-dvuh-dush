@@ -124,7 +124,7 @@ const glintCols={red:0xff2a2a,purple:0xc050ff,blue:0x60b0ff};
 function genmaMat(){return M.genma.clone()}
 function veinsOn(parent,n,h,rad){for(let i=0;i<n;i++){const pts=[];let a=rnd(0,6),y=rnd(0.1,h);for(let k=0;k<5;k++){pts.push(new V3(Math.cos(a)*rad,y,Math.sin(a)*rad));a+=rnd(-.4,.4);y+=rnd(-.12,.12)}
  const tg=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),10,0.008,3,false);const m=new Mesh(tg,M.vein);parent.add(m)}}
-function rigAsh(big){if(ASSET.ok&&ASSET.parts.GE)return rigAshA(big);const gm=genmaMat(),s=big?1.3:1;const root=new Group(),hips=new Group();hips.position.y=0.88;root.add(hips);root.scale.setScalar(s);
+function rigAsh(big){if(!big&&ASSET.skins.ronin)return rigAshX();if(ASSET.ok&&ASSET.parts.GE)return rigAshA(big);const gm=genmaMat(),s=big?1.3:1;const root=new Group(),hips=new Group();hips.position.y=0.88;root.add(hips);root.scale.setScalar(s);
  const legs=[];for(const sd of[-1,1]){const th=new Group();th.position.x=sd*0.11;hips.add(th);mesh(new THREE.CapsuleGeometry(0.07,0.7,4,8),gm,0,-0.43,0,th);legs.push(th)}
  const torso=new Group();hips.add(torso);torso.rotation.x=0.4;
  const b=mesh(new THREE.CapsuleGeometry(0.19,0.42,4,10),gm,0,0.35,0,torso);b.scale.set(1.15,1,0.85);
@@ -142,7 +142,7 @@ function rigAsh(big){if(ASSET.ok&&ASSET.parts.GE)return rigAshA(big);const gm=ge
   const arm2=new Group();arm2.position.set(0.24,0.55,0.05);torso.add(arm2);mesh(new THREE.CapsuleGeometry(0.06,0.45,3,6),gm,0,-0.25,0,arm2);root.userData.arm2=arm2}
  const gl=glintSprite();scene.add(gl);
  return{root,hips,torso,legs,arm,weap,tip,gl,mat:gm,upper:torso,kind:big?'gasa':'ash',head}}
-function rigKama(){if(ASSET.ok&&ASSET.parts.KA)return rigKamaA();const gm=genmaMat();const root=new Group(),body=new Group();body.position.y=0.38;root.add(body);
+function rigKama(){if(ASSET.km)return rigKamaX();if(ASSET.ok&&ASSET.parts.KA)return rigKamaA();const gm=genmaMat();const root=new Group(),body=new Group();body.position.y=0.38;root.add(body);
  const b=mesh(new THREE.SphereGeometry(0.3,12,8),gm,0,0,0,body);b.scale.set(0.7,0.6,1.3);
  const head=new Group();head.position.set(0,0.12,0.42);body.add(head);mesh(new THREE.SphereGeometry(0.14,10,8),gm,0,0,0,head);for(const s of[-1,1])mesh(new THREE.ConeGeometry(0.04,0.14,5),gm,s*0.08,0.14,0,head);
  for(const s of[-1,1])mesh(new THREE.BoxGeometry(0.03,0.015,0.01),M.eye,s*0.05,0.03,0.13,head);
@@ -151,14 +151,14 @@ function rigKama(){if(ASSET.ok&&ASSET.parts.KA)return rigKamaA();const gm=genmaM
  const arm=new Group();arm.position.set(0,-0.02,0.3);body.add(arm);for(const s of[-1,1]){const sk=mesh(new THREE.TorusGeometry(0.22,0.014,4,14,Math.PI*0.9),M.bone,s*0.16,0,0.1,arm);sk.rotation.set(0,Math.PI/2,0)}
  veinsOn(body,3,0.1,0.22);const tip=new THREE.Object3D();tip.position.set(0,0,0.4);arm.add(tip);const gl=glintSprite();scene.add(gl);
  return{root,hips:body,torso:body,legs,arm,weap:arm,tip,gl,mat:gm,upper:head,kind:'kama'}}
-function rigYumi(){if(ASSET.ok&&ASSET.parts.YU)return rigYumiA();const gm=genmaMat();const root=new Group(),body=new Group();body.position.y=0.5;root.add(body);
+function rigYumi(){if(ASSET.skins.archer)return rigYumiX();if(ASSET.ok&&ASSET.parts.YU)return rigYumiA();const gm=genmaMat();const root=new Group(),body=new Group();body.position.y=0.5;root.add(body);
  const b=mesh(new THREE.SphereGeometry(0.34,12,10),gm,0,0,0,body);b.scale.set(1,1.2,0.9);veinsOn(body,5,0.4,0.3);
  const neck=[];for(let i=0;i<7;i++){neck.push(mesh(new THREE.SphereGeometry(0.06,6,5),gm,0,0.35+i*0.08,0.05,body))}
  const head=new Group();body.add(head);mesh(new THREE.SphereGeometry(0.12,10,8),M.pale,0,0,0,head);const hair=mesh(new THREE.ConeGeometry(0.15,0.7,8,1,true),M.hair,0,-0.25,-0.05,head);hair.rotation.x=Math.PI+0.2;
  const arm=new Group();arm.position.set(0,0.15,0.3);body.add(arm);const bow=mesh(new THREE.TorusGeometry(0.55,0.015,4,20,Math.PI*0.8),M.wood,0,0,0,arm);bow.rotation.set(0,Math.PI/2,Math.PI/2+0.3*0);bow.rotation.z=Math.PI*0.6;
  const tip=new THREE.Object3D();head.add(tip);const gl=glintSprite();scene.add(gl);
  return{root,hips:body,torso:body,legs:[],arm,weap:arm,tip,gl,mat:gm,upper:head,kind:'yumi',neck,head}}
-function rigSota(){if(ASSET.ok&&ASSET.parts.SO&&ASSET.mats.SO_skin)M.sotaSkin=ASSET.mats.SO_skin;const h=makeHuman({set:'SO',scale:1.1,pants:M.sotaK,pants2:M.sotaK,kimono:M.sotaK,vest:M.sotaV,skin:M.sotaSkin,cape:null,tsR:M.sotaA,tsL:M.sotaA,armor:M.sotaA,obi:M.sotaA,eyes:true,horns:true,len:{R:0.9,L:0.86}});
+function rigSota(){if(ASSET.skins.sota)return rigSotaX();if(ASSET.ok&&ASSET.parts.SO&&ASSET.mats.SO_skin)M.sotaSkin=ASSET.mats.SO_skin;const h=makeHuman({set:'SO',scale:1.1,pants:M.sotaK,pants2:M.sotaK,kimono:M.sotaK,vest:M.sotaV,skin:M.sotaSkin,cape:null,tsR:M.sotaA,tsL:M.sotaA,armor:M.sotaA,obi:M.sotaA,eyes:true,horns:true,len:{R:0.9,L:0.86}});
  const gl=glintSprite();scene.add(gl);return{...h,root:h.root,tip:h.arms.R.sw.userData.tip,gl,mat:null,upper:h.torso,kind:'sota',human:h}}
 M.pale=new MS({color:0xcfc5b5,roughness:0.6});M.sotaSkin=new MS({color:0x9c7b66,roughness:0.6});
 
@@ -186,3 +186,34 @@ function rigYumiA(){const gm=tarMat(),add=adder(gm);const root=new Group(),body=
  const arm=new Group();arm.position.set(0,0.15,0.3);body.add(arm);add(arm,'YU','arm');
  const tip=new THREE.Object3D();head.add(tip);const gl=glintSprite();scene.add(gl);
  return{root,hips:body,torso:body,legs:[],arm,weap:arm,tip,gl,mat:gm,upper:head,kind:'yumi',neck,head}}
+
+// ---------- v0.10: внешние модели (blender/ext -> niten_ext.glb): скины на риге игры + кролик-кама + тыква
+// копии материалов на каждого врага (вспышки урона/заморозки не затрагивают остальных)
+function skinMM(n,f){const mm={};for(const p of(ASSET.skins[n]||{parts:[]}).parts){const m=p.mat;if(m&&!mm[m.name]){const c=m.clone();c.userData.em=!!c.emissiveMap;if(f)f(c);mm[m.name]=c}}return mm}
+function mmProxy(mm){const L=Object.values(mm).filter(m=>m.emissive&&!m.userData.em);return{list:L,emissive:{set:c=>{for(const m of L)m.emissive.set(c)}},color:{set:()=>{for(const m of L)m.color.multiplyScalar(0.5)}}}}
+function rigHumanX(name,kind,o={}){const mm=skinMM(name);const h=makeHuman({set:'XS',xs:name,matMap:mm,scale:o.scale||1,len:o.len||{R:0.9,L:0.86},tsR:M.sotaA,tsL:M.sotaA});
+ const gl=glintSprite();scene.add(gl);return{...h,root:h.root,tip:h.arms.R.sw.userData.tip,gl,mat:mmProxy(mm),mm,upper:h.torso,kind,human:h}}
+// Куро-асигару: ронин с яри (копьё старой модели GE в правой руке)
+function rigAshX(){const r=rigHumanX('ronin','ash',{scale:1.0});const A=r.human.arms;A.L.sw.visible=false;A.R.sw.visible=false;
+ const weap=new Group();weap.position.set(0,0,-0.45);A.R.hand.add(weap);let tip;
+ if(ASSET.parts.GE&&ASSET.parts.GE.weap){addPart(weap,'GE','weap',{mat:m=>m&&m.name==='tar'?M.wood:m});tip=new THREE.Object3D();tip.position.copy(ASSET.tips.GE__weap||new V3(0,0,1.7));weap.add(tip)}
+ else{mesh(new THREE.CylinderGeometry(0.02,0.02,2.2,6),M.wood,0,0,0.5,weap).rotation.x=Math.PI/2;mesh(new THREE.ConeGeometry(0.04,0.25,6),M.bone,0,0,1.7,weap).rotation.x=Math.PI/2;tip=new THREE.Object3D();tip.position.set(0,0,1.8);weap.add(tip)}
+ r.weap=weap;r.tip=tip;r.arm=A.R.sh;return r}
+// лучник-скелет: лук в левой руке, стрелы вылетают из лука (r.head)
+function rigYumiX(){const r=rigHumanX('archer','yumi',{scale:1.0});const A=r.human.arms;A.L.sw.visible=false;A.R.sw.visible=false;
+ const bow=new Group();A.L.hand.add(bow);const pts=[];for(let i=0;i<=12;i++){const z=-0.6+i*0.1;pts.push(new V3(0,0.16*(z/0.6)*(z/0.6)-0.02,z))}
+ mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),24,0.014,5,false),M.wood,0,0,0,bow);
+ const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([pts[0],new V3(0,0.14,0),pts[12]]),new THREE.LineBasicMaterial({color:0xd8d0c0}));bow.add(line);
+ const head=new THREE.Object3D();head.position.set(0,0.05,0);bow.add(head);r.bow=bow;r.string=line;r.head=head;r.tip=head;r.neck=[];return r}
+function rigSotaX(){const r=rigHumanX('sota','sota',{scale:1.1,len:{R:0.9,L:0.86}});const nk=r.human.neck;
+ for(const s of[-1,1]){const h=mesh(new THREE.ConeGeometry(0.03,0.24,6),M.chitin,s*0.075,0.2,0.0,nk);h.rotation.set(-0.35,0,s*-0.55);h.visible=false;r.horns.push(h)}
+ return r}
+// Кама-итати: кролик-крыса со своим скелетом и клипами (AnimationMixer)
+function rigKamaX(){const root=new Group(),body=new Group();root.add(body);const km=skClone(ASSET.km.src);body.add(km);
+ let mat=null;km.traverse(o=>{if(o.isMesh){if(!mat){mat=o.material.clone()}o.material=mat;o.frustumCulled=false;o.castShadow=true}});
+ const mixer=new THREE.AnimationMixer(km),act={};for(const c of ASSET.km.clips){const a=mixer.clipAction(c);act[c.name.slice(3)]=a}
+ for(const k of['crouch','leap','hit'])if(act[k]){act[k].setLoop(THREE.LoopOnce,1);act[k].clampWhenFinished=true}
+ if(act.idle)act.idle.play();
+ const head=new Group();head.position.set(0,0.4,0.3);body.add(head);const arm=new Group();arm.position.set(0,0.25,0.35);body.add(arm);const tip=new THREE.Object3D();tip.position.set(0,0,0.25);arm.add(tip);
+ const gl=glintSprite();scene.add(gl);return{root,hips:body,torso:body,legs:[],arm,weap:arm,tip,gl,mat,upper:head,kind:'kama',mixer,act,cur:'idle',lt:null}}
+function kamaPlay(r,n,fade=0.18){if(r.cur===n||!r.act[n])return;const a=r.act[n],b=r.act[r.cur];a.reset();a.play();if(b)a.crossFadeFrom(b,fade,false);r.cur=n}

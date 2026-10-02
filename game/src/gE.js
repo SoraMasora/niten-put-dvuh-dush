@@ -42,11 +42,17 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
  if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.order='YXZ';const T=e.tl;r.root.rotation.set((T?T.x:0)+(e.csRx||0),e.yaw,T?T.z:0)}
  if(r.mat){r.mat.emissive.set(e.flash>0?0x606060:e.frozen>0?0x103060:e.burn>0?0x401000:0x000000)}
  const mv=(e.state==='move'||e.state==='enter')?1:0,ph=e.anim*0.11;
+ if(r.mixer){const dt=r.lt==null?0.016:Math.min(0.1,Math.max(0,t-r.lt));r.lt=t;if(e.dead)kamaPlay(r,'hit',0.1);r.mixer.update(dt*(r.cur==='run'?1.4:1))}
  if(e.dead){r.gl.visible=false;return}
- if(r.kind==='ash'||r.kind==='gasa'){r.legs[0].rotation.x=Math.sin(ph)*0.5*mv;r.legs[1].rotation.x=-Math.sin(ph)*0.5*mv;r.torso.rotation.x=0.4+Math.sin(t*2+e.anim)*0.04+mv*0.08;r.torso.rotation.z=Math.sin(t*0.9+e.anim)*0.07*(1-mv)+Math.sin(ph)*0.06*mv;r.root.position.y+=Math.abs(Math.cos(ph))*0.05*mv;if(r.head){const tw=Math.sin(t*0.7+e.anim*0.01);r.head.rotation.z=tw>0.93?Math.sin(t*40)*0.25:Math.sin(t*0.5+e.anim)*0.12}
+ if(r.human&&(r.kind==='ash'||r.kind==='yumi')){const A=r.kind==='ash';let p=A?POSE.yariG:POSE.bowIdle;
+  if(A){if(wind)p=mixPose(POSE.yariG,POSE.yariW,k);else if(act)p=POSE.yariT;else if(rec)p=mixPose(POSE.yariT,POSE.yariG,Math.min(1,e.st/e.atk.rec));else if(e.state==='stag')p=POSE.hurt}
+  else{const dr=wind?k:act?1:rec?Math.max(0,1-e.st/30):0;p=mixPose(POSE.bowIdle,POSE.bowDraw,Math.min(1,dr*1.5));if(e.state==='stag')p=POSE.hurt;if(r.string){const g=r.string.geometry.attributes.position;g.setY(1,0.14+(wind?0.3*k:0));g.needsUpdate=true}}
+  e.pose=mixPose(e.pose||p,p,0.3);applyPose(r.human,e.pose,mv,ph*1.2,t,{run:0.7,idle:e.state==='idle'||e.state==='circle'?1:0.4,seed:e.anim*0.01,look:0})}
+ else if(r.kind==='ash'||r.kind==='gasa'){r.legs[0].rotation.x=Math.sin(ph)*0.5*mv;r.legs[1].rotation.x=-Math.sin(ph)*0.5*mv;r.torso.rotation.x=0.4+Math.sin(t*2+e.anim)*0.04+mv*0.08;r.torso.rotation.z=Math.sin(t*0.9+e.anim)*0.07*(1-mv)+Math.sin(ph)*0.06*mv;r.root.position.y+=Math.abs(Math.cos(ph))*0.05*mv;if(r.head){const tw=Math.sin(t*0.7+e.anim*0.01);r.head.rotation.z=tw>0.93?Math.sin(t*40)*0.25:Math.sin(t*0.5+e.anim)*0.12}
   if(r.kind==='ash'){r.weap.position.z=wind?-0.5*k:act?0.7:rec?0.7*(1-e.st/e.atk.rec):0;r.arm.rotation.x=e.state==='stag'?0.6:0}
   else{const grab=e.atk&&e.atk.k==='grab'&&(wind||e.state==='hold');const a2=r.root.userData.arm2;
    if(grab){r.arm.rotation.x=-1.4;a2.rotation.x=-1.4;r.weap.rotation.x=1.2}else{r.arm.rotation.x=wind?lerp(-0.6,-3.0,k):act?-0.2:rec?lerp(-0.2,-0.6,e.st/e.atk.rec):-0.6;a2.rotation.x=-0.3;r.weap.rotation.x=0.8}}}
+ else if(r.mixer){kamaPlay(r,e.state==='stag'?'hit':wind?'crouch':(act||e.y>0.05)?'leap':mv?'run':'idle')}
  else if(r.kind==='kama'){r.legs.forEach((l,i)=>l.rotation.x=Math.sin(ph*1.6+i*1.6)*0.8*mv);r.hips.rotation.x=e.y>0.05?-0.4:0;r.arm.rotation.x=wind?-0.9*k:act?0.9:0}
  else if(r.kind==='yumi'){const ext=wind?k*1.2:rec?1.2*(1-Math.min(1,e.st/40)):act?1.2:0;r.neck.forEach((n,i)=>{n.position.set(Math.sin(t*2+i)*0.05*ext,0.35+i*(0.08+ext*0.17),0.05+Math.sin(i*0.8)*0.1*ext)});
   const top=r.neck[6].position;r.head.position.set(top.x,top.y+0.12,top.z);r.head.lookAt(tv1.set(P.x,1.5,P.z));}

@@ -8,6 +8,7 @@ import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.j
 import {initMats,M,mesh,makeHuman,makeSword,POSE,mixPose,applyPose,ASSET,ANIMS,applyClip,clipSword} from './models.js';
 if(ANIMS.poses&&ANIMS.poses.sheath)POSE.sheath=ANIMS.poses.sheath;
 import {loadAssets,addPart} from './assets.js';
+import {clone as skClone} from 'three/examples/jsm/utils/SkeletonUtils.js';
 await loadAssets();
 import {audioInit,SFX} from './audio.js';
 const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,Vector3:V3}=THREE;

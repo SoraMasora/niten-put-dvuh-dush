@@ -44,8 +44,9 @@ const G={mode:'title',diff:1,frame:0,chap:0,slow:0,slowTs:1,freeze:0,hitstop:0,s
 let LV=null,enemies=[],souls=[],proj=[],lines=[];
 const P={};
 // ---------- hero
-const heroMats={skin:(ASSET.ok&&ASSET.mats.AK_skin?ASSET.mats.AK_skin:M.skin).clone(),vest:M.vest.clone()};heroMats.skinBase=heroMats.skin.color.clone();
-const hero=makeHuman({set:'AK',matMap:{AK_skin:heroMats.skin},scale:1.02,pants:M.pants,pants2:M.pants2,kimono:M.kimono,vest:heroMats.vest,skin:heroMats.skin,cape:M.cape,tsR:M.tsubaR,tsL:M.tsubaL,lapis:true,glove:true,len:{R:0.74,L:0.69}});
+const HXS=!!ASSET.skins.hero;// v0.10: Акира — модель mysterious-ronin (скин на риге игры), катаны katana.glb
+const heroMats={skin:(HXS?ASSET.mats.hero_m0:ASSET.ok&&ASSET.mats.AK_skin?ASSET.mats.AK_skin:M.skin).clone(),vest:M.vest.clone()};heroMats.skinBase=heroMats.skin.color.clone();
+const hero=makeHuman({set:HXS?'XS':'AK',xs:HXS?'hero':null,kn:HXS,matMap:HXS?{hero_m0:heroMats.skin}:{AK_skin:heroMats.skin},scale:1.02,pants:M.pants,pants2:M.pants2,kimono:M.kimono,vest:heroMats.vest,skin:heroMats.skin,cape:M.cape,tsR:M.tsubaR,tsL:M.tsubaL,lapis:true,glove:true,len:{R:0.74,L:0.69}});
 scene.add(hero.root);hero.root.traverse(o=>{if(o.isMesh)o.castShadow=true});
 const ghostMat=new MB({color:0xffa060,transparent:true,opacity:0.35,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
 const ghosts=[0,1].map(()=>{const s=makeSword(0.85,M.tsubaR,false);s.traverse(o=>{if(o.isMesh){o.material=ghostMat;o.castShadow=false}});s.visible=false;scene.add(s);return s});

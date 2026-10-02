@@ -19,10 +19,10 @@ function dmgEnemy(e,dmg,dx,dz,o={}){
  e.poiseDmg+=dmg;if(e.state!=='hold'&&(e.poiseDmg>=(e.d.poise||0)||o.stagT)){e.poiseDmg=0;if(!(e.d.boss&&e.state==='act')){e.state='stag';e.st=0;e.stagT=o.stagT||(e.d.boss?22:20)}}}
 function killEnemy(e,dx,dz,o={}){
  if(e.t==='sota'&&e.phase===1){e.phase=2;e.hp=e.max=Math.round(800*DIFF[G.diff].hp);e.state='trans';e.st=0;e.inv=1;G.rainFreeze=200;SFX.bell();G.shake=0.3;
-  for(const h of e.rig.horns)h.visible=true;if(!ASSET.ok)e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
+  for(const h of e.rig.horns)h.visible=true;if(e.rig.mm){e.rig.root.traverse(o=>{if(o.isSkinnedMesh&&o.material.name==='sota_m2')o.visible=false});for(const m of Object.values(e.rig.mm))if(!m.userData.em)m.color.multiply(new THREE.Color(0.75,0.62,0.85))}if(!ASSET.ok)e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
   say('Сота','…Ты всегда был медленнее, брат.');say('Юки','Он снял маску… Синяя вспышка — только уворот!');tar(e.x,1.2,e.z,60,2);return}
  e.dead=true;e.hp=0;e.deathT=0;G.stats.kills++;lootOnKill(e);if(P.clinch===e){P.clinch=null;P.state='idle'}if(G.lock===e)G.lock=null;
- const up=e.rig.upper;scene.attach(up);const kn=(o.knock||3);e.upV={vx:dx*(0.04+kn*0.004)+rnd(-.02,.02),vy:rnd(0.06,0.1),vz:dz*(0.04+kn*0.004)+rnd(-.02,.02),rx:rnd(-.15,.15),rz:rnd(-.15,.15)};
+ const up=e.rig.upper;if(e.rig.cut)e.rig.cut();scene.attach(up);const kn=(o.knock||3);e.upV={vx:dx*(0.04+kn*0.004)+rnd(-.02,.02),vy:rnd(0.06,0.1),vz:dz*(0.04+kn*0.004)+rnd(-.02,.02),rx:rnd(-.15,.15),rz:rnd(-.15,.15)};
  {const sy=Math.sin(e.yaw),cy=Math.cos(e.yaw);e.fall={a:0.05,v:0.02+kn*0.003,f:dx*sy+dz*cy,s:dx*cy-dz*sy,sx:dx*(0.02+kn*0.003),sz:dz*(0.02+kn*0.003),n:0};const L=Math.hypot(e.fall.f,e.fall.s)||1;e.fall.f/=L;e.fall.s/=L;if(!(dx||dz)){e.fall.f=-1;e.fall.s=0}}
  e.rig.gl.visible=false;tar(e.x,e.d.h*0.55,e.z,40,1.5);if(!o.issen)G.hitstop=Math.max(G.hitstop,6);
  killFx(e,dx,dz);if(!o.issen){const last=!enemies.some(x=>!x.dead&&x!==e);G.slow=Math.max(G.slow,last?50:14);G.slowTs=last?0.25:0.4;if(last){G.fovT=46;G.fovHold=30;G.shake=Math.max(G.shake,0.2)}}
