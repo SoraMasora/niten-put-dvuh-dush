@@ -90,13 +90,13 @@ function updSota(e,ts,d,ty){e.st+=ts;const sp=e.phase===2?1.3:1;
  case'stag':if(e.st>=e.stagT){e.state='move';e.st=0;e.cd=20}break;}}
 // ---------- chapters
 function clearWorld(){for(const e of enemies)removeRig(e);for(const s of souls)scene.remove(s.m);for(const p of proj)scene.remove(p.m);enemies=[];souls=[];proj=[];lines=[];FX.add.list.length=0;FX.norm.list.length=0}
-function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;const c=CH[i];const env=buildEnv(c.theme);
+function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;GY=0;const c=CH[i];const env=buildEnv(c.theme);
  env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));const gp=(LAYOUT[c.theme]&&LOCN[c.theme]&&LVok(LOCN[c.theme])&&LAYOUT[c.theme].gate)||[0,16];env.gate=makeGate(ENV,gp[0],c.house?-90:gp[1]);
  LV={c,env,wave:0,waveT:0,started:false,done:false,walls:env.walls||null,house:!!c.house,H:env.H||null};G.subs=[];G.bossBar=null;G.rainFreeze=0;G.rainUp=false;G.issenFx=null;G.lock=null;M.sotaSkin.color.set(0x9c7b66);
  resetPlayer(0,c.house?-14.6:-12);G.camYaw=0;G.camK=1;
- if(cp){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
+ if(cp&&env.mirrors.length){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
  else{G.cp={chap:i,wave:0,mi:0,oni:0};for(const s of c.start)say(s[0],s[1])}
- activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);
+ if(env.mirrors[0])activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);if(c.kak)kakLoad(cp);
  G.card={t:0,title:c.title,name:c.name}}
 function activateMirror(m,silent){if(m.act)return;m.act=true;m.face.material=M.mirrorOn;m.lant.material=M.lampOn;if(!silent){P.food=3;P.hp=P.max;pop('Зеркало-сакр: путь сохранён','#e6c98a');SFX.bell()}}
 function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s[1]);
@@ -106,7 +106,7 @@ function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s
 function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){u.open=0;gateP.visible=false;return}
  if(!u.open){const nx=CH[G.chap+1];portalCol(gateP,PCOL[nx?nx.theme:'ash']||PCOL.ash);u.w=LVok('portal')?PORTAL_R:1.15;u.h=LVok('portal')?PORTAL_R:1.55;u.int=1;u.spin=1;ripple(gateP)}
  gateP.position.set(gt.x,1.75,gt.z);gateP.rotation.set(0,0,0);u.open=Math.min(1,u.open+0.02);if(!CS.on){u.int=lerp(u.int,1,0.05);u.spin=lerp(u.spin,1,0.05)}updPortal(gateP)}
-function updChapter(ts){if(LV.env.hdoor)updDuelDoor();
+function updChapter(ts){if(LV.kak){updKak(ts);return}if(LV.env.hdoor)updDuelDoor();
  if(LV.house){updHouse(ts);if(G.rainFreeze>0)G.rainFreeze-=ts;return}
  if(!LV.started){LV.waveT+=ts;if(LV.waveT>300||Math.hypot(P.x,P.z+12)>4){LV.started=true;LV.waveT=150}}
  else if(!LV.active&&LV.wave<LV.c.waves.length){LV.waveT+=ts;if(LV.waveT>180&&!G.subs.length||LV.waveT>420){spawnWave();LV.waveT=0}}
@@ -141,7 +141,7 @@ function updWorld(ts){
  FX.add.update(ts);FX.norm.update(ts);
  for(const f of flashes)f.life-=ts;for(let i=flashes.length-1;i>=0;i--)if(flashes[i].life<=0)flashes.splice(i,1);
  updKWave(ts);for(const l of lines)l.life-=ts;lines=lines.filter(l=>l.life>0);
- if(!CS.on)updChapter(ts);updGate();updItems(ts);
+ if(LV.kak)kakAnim(ts);if(!CS.on)updChapter(ts);updGate();updItems(ts);
  if(LV.env.theme==='ash'&&G.frame%2===0)FX.norm.add({x:P.x+rnd(-12,12),y:0,z:P.z+rnd(-12,12),vx:rnd(-.3,.3)/60,vy:rnd(0.3,0.9)/60,vz:rnd(-.3,.3)/60,life:rnd(200,400),s:rnd(0.03,0.06),r:0.55,gg:0.52,b:0.5,a:0.7});
  if(LV.env.theme==='ash'&&G.frame%3===0)embers(P.x+rnd(-10,10),rnd(0,1),P.z+rnd(-10,10));
  if(LV.env.theme==='forest'&&G.frame%5===0)FX.add.add({x:P.x+rnd(-10,10),y:rnd(0.3,2.5),z:P.z+rnd(-10,10),vx:rnd(-.2,.2)/60,vy:rnd(-.1,.1)/60,vz:rnd(-.2,.2)/60,life:rnd(160,300),s:0.04,r:0.9,gg:1.6,b:0.5,pulse:rnd(0,6),fade:false,sw:rnd(0,6)});

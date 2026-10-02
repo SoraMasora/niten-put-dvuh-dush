@@ -26,7 +26,7 @@ function heroClips(){let cn=null,ct=0,atk=false;
   if(P.drawn||!S){_bp.copy(_hp);_bq.copy(_hq)}else{_bp.set(S[0],S[1],S[2]);_bq.set(S[3],S[4],S[5],S[6])}
   if(HC.w>0.001&&clipSword(HC.name,s,HC.t,swS)){swS.p.lerp(_hp,swS.a);swS.q.slerp(_hq,swS.a);_bp.lerp(swS.p,HC.w);_bq.slerp(swS.q,HC.w)}
   sw.position.copy(_bp);sw.quaternion.copy(_bq);sw.updateMatrixWorld(true)}}
-function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.csLook!=null?P.csLook:P.idleClip?0:lk,lockL:!P.drawn});hero.root.visible=!P.csHide;{const s=P.csScale;hero.root.scale.set(1.02*(s?s[0]:1),1.02*(s?s[1]:1),1.02*(s?s[2]:1))}hero.root.position.set(P.x,P.y,P.z);hero.root.rotation.order='YXZ';hero.root.rotation.y=P.yaw;
+function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Math.max(0,Math.sin(t*0.13))*1.2:Math.sin(t*0.3)*0.25;applyPose(hero,p,P.walk,P.walkPh,t,{run:P.gait,idle:P.state==='idle'?1:0,look:P.csLook!=null?P.csLook:P.idleClip?0:lk,lockL:!P.drawn});hero.root.visible=!P.csHide;{const s=P.csScale;hero.root.scale.set(1.02*(s?s[0]:1),1.02*(s?s[1]:1),1.02*(s?s[2]:1))}hero.root.position.set(P.x,P.y+GY,P.z);hero.root.rotation.order='YXZ';hero.root.rotation.y=P.yaw;
  heroClips();stepTilt(P.tl,1);if(P.tl){hero.torso.rotateX(P.tl.x*0.8);hero.torso.rotateZ(P.tl.z*0.8)}
  P.ldv=(P.ldv||0)+(-0.12*(P.ld||0)-0.2*(P.ldv||0));P.ld=(P.ld||0)+P.ldv;hero.hips.position.y+=P.ld;
  hero.root.rotation.x=P.state==='dead'?lerp(hero.root.rotation.x,0,0.1):(P.csRx||0);hero.arms.L.sw.visible=!(G.oneBlade||P.hideL);
@@ -88,7 +88,7 @@ function syncWorld(t){
  if(P.muso>0)src.push([P.x,1.5,P.z,0xff8040,3,6]);
  src.sort((a,b)=>b[4]-a[4]);
  DYN.forEach((l,i)=>{const s=src[i];if(!s){l.intensity=0;return}l.position.set(s[0],s[1],s[2]);l.color.set(s[3]);l.intensity=s[4];l.distance=s[5]});
- moon.position.set(P.x-10,20,P.z-8);moon.target.position.set(P.x,0,P.z);
+ moon.position.set(P.x-10,20+GY,P.z-8);moon.target.position.set(P.x,GY,P.z);
  // iai line
  const L=lines[0];iaiLine.visible=!!L;if(L){iaiLine.position.set((L.x1+L.x2)/2,1.2,(L.z1+L.z2)/2);iaiLine.lookAt(L.x2,1.2,L.z2);iaiLine.scale.set(1,1,Math.hypot(L.x2-L.x1,L.z2-L.z1)||0.1);iaiLine.material.opacity=L.life/(L.max||24);iaiLine.material.color.set(L.col||0x80c8ff);iaiLine.scale.x=iaiLine.scale.y=L.col?2.2:1}
  // rain
@@ -110,6 +110,6 @@ function updCamera(){
  if(G.fovHold>0)G.fovHold--;else G.fovT=55;G.fov=lerp(G.fov,G.fovT,0.15);camera.fov=G.fov;camera.updateProjectionMatrix();
  const dist=G.camDist*(G.fov<50?0.8:1),cp=Math.cos(G.camPitch),sp=Math.sin(G.camPitch);
  let tx=P.x,tz=P.z;if(G.lock){tx=lerp(P.x,G.lock.x,0.25);tz=lerp(P.z,G.lock.z,0.25)}
- const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
+ const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+GY+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
  const rx=-Math.cos(G.camYaw)*0.45,rz=Math.sin(G.camYaw)*0.45;camera.position.x+=rx;camera.position.z+=rz;
- tv1.set(tx+rx,1.35+P.y*0.6,tz+rz);if(LV.house)camClip(tv1,camera.position);else if(LV.env.nav)navCam(tv1,camera.position);if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}
+ tv1.set(tx+rx,1.35+P.y*0.6+GY,tz+rz);if(LV.house)camClip(tv1,camera.position);else if(LV.env.nav){navCam(tv1,camera.position);if(LV.kak)kakCamFix(camera.position)}if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}

@@ -98,12 +98,12 @@ function updChests(ts){if(!LV.chests)return;for(const c of LV.chests){
  c.lid.rotation.x=-1.95*c.open;c.glow.material.opacity=c.state==='open'?(CS.on&&CS.k==='chest'?Math.min(1,c.open*1.3):0.12*c.open):0}}
 // ---------- взаимодействие (X)
 const INV={open:false,sel:-1,hover:-1,drag:null,mx:0,my:0,msg:null,lastClick:0};
-function nearInteract(){if(!LV)return null;let best=null,bd=1.45;for(const o of WI){const d=Math.hypot(o.x-P.x,o.z-P.z);if(d<bd&&o.y<0.6){bd=d;best={k:'item',o}}}
+function nearInteract(){if(!LV)return null;if(LV.kak)return kakNear();let best=null,bd=1.45;for(const o of WI){const d=Math.hypot(o.x-P.x,o.z-P.z);if(d<bd&&o.y<0.6){bd=d;best={k:'item',o}}}
  if(LV.H)for(const s of LV.H.spots){if(s.done)continue;const d=Math.hypot(s.x-P.x,s.z-P.z);if(d<Math.min(bd,s.r||1.4)){bd=d;best={k:'spot',s}}}
  if(LV.duelOpen&&Math.hypot(P.x,P.z+26.6)<1.9)best={k:'door'};
  if(LV.chests)for(const c of LV.chests){if(c.state==='open'||c.state==='hidden')continue;const fx=c.x+Math.sin(c.yaw)*0.9,fz=c.z+Math.cos(c.yaw)*0.9,d=Math.hypot(fx-P.x,fz-P.z);if(d<Math.min(bd,1.4)){bd=d;best={k:'chest',c}}}return best}
-function promptText(n){if(!n)return null;if(n.k==='spot')return n.s.label;if(n.k==='door')return invCount('housekey')?'X — отпереть дверь дома':'Дверь заперта';if(n.k==='item')return'X — подобрать: '+ITEMS[n.o.id].n;const c=n.c;if(c.state==='sealed')return'Сундук запечатан — сначала зачисти локацию';return invCount('key')?'X — открыть сундук ключом':'Сундук заперт — нужен ключ'}
-function interact(){const n=nearInteract();if(!n)return;if(n.k==='spot'){houseSpot(n.s);return}if(n.k==='door'){if(invCount('housekey'))startDoorCS();else pop('Нужен ключ','#c9a0a0');return}
+function promptText(n){if(!n)return null;if(n.k==='kak')return n.label;if(n.k==='spot')return n.s.label;if(n.k==='door')return invCount('housekey')?'X — отпереть дверь дома':'Дверь заперта';if(n.k==='item')return'X — подобрать: '+ITEMS[n.o.id].n;const c=n.c;if(c.state==='sealed')return'Сундук запечатан — сначала зачисти локацию';return invCount('key')?'X — открыть сундук ключом':'Сундук заперт — нужен ключ'}
+function interact(){const n=nearInteract();if(!n)return;if(n.k==='kak'){n.f();return}if(n.k==='spot'){houseSpot(n.s);return}if(n.k==='door'){if(invCount('housekey'))startDoorCS();else pop('Нужен ключ','#c9a0a0');return}
  if(n.k==='item'&&n.o.id==='housekey'){const o=n.o;removeWI(o);startHouseKeyCS(o.x,o.z);return}if(n.k==='item'){const o=n.o;if(o.id==='note'){removeWI(o);addItem('note');startNoteCS(o.x,o.z);return}const left=addItem(o.id);if(left){INV.msg=['Инвентарь полон',90];pop('Инвентарь полон','#c9a0a0');return}removeWI(o);pop('Подобрано: '+ITEMS[o.id].n,RAR[ITEMS[o.id].r][1]);SFX.pickup()}
  else{const c=n.c;if(c.state==='sealed'){pop('Печать держит, пока рядом Гэнма','#c9a0a0');return}if(!invCount('key')){pop('Нужен ключ — его носят Гэнма','#c9a0a0');return}startChestCS(c)}}
 function updItems(ts){updWI(ts);updChests(ts);for(const k of['def','dmg','spd','tea','sake'])if(G.buf[k]>0)G.buf[k]-=ts;if(G.buf.tea>0&&P.state!=='dead'){P.hp=Math.min(P.max,P.hp+0.05*ts);if(G.frame%20===0)FX.add.add({x:P.x+rnd(-.3,.3),y:rnd(0.3,1.6),z:P.z+rnd(-.3,.3),vx:0,vy:0.01,vz:0,life:40,s:0.05,r:0.8,gg:1.8,b:0.6,a:0.6})}
@@ -154,7 +154,7 @@ function pickPoint(x,z){const d=Math.hypot(P.x-x,P.z-z)||1,ux=(x-P.x)/d,uz=(z-P.
 function startNoteCS(x=P.x+fwdX(P.yaw)*0.46,z=P.z+fwdZ(P.yaw)*0.46){const nt=itemModel('note');scene.add(nt);nt.position.set(x,0.03,z);nt.rotation.set(0,rnd(0,6.28),0);nt.updateMatrixWorld(true);const g0=nt.position.clone(),q0=nt.quaternion.clone();
  if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}
  const NM=holdM(-0.3,0,0,0,-0.02,0.06),mid=new V3(),nq=new THREE.Quaternion(),tq=new THREE.Quaternion();let c0=null,jump=false;
- const close=()=>{scene.remove(nt);CS.img=null;csEnd();if(LV.winPending){LV.winPending=false;G.winT=1}};
+ const close=()=>{scene.remove(nt);CS.img=null;csEnd();if(LV.winPending){LV.winPending=false;kakMemory()}};
  csStart('note',t=>{const H=CS.H;CS.bars=Math.min(1,t/14);const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);
   if(t===1){const pp=pickPoint(x,z);if(Math.hypot(pp[0]-P.x,pp[1]-P.z)>0.07){H.to=pp;H.spd=0.03;H.gait=0}}
   if(c0==null){if(!H.to||t>110){H.to=null;H.yaw=Math.atan2(x-P.x,z-P.z);H.yawK=0.25;if(t>110||Math.abs(((P.yaw-H.yaw+9.42)%6.283)-3.14)<0.12)c0=t}

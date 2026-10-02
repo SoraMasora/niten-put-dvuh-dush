@@ -33,4 +33,9 @@ CFG={
  'pumpkin':dict(src='pumpkin_monster.glb',center='bbox',h=1.0,tris=9000,tex=512),
  # 9. босс дома — dark_samurai_shadow_warrior.glb
  'boss':dict(src='dark_samurai_shadow_warrior.glb',rot=(0,0,-90),capsule=[((0.207,-0.187,0.642),(-0.341,-1.012,0.505),0.07)],h=1.86,tris=40000,tex=1024),
+ # v0.14 — деревня Какарико: НПС и кузнец (исходники в $NITEN_SRC/kak)
+ 'sarah':dict(src='kak/sarah_zzz_npc.glb',exclude='Icosphere',h=1.66,tris=16000,tex=1024),
+ 'orc':dict(src='kak/orc_npc_from_fuse.glb',h=2.02,tris=16000,tex=1024),
+ 'smith':dict(src='kak/lowpoly_blacksmith_girl.glb',exclude='Box005',center='bbox',h=1.58,tris=14000,tex=1024),
+ 'girl':dict(src='kak/girl_npc_outer_plane.glb',exclude='Icosphere',h=1.22,tris=14000,tex=1024),
 }

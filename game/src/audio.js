@@ -29,6 +29,7 @@ export const SFX={
  swingR(o){if(smp(o==='O'?'swO':'swR',{vol:0.55,rv:0.05}))return;noise(0.25,600,0.8,0.35);noise(0.3,300,1,0.12,'lowpass')},
  swingL(){if(smp('swL',{vol:0.5,rv:0.05}))return;noise(0.15,3500,2,0.25)},
  hit(big){if(smp(big?'hitH':'hit',{vol:big?0.95:0.8,rv:0.12}))return;noise(0.12,220,1,0.5,'lowpass');tone(90,0.15,'sine',0.25,40)},
+ anvil(v=1){if(v<0.02)return;if(smp('clang',{vol:0.55*v,rv:0.15+0.3*(1-v),jit:0.06}))return;tone(520,0.5,'triangle',0.1*v);tone(1800,0.3,'sine',0.05*v)},door(){if(!smp('lidCreak',{vol:0.6,rv:0.25}))noise(0.4,500,1,0.15,'lowpass')},
  clang(){if(smp('clang',{vol:0.75,rv:0.2}))return;tone(230,0.8,'triangle',0.18);tone(1250,0.6,'sine',0.1);noise(0.15,5000,1,0.2,'highpass')},
  cross(){tone(190,1.3,'sine',0.22);tone(1210,1.1,'sine',0.12,null,0.05)},
  issen(){noise(0.05,4000,1,0.3,'highpass');tone(98,2.6,'sine',0.4);tone(196,2,'sine',0.15);tone(294,1.5,'sine',0.07)},

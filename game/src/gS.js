@@ -29,7 +29,7 @@ function csLights(){const s=[];for(const p of[gateP,csP])if(p.visible){p.getWorl
 function csPrecompile(on){for(const p of[gateP,csP]){p.visible=on;p.position.set(0,1.5,-2);p.scale.setScalar(1)}beam.visible=on}
 // ---------- движок
 function csSay(n,t,a,b){CS.subs.push({n,t,a,b})}
-function csStart(k,fn,skip){for(const q of KILLS){q.life=0;q.m.visible=false}CS.card=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
+function csStart(k,fn,skip){for(const q of KILLS){q.life=0;q.m.visible=false}CS.card=null;CS.hint=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
  P.atk=null;P.csClip=null;P.csPost=null;P.buf=null;P.pendR=P.pendL=false;P.idleClip=null;P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;P.vx=P.vz=0;P.mvS=0;
  for(const k in K)K[k]=0;mdx=mdy=0}
 function csEnd(subs){P.csClip=null;P.csPost=null;CS.card=null;CS.img=null;CS.onImgClose=null;CS.on=false;CS.fn=CS.skip=null;CS.bars=0;CS.fade=0;CS.subs=[];P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;
@@ -60,6 +60,7 @@ function drawCS(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const b=CS.bars*H*0.
  if(CS.card)itemCard(CS.card,850,130,370,450,1);
  if(CS.fade>0.001){X.fillStyle=`rgba(${CS.fadeC},${Math.min(1,CS.fade)})`;X.fillRect(0,0,W,H)}
  if(CS.img&&CS.img.complete){X.drawImage(CS.img,0,0,W,H);if(CS.imgT>40){X.textAlign='right';X.font='14px Georgia,serif';X.fillStyle='rgba(240,230,210,0.7)';X.fillText('Enter / клик — закрыть',W-26,H-18)}X.textAlign='left';return}
+ if(CS.k==='forge')drawForge();if(CS.hint&&CS.t>15){X.textAlign='right';X.font='13px Georgia,serif';X.fillStyle='rgba(230,220,200,0.55)';X.fillText(CS.hint,W-26,H-16)}
  if(CS.skip&&CS.t>15){X.textAlign='right';X.font='13px Georgia,serif';X.fillStyle='rgba(230,220,200,0.45)';X.fillText('Enter — пропустить',W-26,H-16)}X.textAlign='left'}
 // ---------- 1) пролог: Мусаси выбрасывает из разлома в незнакомую горящую деревню, на него сразу нападают Гэнма
 function startIntro(){const c=LV.c;G.subs=[];G.card=null;resetPlayer(0,-12);P.drawn=false;P.y=8.6;P.csHide=true;

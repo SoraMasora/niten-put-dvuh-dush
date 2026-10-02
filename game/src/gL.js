@@ -59,6 +59,6 @@ function manorExt(g,env){if(ASSET.mats.ho_shoji_lit)ASSET.mats.ho_shoji_lit.emis
 function navHB(N){if(!N.Ht&&N.ht){const f=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let k=0;k<b.length;k++)u[k]=b.charCodeAt(k);return u};N.Ht=f(N.ht);N.Hl=f(N.hl)}return N.Ht}
 let navTm=1;
 function navCam(T,C){const N=LV.env.nav;if(!N||!navHB(N))return;const dx=C.x-T.x,dy=C.y-T.y,dz=C.z-T.z,L=Math.hypot(dx,dz);if(L<0.3)return;const n=Math.ceil(L/(N.cs*0.5));let tm=1;
- for(let k=2;k<=n;k++){const t=k/n,x=T.x+dx*t,z=T.z+dz*t,y=T.y+dy*t,i=Math.floor((x-N.x0)/N.cs),j=Math.floor((z-N.z0)/N.cs);if(i<0||j<0||i>=N.w||j>=N.h)break;const c=j*N.w+i,ht=N.Ht[c]*0.1;
-  const bl=N.g[c]?(N.Hl[c]<255&&y>N.Hl[c]*0.1-0.35&&y<ht+0.3):ht>y-0.3;if(bl){tm=Math.max(0.1,t-0.6/L);break}}
+ for(let k=2;k<=n;k++){const t=k/n,x=T.x+dx*t,z=T.z+dz*t,y=T.y+dy*t,i=Math.floor((x-N.x0)/N.cs),j=Math.floor((z-N.z0)/N.cs);if(i<0||j<0||i>=N.w||j>=N.h)break;const c=j*N.w+i,hs=N.hs||0.1,ho=N.ho||0,ht=N.Ht[c]*hs+ho;
+  const bl=N.g[c]?(N.Hl[c]<255&&y>N.Hl[c]*hs+ho-0.35&&y<ht+0.3):ht>y-0.3;if(bl){tm=Math.max(0.1,t-0.6/L);break}}
  navTm=tm<navTm?lerp(navTm,tm,0.5):lerp(navTm,tm,0.06);C.x=T.x+dx*navTm;C.y=T.y+dy*navTm;C.z=T.z+dz*navTm}

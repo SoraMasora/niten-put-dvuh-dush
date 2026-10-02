@@ -3,6 +3,7 @@ const THEMES={
  ash:{bg:0x2a1e18,fog:0x2e221b,dens:0.045,hemi:[0xa08070,0x2a1c14,1.0],moon:[0xffc8a0,1.2],exp:1.1,ground:'dirt',R:20},
  forest:{bg:0x0b1a17,fog:0x0e211c,dens:0.05,hemi:[0x7aaa9a,0x142018,1.0],moon:[0xb8e0d0,1.3],exp:1.1,ground:'moss',R:20},
  duel:{bg:0x060a14,fog:0x0a1020,dens:0.04,hemi:[0x6a7aa0,0x0a0c14,0.85],moon:[0x9ab0e0,1.5],exp:1.15,ground:'stone',R:16},
+ kak:{bg:0x6c5a66,fog:0x7a6470,dens:0.011,hemi:[0xe0c8b4,0x40302a,1.2],moon:[0xffc890,2.1],exp:1.1,ground:'dirt',R:200},
  house:{bg:0x05070d,fog:0x0b0d13,dens:0.022,hemi:[0x8c7c6c,0x1c1612,0.55],moon:[0x9ab0e0,0.7],exp:1.2,ground:'stone',R:60}
 };
 let ENV=null;const flames=[],rain={obj:null};
@@ -106,6 +107,7 @@ function buildEnv(theme){
   const lamps=LOC?LAYOUT.forest.lamps:[[-4,-10],[4,6],[-6,12],[7,-4]];lamps.forEach(([x,z],i)=>{stoneLantern(g,x,z,true);const l=STATIC[i];l.position.set(x,1.0,z);l.color.set(0xffa050);l.userData.base=3;l.distance=10;l.intensity=3});
   const fogM=new MB({map:TX.dot,color:0x9ac0b0,transparent:true,opacity:0.07,depthWrite:false,fog:false});for(let i=0;i<24;i++){const s=new THREE.Sprite(fogM);const[x,z]=ringPos(6,26);s.position.set(x,rnd(0.5,2),z);s.scale.set(rnd(8,16),rnd(3,5),1);g.add(s)}
  }else if(theme==='house'){buildHouseEnv(g,env);
+ }else if(theme==='kak'){gr.visible=false;buildKakEnv(g,env);
  }else{
   const pil=new THREE.CylinderGeometry(0.28,0.3,7,12);pil.translate(0,3.5,0);for(let i=0;i<14;i++){const a=i/14*Math.PI*2;if(EVok('pillar'))evAdd(g,'pillar',Math.cos(a)*17,0,Math.sin(a)*17,-a);else mesh(pil,M.pillar,Math.cos(a)*17,0,Math.sin(a)*17,g)}
   const ring=mesh(new THREE.TorusGeometry(17,0.3,8,96),EVok('pillar')&&ASSET.mats.ev_vermilion||M.pillar,0,EVok('pillar')?7.5:7,0,g);if(EVok('pillar')){const r2=mesh(new THREE.TorusGeometry(17,0.16,6,96),ASSET.mats.ev_vermilion,0,5.4,0,g);r2.rotation.x=Math.PI/2}ring.rotation.x=Math.PI/2;
@@ -119,7 +121,7 @@ function buildEnv(theme){
   makeRain(g);const mistM=new MB({map:TX.dot,color:0x8a98b8,transparent:true,opacity:0.06,depthWrite:false,fog:false});for(let i=0;i<18;i++){const sp=new THREE.Sprite(mistM);const[x,z]=ringPos(4,22);sp.position.set(x,rnd(0.3,1.2),z);sp.scale.set(rnd(9,15),rnd(1.5,3),1);g.add(sp)}
  }
  if(theme!=='duel')rain.obj=null;
- env.theme=theme;env.R=T.R;if(theme==='house')env.mirrors=[];env.nav=LOC&&theme!=='duel'?navOf(LN):null;return env}
+ env.theme=theme;env.R=T.R;if(theme==='house')env.mirrors=[];env.nav=theme==='kak'?kakNavV():LOC&&theme!=='duel'?navOf(LN):null;return env}
 const embersSpots=[];
 function extraMats(){Object.assign(M,{stoneL:new MS({color:0x4a4e4a,roughness:0.95}),lampOn:new MB({color:0xffb060,toneMapped:false}),lampOff:new MS({color:0x2a2a22}),bronze:new MS({color:0x8a6a30,roughness:0.35,metalness:1}),
  mirrorOff:new MS({color:0x6a5a3a,roughness:0.15,metalness:1}),mirrorOn:new MB({color:0xffe0a0,toneMapped:false}),torii:new MS({color:0x8a1810,roughness:0.6,emissive:0x300500}),charWood:new MS({color:0x17110d,roughness:0.95}),

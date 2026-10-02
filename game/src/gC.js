@@ -44,7 +44,8 @@ const CH=[
    {en:['gasa','kama','yumi','ash'],say:[['Акира','…Сколько же вас.'],['Юки','Шкала Они полна? R — Мусо Нитэн.']]}]},
  {title:'ГЛАВА 4',name:'Двор с колоколом',theme:'duel',noGate:true,mirrors:[[-3.5,-12,Math.PI/2]],start:[],
   waves:[{en:['sota'],boss:true,say:[['Сота','Ты пришёл, брат. С отцовским мечом… и с моим.'],['Акира','Я пришёл забрать тебя домой.'],['Сота','Дом сгорел. Умри!']]}]},
- {title:'ГЛАВА 5',name:'Забытый дом',theme:'house',house:true,mirrors:[[-2.95,-15.4,Math.PI/2],[-9.1,7.2,Math.PI/2]],start:[],waves:[]}
+ {title:'ГЛАВА 5',name:'Забытый дом',theme:'house',house:true,mirrors:[[-2.95,-15.4,Math.PI/2],[-9.1,7.2,Math.PI/2]],start:[],waves:[]},
+ {title:'ГЛАВА 6',name:'Родная деревня',theme:'kak',kak:true,noGate:true,mirrors:[],start:[],waves:[]}
 ];
 const G={mode:'title',diff:1,frame:0,chap:0,slow:0,slowTs:1,freeze:0,hitstop:0,shake:0,fov:55,fovT:55,camYaw:0,camPitch:0.28,camDist:4.6,card:null,subs:[],pops:[],
  souls:{r:0,b:0,p:0},stats:{kills:0,issen:0,time:0,deaths:0},issenFx:null,flashRed:0,tarScreen:0,rainFreeze:0,rainUp:false,winT:0,deadT:0,cp:null,bossBar:null,paused:false,menuSel:1,reviveHint:false,lock:null,wave:0,waveT:0,trans:0,exposureT:1};
@@ -120,7 +121,7 @@ function startAttack(k,dirY){if(G.oneBlade)return startOne(k,dirY);
 function startDraw(d,buf=null){const n=d?'draw':'sheathe';P.state=n;P.t=0;P.buf=buf;P.drawSpd=buf?1.6:1;P.idleClip=null;(SFX.draw||(()=>{}))(d)}
 function startDodge(dirY){const fr=G.buf&&G.buf.spd>0;if(P.st<20&&!fr){pop('Нет выносливости','#c9a0a0');return}if(!fr)P.st-=20;P.state='dodge';P.t=0;const y=dirY!=null?dirY:P.yaw+Math.PI;P.dodgeYaw=y;if(dirY!=null)P.yaw=dirY;
  P.dodgeLen=P.stance===0?19:P.stance===2?28:24;P.dodgeSpd=(P.stance===2?7.5:9)/60}
-function doHits(a){const mul=(P.stance===0?1.3:P.stance===2?0.8:1)*(P.muso>0?1.5:1)*(P.exhaust>0?0.7:1)*(G.buf&&G.buf.dmg>0?1.3:1)*(G.buf&&G.buf.sake>0?1.4:1)*(G.buf&&G.buf.ofuda>0?1.4:1),fx=fwdX(P.yaw),fz=fwdZ(P.yaw);let ofHit=false;
+function doHits(a){const FG=G.forge||{R:0,L:0},mul=(1+0.1*(a.type==='L'?FG.L:a.type==='R'?FG.R:(FG.R+FG.L)/2))*(P.stance===0?1.3:P.stance===2?0.8:1)*(P.muso>0?1.5:1)*(P.exhaust>0?0.7:1)*(G.buf&&G.buf.dmg>0?1.3:1)*(G.buf&&G.buf.sake>0?1.4:1)*(G.buf&&G.buf.ofuda>0?1.4:1),fx=fwdX(P.yaw),fz=fwdZ(P.yaw);let ofHit=false;
  for(const e of enemies){if(e.dead||P.hitList.has(e))continue;const dx=e.x-P.x,dz=e.z-P.z,d=Math.hypot(dx,dz)||0.01;
   const both=a.both||(P.stance===2&&a.type==='L');if(a.line){const f=dx*fx+dz*fz,l=Math.abs(dx*fz-dz*fx);if(f<-0.3||f>a.reach+e.d.rad||l>a.line+e.d.rad||Math.abs(e.y-P.y)>1.5)continue}else{if(!both&&(dx*fx+dz*fz)/d<a.arc)continue;if(d>a.reach+e.d.rad||Math.abs(e.y-P.y)>1.5)continue}
   P.hitList.add(e);if(G.oneBlade)oneHit(a,e,dx/d,dz/d);dmgEnemy(e,Math.round(rnd(a.dmg[0],a.dmg[1])*mul*(P.fire&&a.type==='R'?1.35:1)),dx/d,dz/d,{knock:a.knock,stop:a.type==='N'?7:4,gb:a.gb,launch:a.launch});
