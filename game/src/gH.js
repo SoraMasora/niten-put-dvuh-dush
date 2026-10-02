@@ -17,9 +17,9 @@ function houseExt(g,env){if(ASSET.mats.ho_shoji_lit)ASSET.mats.ho_shoji_lit.emis
  const inner=new Mesh(new THREE.PlaneGeometry(2.4,2.5),new MB({color:0x7a5236}));inner.position.set(0,1.87,HX.z+4.9);inner.visible=false;g.add(inner);
  env.hdoor={L:dL,R:dR,glow,inner,open:0};
  const lm=[[-1.9,3.37,HX.z+7.0],[1.9,3.37,HX.z+7.0]];env.hlamps=lm}
-const stepY=z=>z>-26.75?0:z>-27.5?0.24:z>-28.25?0.48:0.62;
+const stepY=z=>LVok('manor')?(z>MSTEP[0][0]?0:z>MSTEP[1][0]?MSTEP[0][2]:z>MSTEP[1][1]?MSTEP[1][2]:0.62):z>-26.75?0:z>-27.5?0.24:z>-28.25?0.48:0.62;
 function updDuelDoor(){const D=LV.env.hdoor;if(!D)return;D.glow.material.opacity=LV.duelOpen&&!CS.on?0.18+Math.sin(G.frame*0.06)*0.08:CS.on&&CS.k==='door'?D.glow.material.opacity:0;
- D.L.position.x=-0.6-1.2*D.open;D.R.position.x=0.6+1.2*D.open;D.inner.visible=D.open>0.02}
+ const hw=D.hw||0.6;D.L.position.x=-hw-2*hw*D.open;D.R.position.x=hw+2*hw*D.open;D.inner.visible=D.open>0.02}
 // ключ с тела Соты: поднять, осмотреть, понять, от чего он
 function startHouseKeyCS(x,z){const key=itemModel('housekey');scene.add(key);key.position.set(x,0.03,z);key.rotation.set(Math.PI/2,0,0);const hand=new V3();
  if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}

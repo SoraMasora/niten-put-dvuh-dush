@@ -31,7 +31,10 @@ const ITEMS={
  sake:{n:'Токкури «Кровь Они»',r:'e',type:'Усиление',max:2,w:0.6,cost:110,desc:'40 секунд: урон +40%, но получаемый урон +20%.',lore:'Саке, настоянное на рогах. Его пьют перед последним боем.',stats:[['Урон','+40%'],['Защита','−20%'],['Действует',sec(2400)]],use(){G.buf.sake=2400;fxUse(0xff3020);return true}}};
 const HOUSE_POOL=[['tea',3],['smoke',2.2],['ofuda',2],['sake',1.2]];
 const LOOT_POOL=[['gourd',3],['flask',3],['omamori',2],['whetstone',1.4],['censer',2],['scroll',1.4],['mask',0.8],['bento',3]];
-const CHESTS={ash:[[8.5,3.5],[-7.5,10.5]],forest:[[9.5,-3.5],[-9,7],[6,12]],duel:[[5.8,-8.5]]};
+const CHESTS0={ash:[[8.5,3.5],[-7.5,10.5]],forest:[[9.5,-3.5],[-9,7],[6,12]],duel:[[5.8,-8.5]]};
+// v0.12: в локациях из моделей сундуки стоят в проходимых клетках nav
+const CHESTS_LOC={ash:[[12,-6],[-12,-2]],forest:[[4.5,-3.5],[-4.5,7],[4,14]],duel:[[5.8,-8.5]]};
+const CHESTS=new Proxy({},{get:(o,k)=>(LOCN[k]&&LVok(LOCN[k])?CHESTS_LOC:CHESTS0)[k]});
 G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;
 function invReset(){G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;G.noteRead=false;G.hcleared=new Set();G.hreveal=new Set();G.hseen=new Set();G.hasMap=false;G.oneBlade=false;G.ambushDone=false;G.mapOpen=false}
 function invCount(id){return G.inv.reduce((a,s)=>a+(s&&s.id===id?s.n:0),0)}

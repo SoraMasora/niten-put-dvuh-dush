@@ -17,6 +17,7 @@ function makeMirror(g,x,z,yaw){const m=new Group();m.position.set(x,0,z);m.rotat
  const lant=stoneLantern(g,x+Math.cos(yaw)*1.6,z-Math.sin(yaw)*1.6,false);
  return{x,z,act:false,face,lant}}
 function makeGate(g,x,z){const t=new Group();t.position.set(x,0,z);g.add(t);const r=M.torii;
+ if(LVok('portal')){portalRing(t,0,0);const glow=mesh(new THREE.CircleGeometry(1.5,40),new MB({color:0xffc080,transparent:true,opacity:0.0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}),0,1.75,0,t);t.visible=false;return{t,glow,x,z}}
  if(ASSET.ok&&ASSET.parts.PR){addPart(t,'PR','torii');addPart(t,'PR','toriib')}else{for(const s of[-1,1])mesh(new THREE.CylinderGeometry(0.16,0.2,4,10),r,s*1.6,2,0,t);
  mesh(new THREE.BoxGeometry(4.6,0.28,0.4),r,0,4.05,0,t);mesh(new THREE.BoxGeometry(3.8,0.18,0.3),r,0,3.4,0,t);}
  const glow=mesh(new THREE.PlaneGeometry(3,3.3),new MB({color:0xffc080,transparent:true,opacity:0.0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}),0,1.7,0,t);
@@ -69,12 +70,15 @@ function buildEnv(theme){
  if(ASSET.ok&&ASSET.mats.ev_kawara&&!ASSET.mats.ev_kawara.userData.fx){const k=ASSET.mats.ev_kawara;k.userData.fx=1;k.metalness=0;k.envMapIntensity=0.25;k.roughness=0.8;k.color.multiplyScalar(0.55)}
  if(ENV){scene.remove(ENV);ENV.traverse(o=>{if(o.geometry)o.geometry.dispose()})}flames.length=0;for(const l of STATIC){l.intensity=0;l.userData.base=0}
  const T=THEMES[theme],g=new Group();ENV=g;scene.add(g);
- scene.background=new THREE.Color(T.bg);scene.fog=new THREE.FogExp2(T.fog,T.dens);hemi.color.set(T.hemi[0]);hemi.groundColor.set(T.hemi[1]);hemi.intensity=T.hemi[2];moon.color.set(T.moon[0]);moon.intensity=T.moon[1];
+ const LN=LOCN[theme],LOC=!!LN&&LVok(LN);
+ scene.background=new THREE.Color(T.bg);scene.fog=new THREE.FogExp2(T.fog,LOC&&theme==='duel'?0.02:LOC&&theme==='ash'?0.035:T.dens);hemi.color.set(T.hemi[0]);hemi.groundColor.set(T.hemi[1]);hemi.intensity=T.hemi[2];moon.color.set(T.moon[0]);moon.intensity=T.moon[1];
  const gm=groundMat({ash:'ground_ash',forest:'ground_moss',duel:'ground_paving'}[theme],theme==='duel'?44:40)||new MS({map:TX[T.ground],roughness:theme==='duel'?0.75:0.95,metalness:theme==='duel'?0.05:0});if(theme==='duel'){gm.roughnessMap=puddleTex();gm.roughness=0.8;gm.envMapIntensity=0.55;gm.color.multiplyScalar(0.85)}const gr=new Mesh(new THREE.PlaneGeometry(160,160),gm);gr.rotation.x=-Math.PI/2;gr.receiveShadow=true;g.add(gr);if(theme==='house')gr.position.y=-0.06;
+ if(LOC){if(theme==='ash')gr.position.y=-7;else gr.visible=false}
  const moonS=new THREE.Sprite(new THREE.SpriteMaterial({map:TX.dot,color:theme==='ash'?0xff9060:0xd8e4ff,fog:false,toneMapped:false}));moonS.material.opacity=0.55;moonS.material.transparent=true;moonS.position.set(-50,55,70);moonS.scale.set(6,6,1);g.add(moonS);
  const env={mirrors:[],gate:null};setGrade(theme);
  env.rays=godRays(g,theme);
- if(theme==='ash'){
+ if(theme==='ash'&&LOC){locAdd(g,'village');const L=LAYOUT.ash;L.fires.forEach(([x,y,z],i)=>addFire(g,x,y,z,1.5,i));for(const e of L.embers)embersSpots.push(e);
+ }else if(theme==='ash'){
   const houses=[];for(let i=0;i<14;i++){const a=i/14*Math.PI*2+rnd(-.1,.1),r=rnd(24,30);houses.push([Math.cos(a)*r,Math.sin(a)*r,a])}
   if(EVok('minka')){houses.forEach(([x,z,a],i)=>{const burnt=i%2===0,s=rnd(0.9,1.12);evAdd(g,burnt?'minkab':'minka',x,0,z,-a-Math.PI/2+rnd(-.15,.15),s);if(burnt)addFire(g,x*0.97,3.4*s,z*0.97,2.2,i/2|0);
     if(i%3===1)evAdd(g,'barrel',x*0.86+rnd(-1,1),0,z*0.86+rnd(-1,1),rnd(0,6));if(i%5===2)evAdd(g,'cart',x*0.8,0,z*0.8,-a+rnd(-.5,.5))});
@@ -88,6 +92,7 @@ function buildEnv(theme){
   if(EVok('scarecrow')){for(let i=0;i<6;i++){const [x,z]=ringPos(5,17);evAdd(g,'scarecrow',x,0,z,rnd(0,6)).rotation.z=rnd(-.12,.12)}}else for(let i=0;i<6;i++){const [x,z]=ringPos(5,17);const d=new Group();d.position.set(x,0,z);g.add(d);mesh(new THREE.CylinderGeometry(0.04,0.04,1.8,5),M.wood,0,0.9,0,d);const b=mesh(new THREE.CylinderGeometry(0.22,0.25,0.8,8),M.thatch,0,1.3,0,d);mesh(new THREE.BoxGeometry(1,0.08,0.08),M.wood,0,1.45,0,d);mesh(new THREE.SphereGeometry(0.17,8,6),M.thatch,0,1.85,0,d)}
   for(let i=0;i<8;i++){const [x,z]=ringPos(6,18);embersSpots.push([x,z]);if(EVok('debris')){evAdd(g,'debris',x,0,z,rnd(0,6),rnd(0.6,1.0));continue}const deb=mesh(new THREE.BoxGeometry(rnd(0.6,1.4),0.25,rnd(0.4,1)),M.charWood,x,0.12,z,g);deb.rotation.y=rnd(0,3)}
  }else if(theme==='forest'){
+  if(LOC){locAdd(g,'sagano');const L=LAYOUT.forest;if(EVok('shrine')){evAdd(g,'shrine',L.shrine[0],0,L.shrine[1],Math.PI/2);stoneLantern(g,L.shrine[0]+0.6,L.shrine[1]+1.9,true)}}else{
   const bg=new THREE.CylinderGeometry(0.07,0.09,14,7);bg.translate(0,7,0);
   if(EVok('bamboo')){const pl=(o,i)=>{let x,z;do{[x,z]=ringPos(i<150?9:14,40)}while(Math.hypot(x,z+14)<3);o.position.set(x,0,z);o.rotation.set(rnd(-.05,.05),rnd(0,6),rnd(-.05,.05));const k=rnd(.8,1.2);o.scale.set(k,rnd(.8,1.15),k)};
    const seed=[];const pl2=(o,i)=>{if(!seed[i]){seed[i]=1}pl(o,i)};const R0=Math.random;let st=7;const rr=()=>{st=(st*16807)%2147483647;return st/2147483647};
@@ -97,13 +102,15 @@ function buildEnv(theme){
   const nodeG=new THREE.CylinderGeometry(0.1,0.1,0.06,7);
   const lg=new THREE.ConeGeometry(0.025,0.4,3);lg.translate(0,0.2,0);if(EVok('grass'))evInst(g,'grass',2200,(o)=>{const[x,z]=ringPos(1,28);o.position.set(x,0,z);o.rotation.set(0,rnd(0,6),0);o.scale.setScalar(rnd(.7,1.5))},false);else inst(lg,M.grass,4000,(o)=>{const[x,z]=ringPos(1,26);o.position.set(x,0,z);o.rotation.set(rnd(-.4,.4),rnd(0,6),rnd(-.4,.4));o.scale.set(1,rnd(.5,1.3),1)},g);
   if(EVok('rock1')){for(let i=0;i<18;i++){const[x,z]=ringPos(6,24);evAdd(g,'rock'+(1+i%3),x,0,z,rnd(0,6),rnd(0.6,1.4))}evAdd(g,'shrine',-8.5,0,-3.5,Math.PI/2-0.3);stoneLantern(g,-8.2,-1.8,true)}else for(let i=0;i<14;i++){const[x,z]=ringPos(7,21);const r=mesh(new THREE.DodecahedronGeometry(rnd(0.4,1.1),0),M.rock,x,0.2,z,g);r.scale.y=0.6;r.rotation.set(rnd(0,3),rnd(0,3),0);r.receiveShadow=true}
-  const lamps=[[-4,-10],[4,6],[-6,12],[7,-4]];lamps.forEach(([x,z],i)=>{stoneLantern(g,x,z,true);const l=STATIC[i];l.position.set(x,1.0,z);l.color.set(0xffa050);l.userData.base=3;l.distance=10;l.intensity=3});
+  }
+  const lamps=LOC?LAYOUT.forest.lamps:[[-4,-10],[4,6],[-6,12],[7,-4]];lamps.forEach(([x,z],i)=>{stoneLantern(g,x,z,true);const l=STATIC[i];l.position.set(x,1.0,z);l.color.set(0xffa050);l.userData.base=3;l.distance=10;l.intensity=3});
   const fogM=new MB({map:TX.dot,color:0x9ac0b0,transparent:true,opacity:0.07,depthWrite:false,fog:false});for(let i=0;i<24;i++){const s=new THREE.Sprite(fogM);const[x,z]=ringPos(6,26);s.position.set(x,rnd(0.5,2),z);s.scale.set(rnd(8,16),rnd(3,5),1);g.add(s)}
  }else if(theme==='house'){buildHouseEnv(g,env);
  }else{
   const pil=new THREE.CylinderGeometry(0.28,0.3,7,12);pil.translate(0,3.5,0);for(let i=0;i<14;i++){const a=i/14*Math.PI*2;if(EVok('pillar'))evAdd(g,'pillar',Math.cos(a)*17,0,Math.sin(a)*17,-a);else mesh(pil,M.pillar,Math.cos(a)*17,0,Math.sin(a)*17,g)}
   const ring=mesh(new THREE.TorusGeometry(17,0.3,8,96),EVok('pillar')&&ASSET.mats.ev_vermilion||M.pillar,0,EVok('pillar')?7.5:7,0,g);if(EVok('pillar')){const r2=mesh(new THREE.TorusGeometry(17,0.16,6,96),ASSET.mats.ev_vermilion,0,5.4,0,g);r2.rotation.x=Math.PI/2}ring.rotation.x=Math.PI/2;
-  if(EVok('wall')){const n=27;for(let i=0;i<n;i++){const a=i/n*Math.PI*2,x=Math.cos(a)*26,z=Math.sin(a)*26;if(z<-15&&Math.abs(x)<13)continue;evAdd(g,'wall',x,0,z,-a+Math.PI/2,[1.03,1,1])}
+  if(LOC){locAdd(g,'scifi',false);if(LVok('manor'))manorExt(g,env);else if(HOok('ext'))houseExt(g,env);for(const sx of[-1,1])stoneLantern(g,sx*3.2,-23.5,true)}
+  else if(EVok('wall')){const n=27;for(let i=0;i<n;i++){const a=i/n*Math.PI*2,x=Math.cos(a)*26,z=Math.sin(a)*26;if(z<-15&&Math.abs(x)<13)continue;evAdd(g,'wall',x,0,z,-a+Math.PI/2,[1.03,1,1])}
    if(HOok('ext'))houseExt(g,env);else evAdd(g,'hall',0,0,-31,0);for(const sx of[-1,1]){stoneLantern(g,sx*3.2,-23.5,true)}}
   else  for(let i=0;i<4;i++){const a=i/4*Math.PI*2+Math.PI/4;const w=mesh(new THREE.BoxGeometry(20,6,1),M.wall,Math.cos(a)*26,3,Math.sin(a)*26,g);w.rotation.y=-a+Math.PI/2;const rf=mesh(new THREE.BoxGeometry(22,0.4,3),M.roof,Math.cos(a)*26,6.2,Math.sin(a)*26,g);rf.rotation.y=-a+Math.PI/2}
   const bt=new Group();bt.position.set(0,0,9);g.add(bt);if(EVok('shoro'))addPart(bt,'EV','shoro');else for(const s of[-1,1])mesh(new THREE.BoxGeometry(0.35,5,0.35),M.pillar,s*1.8,2.5,0,bt);if(!EVok('shoro'))mesh(new THREE.BoxGeometry(4.4,0.35,0.5),M.pillar,0,5,0,bt);
@@ -112,7 +119,7 @@ function buildEnv(theme){
   makeRain(g);const mistM=new MB({map:TX.dot,color:0x8a98b8,transparent:true,opacity:0.06,depthWrite:false,fog:false});for(let i=0;i<18;i++){const sp=new THREE.Sprite(mistM);const[x,z]=ringPos(4,22);sp.position.set(x,rnd(0.3,1.2),z);sp.scale.set(rnd(9,15),rnd(1.5,3),1);g.add(sp)}
  }
  if(theme!=='duel')rain.obj=null;
- env.theme=theme;env.R=T.R;if(theme==='house')env.mirrors=[];return env}
+ env.theme=theme;env.R=T.R;if(theme==='house')env.mirrors=[];env.nav=LOC&&theme!=='duel'?navOf(LN):null;return env}
 const embersSpots=[];
 function extraMats(){Object.assign(M,{stoneL:new MS({color:0x4a4e4a,roughness:0.95}),lampOn:new MB({color:0xffb060,toneMapped:false}),lampOff:new MS({color:0x2a2a22}),bronze:new MS({color:0x8a6a30,roughness:0.35,metalness:1}),
  mirrorOff:new MS({color:0x6a5a3a,roughness:0.15,metalness:1}),mirrorOn:new MB({color:0xffe0a0,toneMapped:false}),torii:new MS({color:0x8a1810,roughness:0.6,emissive:0x300500}),charWood:new MS({color:0x17110d,roughness:0.95}),

@@ -65,7 +65,7 @@ function drawCS(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const b=CS.bars*H*0.
 function startIntro(){const c=LV.c;G.subs=[];G.card=null;resetPlayer(0,-12);P.drawn=false;P.y=8.6;P.csHide=true;
  portalCol(csP,PCOL.rift);Object.assign(csP.userData,{w:1.9,h:1.9,open:0,int:1,spin:1.6});csP.position.set(0,9.2,-12);csP.rotation.set(Math.PI/2,0,0);
  beam.material.color.set(PCOL.rift.core);beam.position.set(0,4.6,-12);beam.material.opacity=0;
- const EN=[[-2.7,-7.3],[2.9,-7.0],[0.4,-6.2]].slice(0,c.waves[0].en.length);let foes=null;
+ const EN=[[-2.7,-7.3],[2.9,-7.0],[0.4,-6.2]].slice(0,c.waves[0].en.length).map(([x,z])=>LV.env.nav&&!navClear(x,z,0.5)?navNearest(x,z):[x,z]);let foes=null;
  const spawn=()=>{if(foes)return;foes=c.waves[0].en.map((t,i)=>{const e=mkEnemy(t,EN[i%EN.length][0],EN[i%EN.length][1]);e.state='csIdle';e.y=-1.8;e.yaw=Math.atan2(P.x-e.x,P.z-e.z);enemies.push(e);return e})};
  const finish=()=>{spawn();for(const e of foes){e.y=0;e.state='move';e.st=0;e.cd=rnd(75,125);e.yaw=Math.atan2(P.x-e.x,P.z-e.z)}
   P.y=0;P.vy=0;P.csHide=false;if(!P.drawn&&P.state!=='draw'){P.drawn=true;P.state='idle'}P.yaw=0;
@@ -129,7 +129,7 @@ function startPortalExit(){const gt=LV.env.gate,side=Math.sign(P.z-gt.z)||-1,S=[
   if(t>=226)go()},go)}
 // ---------- 3) прибытие: портал выплёвывает героя в новую локацию
 function startArrival(){const c=LV.c,th=c.theme,pc=PCOL[th]||PCOL.ash,PZ=-13.7;G.subs=[];G.card=null;resetPlayer(0,PZ);P.csHide=true;P.y=0.3;
- portalCol(csP,pc);Object.assign(csP.userData,{w:1.15,h:1.55,open:1,int:1.4,spin:4});csP.position.set(0,1.62,PZ-0.15);csP.rotation.set(0,0,0);
+ portalCol(csP,pc);const PR_=LVok('portal');Object.assign(csP.userData,{w:PR_?PORTAL_R:1.15,h:PR_?PORTAL_R:1.55,open:1,int:1.4,spin:4});csP.position.set(0,PR_?1.75:1.62,PZ-0.15);if(PR_&&!LV.house){portalRing(ENV,0,PZ-0.15);LV.walls=(LV.walls||[]).concat([-1,1].map(s=>({x0:s>0?1.25:-1.75,x1:s>0?1.75:-1.25,z0:PZ-0.45,z1:PZ+0.15,cam:false})))}csP.rotation.set(0,0,0);
  const line={forest:['Акира','Тишина… Бамбук шепчет, будто знает моё имя.'],duel:['Акира','Колокол… Сота где-то рядом.']}[th]||['Акира','Снова чужая земля.'];
  const finish=()=>{P.csHide=false;P.y=0;P.vy=0;P.x=0;if(P.z<-12.6)P.z=-12.2;P.yaw=0;csEnd(c.start)};
  csStart('arrive',t=>{const H=CS.H,u=csP.userData;

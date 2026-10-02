@@ -25,12 +25,12 @@ const ATK={R:{s:18,a:6,r:22,dmg:[24,32],reach:2.4,arc:-0.1,st:15,knock:3,type:'R
  L:{s:10,a:4,r:12,dmg:[12,16],reach:2.7,arc:0.45,st:7,knock:1,type:'L'},N:{s:14,a:6,r:20,dmg:[45,45],reach:2.6,arc:0.15,st:25,knock:9,type:'N',gb:true},X:{s:8,a:6,r:18,dmg:[45,45],reach:2.6,arc:0.15,st:10,knock:4,type:'N',gb:true,launch:true},
  LG:{s:9,a:5,r:14,dmg:[8,11],reach:1.9,arc:0.45,st:6,knock:3,type:'L'}};
 const CH=[
- {title:'ПРОЛОГ',name:'Пепел Ивате',theme:'ash',mirrors:[[-4.5,-9,Math.PI/2],[-10,2,Math.PI/2]],
+ {title:'ПРОЛОГ',name:'Пепел Ивате',theme:'ash',mirrors:[[-2.5,-9.5,Math.PI/2],[-9,2,Math.PI/2]],
   start:[['Юки','Акира… они идут. Правая катана — ЛКМ, левая — ПКМ. Мышь — камера, WASD — шаг.']],
   waves:[{en:['ash','ash'],say:[['Юки','Скрести мечи! ЛКМ и ПКМ вместе — удар креста. Shift — уворот.']]},
    {en:['ash','ash','ash'],say:[['Юки','Когда клинок блеснёт красным — Q в последний миг. Это Иссэн.'],['Юки','Души не ушли! Зажми E, пока они не почернели.']]},
    {en:['gasa','ash'],say:[['Хитоцумэ Гаса','Умри!'],['Юки','Если схватит — бей обоими мечами!']]}]},
- {title:'ГЛАВА 1',name:'Лес Шепчущих Бамбуков',theme:'forest',mirrors:[[-4.5,-9,Math.PI/2],[-10,2,Math.PI/2]],
+ {title:'ГЛАВА 1',name:'Лес Шепчущих Бамбуков',theme:'forest',mirrors:[[-5,-9,Math.PI/2],[5,2,-Math.PI/2]],
   start:[['Юки','Тихо. Бамбук шепчет… F — огненный серп, G — лунные цепи. Tab — захват цели.']],
   waves:[{en:['kama','kama','kama'],say:[['Юки','Кама-итати! Смеются, как дети… Стойка Воды (3) — против стаи.']]},
    {en:['yumi','ash','ash','yumi'],say:[['Юки','Лучники! Держи блок (Q) — клинки отобьют стрелы.']]},
@@ -79,6 +79,7 @@ const fwdX=y=>Math.sin(y),fwdZ=y=>Math.cos(y);
 function say(n,t){G.subs.push({n,t,d:Math.max(170,t.length*4.2),a:0})}
 function pop(t,col='#e8dcc0'){G.pops.push({t,col,life:110})}
 function arenaClamp(o,r=0){if(LV.walls)wallPush(o,Math.max(0.28,r*0.75));if(LV.house){o.x=clamp(o.x,-19.7,19.7);o.z=clamp(o.z,-16.7,24.7);return}
+ if(LV.env.nav){navClamp(o);return}
  const R=LV.env.R-r,d=Math.hypot(o.x,o.z);if(d>R){if(LV.duelOpen&&o===P&&o.z<-11&&Math.abs(o.x)<3.4){o.x=clamp(o.x,-2.3,2.3);o.z=Math.max(o.z,-26.6);return}o.x*=R/d;o.z*=R/d}}
 function setStance(k){if(P.stance===k)return;P.stance=k;P.stanceFx=14;SFX.stance(k)}
 function nearest(r,dirYaw=null,cone=-1){let b=null,bd=r;for(const e of enemies){if(e.dead||e.inv)continue;const dx=e.x-P.x,dz=e.z-P.z,d=Math.hypot(dx,dz);if(d>=bd)continue;if(dirYaw!=null&&(dx*fwdX(dirYaw)+dz*fwdZ(dirYaw))/(d||1)<cone)continue;bd=d;b=e}return b}
@@ -179,7 +180,7 @@ function updPlayer(ts){
  }
  P.mvS=lerp(P.mvS||0,mv,1-Math.pow(mv>(P.mvS||0)?0.8:0.72,ts));if(P.mvS<0.0005)P.mvS=0;mv=P.mvS;
  P.x+=fwdX(P.yaw)*mv*ts+P.vx*ts;P.z+=fwdZ(P.yaw)*mv*ts+P.vz*ts;P.vx*=0.85;P.vz*=0.85;arenaClamp(P,0.5);
- for(const e of enemies){if(e.dead)continue;const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz),min=e.d.rad+0.35;if(d<min&&d>0.001&&P.state!=='dodge'){P.x=e.x+dx/d*min;P.z=e.z+dz/d*min}}
+ for(const e of enemies){if(e.dead)continue;const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz),min=e.d.rad+0.35;if(d<min&&d>0.001&&P.state!=='dodge'){P.x=e.x+dx/d*min;P.z=e.z+dz/d*min}}if(LV.env.nav)navClamp(P);
  if(P.idleClip){if(P.state!=='idle'||P.drawn||dirY!=null)P.idleClip=null;else{P.idleClip.t+=ts;if(P.idleClip.t>=((ANIMS.clips.toss||{n:1}).n)){P.idleClip=null;P.idleT=-200}}}
  else if(!P.drawn&&P.state==='idle'&&P.idleT>420&&ANIMS.clips.toss)P.idleClip={t:0};
  P.walk=lerp(P.walk,mv>0?1:0,0.2);P.walkPh+=mv*ts*(4.4-1.8*(P.gait??1));P.idleT=P.state==='idle'?(P.idleT||0)+ts:0;P.absorbing=P.state==='absorb';

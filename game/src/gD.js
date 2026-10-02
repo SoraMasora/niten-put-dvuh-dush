@@ -55,7 +55,7 @@ function updEnemy(e,ts){
  if(e.frozen>0){e.frozen-=ts;return}
  e.vy-=0.0075*ts;e.y+=e.vy*ts;if(e.y<0){e.y=0;e.vy=0}
  e.x+=e.vx*ts;e.z+=e.vz*ts;const fr=Math.pow(0.86,ts);e.vx*=fr;e.vz*=fr;arenaClamp(e,0.5);solidPush(e,e.d.rad);
- const dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz)||1,ty=Math.atan2(dx,dz);
+ let dx=P.x-e.x,dz=P.z-e.z;const d=Math.hypot(dx,dz)||1;if(LV.env.nav&&d>1.2){const s=navSteer(e);if(s){dx=s[0]*d;dz=s[1]*d}}const ty=Math.atan2(dx,dz);
  if(e.t==='sota')return updSota(e,ts,d,ty);if(e.d.ai)return e.d.ai(e,ts,d,ty);
  e.st+=ts;const sp=e.d.spd/60;
  switch(e.state){
@@ -91,7 +91,7 @@ function updSota(e,ts,d,ty){e.st+=ts;const sp=e.phase===2?1.3:1;
 // ---------- chapters
 function clearWorld(){for(const e of enemies)removeRig(e);for(const s of souls)scene.remove(s.m);for(const p of proj)scene.remove(p.m);enemies=[];souls=[];proj=[];lines=[];FX.add.list.length=0;FX.norm.list.length=0}
 function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;const c=CH[i];const env=buildEnv(c.theme);
- env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));env.gate=makeGate(ENV,0,c.house?-90:16);
+ env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));const gp=(LAYOUT[c.theme]&&LOCN[c.theme]&&LVok(LOCN[c.theme])&&LAYOUT[c.theme].gate)||[0,16];env.gate=makeGate(ENV,gp[0],c.house?-90:gp[1]);
  LV={c,env,wave:0,waveT:0,started:false,done:false,walls:env.walls||null,house:!!c.house,H:env.H||null};G.subs=[];G.bossBar=null;G.rainFreeze=0;G.rainUp=false;G.issenFx=null;G.lock=null;M.sotaSkin.color.set(0x9c7b66);
  resetPlayer(0,c.house?-14.6:-12);G.camYaw=0;G.camK=1;
  if(cp){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
@@ -100,11 +100,11 @@ function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;const c=CH[i];const e
  G.card={t:0,title:c.title,name:c.name}}
 function activateMirror(m,silent){if(m.act)return;m.act=true;m.face.material=M.mirrorOn;m.lant.material=M.lampOn;if(!silent){P.food=3;P.hp=P.max;pop('Зеркало-сакр: путь сохранён','#e6c98a');SFX.bell()}}
 function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s[1]);
- w.en.forEach((t,i)=>{let x,z,tries=0;do{const a=G.camYaw+rnd(-1.3,1.3)+(i%2?0.4:-0.4),r=t==='yumi'?rnd(11,14):t==='sota'?7:rnd(8,11);x=P.x+Math.sin(a)*r;z=P.z+Math.cos(a)*r;tries++}while(Math.hypot(x,z)>LV.env.R-1.5&&tries<30);
+ const used=[];w.en.forEach((t,i)=>{let x,z,tries=0;if(LV.env.nav){[x,z]=navSpawn(t,i,used);const e=mkEnemy(t,x,z);e.yaw=Math.atan2(P.x-x,P.z-z);enemies.push(e);if(t==='sota'){G.bossBar=e;SFX.bell()}return}do{const a=G.camYaw+rnd(-1.3,1.3)+(i%2?0.4:-0.4),r=t==='yumi'?rnd(11,14):t==='sota'?7:rnd(8,11);x=P.x+Math.sin(a)*r;z=P.z+Math.cos(a)*r;tries++}while(Math.hypot(x,z)>LV.env.R-1.5&&tries<30);
   if(Math.hypot(x,z)>LV.env.R-1.5){const k=(LV.env.R-1.5)/Math.hypot(x,z);x*=k;z*=k}
   const e=mkEnemy(t,x,z);enemies.push(e);if(t==='sota'){G.bossBar=e;SFX.bell()}});LV.active=true}
 function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){u.open=0;gateP.visible=false;return}
- if(!u.open){const nx=CH[G.chap+1];portalCol(gateP,PCOL[nx?nx.theme:'ash']||PCOL.ash);u.w=1.15;u.h=1.55;u.int=1;u.spin=1;ripple(gateP)}
+ if(!u.open){const nx=CH[G.chap+1];portalCol(gateP,PCOL[nx?nx.theme:'ash']||PCOL.ash);u.w=LVok('portal')?PORTAL_R:1.15;u.h=LVok('portal')?PORTAL_R:1.55;u.int=1;u.spin=1;ripple(gateP)}
  gateP.position.set(gt.x,1.75,gt.z);gateP.rotation.set(0,0,0);u.open=Math.min(1,u.open+0.02);if(!CS.on){u.int=lerp(u.int,1,0.05);u.spin=lerp(u.spin,1,0.05)}updPortal(gateP)}
 function updChapter(ts){if(LV.env.hdoor)updDuelDoor();
  if(LV.house){updHouse(ts);if(G.rainFreeze>0)G.rainFreeze-=ts;return}
@@ -116,7 +116,7 @@ function updChapter(ts){if(LV.env.hdoor)updDuelDoor();
  const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<2.6&&!G.trans&&!CS.on&&P.state!=='dead')startPortalExit()}
  if(G.rainFreeze>0){G.rainFreeze-=ts;if(G.rainFreeze<=0)G.rainUp=true}}
 function updWorld(ts){
- for(const e of enemies){if(!CS.on)updEnemy(e,ts);stepTilt(e.tl,ts)}separate();
+ for(const e of enemies){if(!CS.on)updEnemy(e,ts);stepTilt(e.tl,ts)}separate();if(LV.env.nav)for(const e of enemies)if(!e.dead)navClamp(e);
  for(let i=0;i<enemies.length;i++)for(let j=i+1;j<enemies.length;j++){const a=enemies[i],b=enemies[j];if(a.dead||b.dead)continue;const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad+0.2;if(d<m&&d>0.001){const p=(m-d)*0.1;a.x-=dx/d*p;a.z-=dz/d*p;b.x+=dx/d*p;b.z+=dz/d*p}}
  enemies=enemies.filter(e=>{if(e.dead&&e.pending<=0&&e.deathT>700){removeRig(e);return false}return true});
  const orb=hero.arms.L.orb;orb.getWorldPosition(tv1);const gx=tv1.x,gy=tv1.y,gz=tv1.z;
