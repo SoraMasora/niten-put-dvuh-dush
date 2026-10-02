@@ -328,7 +328,7 @@ function startExitCS(){const H=LV.H,ex=H.open.find(o=>o.type==='exit');if(P.draw
   if(t===150){C.to=[0,26.2];C.spd=0.022}
   CS.fadeC='255,248,236';CS.fade=ek(t,170,230);
   if(t===150)csSay('Акира','Сота… я узнаю, что здесь случилось.',150,230);
-  if(t>=240){CS.fadeC='0,0,0';csEnd();G.mode='victory';G.noPauseOnUnlock=true;document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>G.noPauseOnUnlock=false,100)}},null)}
+  if(t>=240){csEnd();kakMemory(true)}},null)}
 function houseBossDown(e){const H=LV.H;if(!H)return;const ex=H.open.find(o=>o.type==='exit');ex.w.off=true;ex.open=0.08;
  H.spots.push({k:'exit',x:0,z:23.9,r:1.6,label:'X — открыть дверь в глубину дома'});spawnWI('key',e.x,1.2,e.z,0.01,0.08,0.01);
  say('Кагэмару','…Он… ждёт тебя… внизу…');say('Юки','Страж пал. Дверь за додзё открыта.')}

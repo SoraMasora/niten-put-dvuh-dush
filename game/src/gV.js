@@ -22,7 +22,7 @@ function kakRig(id,name,sc){const r=rigHumanX(name,'npc',{scale:sc});scene.remov
 function kakLoad(cp){LV.kak=true;G.kak=G.kak||{map:false,girl:false,fixed:false,n:{}};G.forge=G.forge||{R:0,L:0};KK.room=-1;KK.door=null;KK.npcs=[];KK.smith=null;KK.hilt=null;
  const sp=KAKD.spawn;P.x=sp[0];P.z=sp[1];P.yaw=1.85;G.camYaw=P.yaw;G.camDist=4.6;P._nx=undefined;GY=kakGH(P.x,P.z);
  if(ASSET.skins&&ASSET.skins.sarah){
-  for(const d of KAKD.doors){if(!d.npc||KK.npcs.some(n=>n.room===d.room))continue;const R=KAKD.rooms[d.room],gi=d.npc==='girl'&&!ASSET.skins.girl,sc=gi?0.74:1;
+  for(const d of KAKD.doors){if(!d.npc||KK.npcs.some(n=>n.room===d.room))continue;const R=KAKD.rooms[d.room],gi=d.npc==='girl'&&!ASSET.skins.girl,sc=gi?0.74:d.npc==='girl'?0.67:1;
    const r=kakRig(d.npc,gi?'sarah':d.npc,sc);KK.rooms[d.room].add(r.root);const x=R.ox+R.npc[0],z=R.npc[1];
    if(gi)for(const m of Object.values(r.mm))if(m.color)m.color.offsetHSL(0.02,0.08,0.04);
    KK.npcs.push({id:d.npc,n:KNAME[d.npc],r,x,y:0,z,yaw:Math.atan2(R.ox-x,R.d/2-z),yaw0:Math.atan2(R.ox-x,R.d/2-z),room:d.room,t:Math.random()*99,eye:KEYE[d.npc]*(gi?0.98:1),talk:0,tt:0})}
@@ -168,10 +168,10 @@ function drawKakMap(){X.fillStyle='rgba(0,0,0,0.78)';X.fillRect(0,0,W,H);const N
  const ax=SX(px),ay=SY(pz),fx=-Math.sin(yw),fy=-Math.cos(yw);X.fillStyle='#b01810';X.beginPath();X.moveTo(ax+fx*13,ay+fy*13);X.lineTo(ax-fx*7+fy*7,ay-fy*7-fx*7);X.lineTo(ax-fx*7-fy*7,ay-fy*7+fx*7);X.closePath();X.fill();
  X.font='13px Georgia,serif';X.fillStyle='rgba(230,220,200,0.7)';X.fillText('M / Esc — закрыть',cx,cy+ph/2+62);X.textAlign='left'}
 // ---------- катсцена после «Забытого дома»: воспоминание о деревне (сепия, облёт), мысль Акиры, перенос в деревню
-function kakMemory(){const ci=CH.findIndex(c=>c&&c.kak);if(ci<0){G.winT=1;return}
+function kakMemory(white){const ci=CH.findIndex(c=>c&&c.kak);if(ci<0){G.winT=1;return}
  const sep=()=>{const U=GRADE.uniforms;U.uTint.value.set(1.16,0.98,0.74);U.uShadow.value.set(0.03,0.015,0);U.uSat.value=0.12;U.uCon.value=1.12};
  csStart('kakMem',t=>{CS.bars=1;
-  if(t<=50){CS.fade=t/50;CS.fadeC='0,0,0';return}
+  if(t<=50){if(white){const c=Math.round(255*(1-t/50));CS.fade=1;CS.fadeC=c+','+Math.round(c*0.97)+','+Math.round(c*0.93)}else{CS.fade=t/50;CS.fadeC='0,0,0'}return}
   if(t===51){G.kak={map:false,girl:false,fixed:false,n:{}};G.hasKakMap=false;loadChapter(ci);G.card=null;G.subs=[];G.cp={chap:ci,wave:0,mi:0,oni:0};sep();P.csHide=true;P.drawn=false;P.state='idle'}
   const k=(t-51)/400,a=-0.9+k*1.5,cx=-16,cz=-6,R=46-k*10;cam([cx+Math.sin(a)*R,30-k*10,cz+Math.cos(a)*R],[cx+k*6,2,cz]);
   if(t===120)csSay('Акира (мысли)','Несмотря на эту неразбериху… хотя бы моя деревня ещё цела?',120,380);

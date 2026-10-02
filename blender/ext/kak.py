@@ -363,7 +363,7 @@ def pack():
     bpy.ops.import_scene.gltf(filepath=os.path.join(OUT,'lv.glb'))
     for o in list(bpy.data.objects):
         if o.type!='MESH':bpy.data.objects.remove(o)
-    for n in['sarah','orc','smith']:
+    for n in['sarah','orc','smith','girl']:
         with bpy.data.libraries.load(os.path.join(PREP,n+'_rig.blend')) as (src,dst):dst.objects=[x for x in src.objects if x.startswith('XS_')]
         for o in dst.objects:bpy.context.scene.collection.objects.link(o)
     hammer()
