@@ -20,7 +20,11 @@ const ET={
  musha:{name:'Мукуро-муся',hp:150,spd:3.0,range:2.2,rad:0.45,h:1.85,human:true,dm:0.7,block:0.22,ai:updMusha,souls:[['r',5],['b',2],['y',1]],poise:40},
  chochin:{name:'Тётин-обакэ',hp:38,spd:3.3,range:1.7,rad:0.38,h:1.0,atk:[{k:'leap',wind:32,act:18,rec:38,dmg:9,reach:1.3}],souls:[['r',2],['b',2]],poise:0},
  moku:{name:'Мокумокурэн',hp:90,spd:0,range:14,rad:0.5,h:2.0,ai:updMoku,souls:[['r',3],['b',3],['p',1]],poise:30},
- shogun:{name:'Кагэмару, Страж Дома',hp:900,spd:3.4,range:2.4,rad:0.6,h:2.3,boss:true,human:true,dm:1.0,block:0.33,ai:updKage,souls:[['r',14],['p',5],['y',3]],poise:70}
+ shogun:{name:'Кагэмару, Страж Дома',hp:900,spd:3.4,range:2.4,rad:0.6,h:2.3,boss:true,human:true,dm:1.0,block:0.33,ai:updKage,souls:[['r',14],['p',5],['y',3]],poise:70},
+ tg:{name:'Тэнгу-ямабуси',hp:110,spd:4.2,range:2.2,rad:0.45,h:1.9,hover:1.7,keep:7,poise:22,ai:updTengu,souls:[['r',4],['b',2]],atk:[{k:'blade',wind:30,act:2,rec:26,dmg:14}]},
+ iwa:{name:'Ива-ёкай',hp:260,spd:1.6,range:3.0,rad:0.7,h:2.5,poise:90,armor:1,ai:updIwa,dmgMod:iwaDmgMod,souls:[['r',6],['b',3],['p',1]],atk:[{k:'slam',wind:44,act:10,rec:46,dmg:30,reach:3.2}]},
+ yari:{name:'Они-яри',hp:180,spd:2.6,range:3.2,rad:0.5,h:2.05,poise:50,guard:1,ai:updYari,dmgPre:yariDmgPre,souls:[['r',5],['b',2],['y',1]],atk:[{k:'thrust',wind:30,act:6,rec:40,dmg:22,reach:3.4}]},
+ tgen:{name:'Тэнгу-старейшина',hp:520,spd:4.6,range:2.4,rad:0.55,h:2.2,hover:2.0,keep:6,poise:50,boss:true,ai:updTengu,souls:[['r',14],['p',5],['y',3]],atk:[{k:'blade',wind:26,act:2,rec:22,dmg:18}]}
 };
 const ATK={R:{s:18,a:6,r:22,dmg:[24,32],reach:2.4,arc:-0.1,st:15,knock:3,type:'R'},R3:{s:16,a:10,r:26,dmg:[50,50],reach:2.7,arc:-2,st:15,knock:10,type:'R',spin:true,gb:true},
  L:{s:10,a:4,r:12,dmg:[12,16],reach:2.7,arc:0.45,st:7,knock:1,type:'L'},N:{s:14,a:6,r:20,dmg:[45,45],reach:2.6,arc:0.15,st:25,knock:9,type:'N',gb:true},X:{s:8,a:6,r:18,dmg:[45,45],reach:2.6,arc:0.15,st:10,knock:4,type:'N',gb:true,launch:true},
@@ -45,7 +49,8 @@ const CH=[
  {title:'ГЛАВА 4',name:'Двор с колоколом',theme:'duel',noGate:true,mirrors:[[-3.5,-12,Math.PI/2]],start:[],
   waves:[{en:['sota'],boss:true,say:[['Сота','Ты пришёл, брат. С отцовским мечом… и с моим.'],['Акира','Я пришёл забрать тебя домой.'],['Сота','Дом сгорел. Умри!']]}]},
  {title:'ГЛАВА 5',name:'Забытый дом',theme:'house',house:true,mirrors:[[-2.95,-15.4,Math.PI/2],[-9.1,7.2,Math.PI/2]],start:[],waves:[]},
- {title:'ГЛАВА 6',name:'Родная деревня',theme:'kak',kak:true,noGate:true,mirrors:[],start:[],waves:[]}
+ {title:'ГЛАВА 6',name:'Родная деревня',theme:'kak',kak:true,noGate:true,mirrors:[],start:[],waves:[]},
+ {title:'ГЛАВА 7',name:'Перевал Тишины',theme:'peak',peak:true,noGate:true,mirrors:[],start:[],waves:[]}
 ];
 const G={mode:'title',diff:1,frame:0,chap:0,slow:0,slowTs:1,freeze:0,hitstop:0,shake:0,fov:55,fovT:55,camYaw:0,camPitch:0.28,camDist:4.6,card:null,subs:[],pops:[],
  souls:{r:0,b:0,p:0},stats:{kills:0,issen:0,time:0,deaths:0},issenFx:null,flashRed:0,tarScreen:0,rainFreeze:0,rainUp:false,winT:0,deadT:0,cp:null,bossBar:null,paused:false,menuSel:1,reviveHint:false,lock:null,wave:0,waveT:0,trans:0,exposureT:1};

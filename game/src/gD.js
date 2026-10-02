@@ -1,5 +1,5 @@
 // ---------- enemies
-function buildRig(t){if(t==='musha'||t==='shogun')return rigMusha(t==='shogun');if(t==='chochin')return rigChochin();if(t==='moku')return rigMoku();return t==='ash'?rigAsh(false):t==='gasa'?rigAsh(true):t==='kama'?rigKama():t==='yumi'?rigYumi():rigSota()}
+function buildRig(t){if(t==='tg'||t==='tgen')return rigTengu();if(t==='iwa')return rigIwa();if(t==='yari')return rigYari();if(t==='musha'||t==='shogun')return rigMusha(t==='shogun');if(t==='chochin')return rigChochin();if(t==='moku')return rigMoku();return t==='ash'?rigAsh(false):t==='gasa'?rigAsh(true):t==='kama'?rigKama():t==='yumi'?rigYumi():rigSota()}
 function mkEnemy(t,x,z){const d=ET[t],hp=Math.round(d.hp*DIFF[G.diff].hp),rig=buildRig(t);scene.add(rig.root);rig.root.traverse(o=>{if(o.isMesh)o.castShadow=true});
  return{t,d,x,z,y:0,vy:0,vx:0,vz:0,yaw:Math.atan2(P.x-x,P.z-z),hp,max:hp,state:d.boss?'intro':'enter',st:0,cd:rnd(40,100),atk:null,hitDone:false,frozen:0,burn:0,burnAcc:0,poiseDmg:0,
   revived:false,anim:rnd(0,99),dead:false,deathT:0,pending:0,blackIn:0,flash:0,inv:0,phase:1,comboN:0,hits:0,rig,upV:null}}
@@ -11,6 +11,7 @@ function separate(){for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.de
  const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad;if(d<m&&d>0.0001){const p=(m-d)*0.5,ux=dx/d,uz=dz/d,wa=b.d.boss?0.9:a.d.boss?0.1:0.5;a.x-=ux*p*wa*2*0.5;a.z-=uz*p*wa*2*0.5;b.x+=ux*p*(1-wa);b.z+=uz*p*(1-wa)}}}}
 function dmgEnemy(e,dmg,dx,dz,o={}){
  if(e.dead||(e.inv&&!o.force))return;if(ADM.x10)dmg*=10;
+ if(e.d.dmgPre&&e.d.dmgPre(e,dx,dz,o))return;if(e.d.dmgMod)dmg=e.d.dmgMod(e,dmg,o);
  if((e.t==='sota'||e.d.block)&&e.state==='move'&&!o.noBlock&&!o.gb&&P.muso<=0&&Math.random()<(e.d.block||0.4)){sparks((e.x+P.x)/2,1.4,(e.z+P.z)/2,180);SFX.clang();e.cd=Math.min(e.cd,12);P.vx-=dx*0.06;P.vz-=dz*0.06;G.hitstop=3;pop(e.t==='sota'?'Сота блокирует':'Блок','#bba');return}
  e.hp-=dmg;G.hitstop=Math.max(G.hitstop,o.stop==null?4:o.stop);e.flash=6;tar(e.x,e.d.h*0.6,e.z,10);SFX.hit(dmg>=40||o.gb);P.tar=Math.min(1,P.tar+0.03);G.shake=Math.max(G.shake,0.06+(o.knock||0)*0.012);
  if(dx||dz)hitFx(e.x-dx*e.d.rad*0.6,Math.min(1.35,e.d.h*0.6),e.z-dz*e.d.rad*0.6,dx,dz,{big:(o.knock||0)>=8,roll:P.atk&&P.atk.type==='L'?rnd(-0.3,0.3):P.atk&&P.atk.type==='N'?rnd(0.9,1.2):rnd(-1.1,-0.5),col:P.atk&&P.atk.type==='L'?0xb8dcff:0xffe0c0});
@@ -30,7 +31,7 @@ function killEnemy(e,dx,dz,o={}){
 const soulGeo=new THREE.SphereGeometry(0.07,10,8),soulMats={r:new MB({color:0xff3020,toneMapped:false}),b:new MB({color:0x2a9aff,toneMapped:false}),y:new MB({color:0xffd93a,toneMapped:false}),p:new MB({color:0xb050ff,toneMapped:false}),k:new MB({color:0x0a0510})};
 const soulCol={r:[1,0.2,0.1],b:[0.2,0.6,1],y:[1,0.85,0.2],p:[0.7,0.3,1]};
 function spawnSouls(e){let n=0;const list=[...e.d.souls];if(Math.random()<0.3)list.push(['y',1]);
- for(const[c,k]of list)for(let i=0;i<k;i++){const m=new Mesh(soulGeo,soulMats[c]);scene.add(m);souls.push({x:e.x+rnd(-.4,.4),y:e.d.h*0.5+rnd(0,.4),z:e.z+rnd(-.4,.4),vx:rnd(-.03,.03),vy:rnd(0.01,.03),vz:rnd(-.03,.03),c,v:c==='r'?Math.round(rnd(2,4)):c==='b'?Math.round(rnd(3,7)):c==='y'?10:1,age:0,owner:e.revived||e.d.boss?null:e,black:false,ph:rnd(0,6),pulled:false,gone:false,m});n++}
+ for(const[c,k]of list)for(let i=0;i<k;i++){const m=new Mesh(soulGeo,soulMats[c]);scene.add(m);souls.push({x:e.x+rnd(-.4,.4),y:(e.gy||0)+e.y+e.d.h*0.5+rnd(0,.4),z:e.z+rnd(-.4,.4),vx:rnd(-.03,.03),vy:rnd(0.01,.03),vz:rnd(-.03,.03),c,v:c==='r'?Math.round(rnd(2,4)):c==='b'?Math.round(rnd(3,7)):c==='y'?10:1,age:0,owner:e.revived||e.d.boss?null:e,black:false,ph:rnd(0,6),pulled:false,gone:false,m});n++}
  e.pending=e.revived||e.d.boss?0:n}
 function revive(e){removeRig(e);const r=buildRig(e.t);scene.add(r.root);e.rig=r;r.root.traverse(o=>{if(o.isMesh)o.castShadow=true});e.mat=r.mat;
  e.dead=false;e.revived=true;e.max=e.hp=Math.round(e.max*1.5);e.state='move';e.st=0;e.upV=null;e.cd=60;tar(e.x,0.8,e.z,40,2);SFX.grab();if(r.mat)r.mat.color.set(0x14020a);
@@ -90,13 +91,13 @@ function updSota(e,ts,d,ty){e.st+=ts;const sp=e.phase===2?1.3:1;
  case'stag':if(e.st>=e.stagT){e.state='move';e.st=0;e.cd=20}break;}}
 // ---------- chapters
 function clearWorld(){for(const e of enemies)removeRig(e);for(const s of souls)scene.remove(s.m);for(const p of proj)scene.remove(p.m);enemies=[];souls=[];proj=[];lines=[];FX.add.list.length=0;FX.norm.list.length=0}
-function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;GY=0;const c=CH[i];const env=buildEnv(c.theme);
+function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;(G.visited=G.visited||new Set()).add(i);GY=0;const c=CH[i];const env=buildEnv(c.theme);
  env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));const gp=(LAYOUT[c.theme]&&LOCN[c.theme]&&LVok(LOCN[c.theme])&&LAYOUT[c.theme].gate)||[0,16];env.gate=makeGate(ENV,gp[0],c.house?-90:gp[1]);
  LV={c,env,wave:0,waveT:0,started:false,done:false,walls:env.walls||null,house:!!c.house,H:env.H||null};G.subs=[];G.bossBar=null;G.rainFreeze=0;G.rainUp=false;G.issenFx=null;G.lock=null;M.sotaSkin.color.set(0x9c7b66);
  resetPlayer(0,c.house?-14.6:-12);G.camYaw=0;G.camK=1;
  if(cp&&env.mirrors.length){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
  else{G.cp={chap:i,wave:0,mi:0,oni:0};for(const s of c.start)say(s[0],s[1])}
- if(env.mirrors[0])activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);if(c.kak)kakLoad(cp);
+ if(env.mirrors[0])activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);if(c.kak)kakLoad(cp);if(c.peak)pkLoad(cp);
  G.card={t:0,title:c.title,name:c.name}}
 function activateMirror(m,silent){if(m.act)return;m.act=true;m.face.material=M.mirrorOn;m.lant.material=M.lampOn;if(!silent){P.food=3;P.hp=P.max;pop('Зеркало-сакр: путь сохранён','#e6c98a');SFX.bell()}}
 function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s[1]);
@@ -106,7 +107,7 @@ function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s
 function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){u.open=0;gateP.visible=false;return}
  if(!u.open){const nx=CH[G.chap+1];portalCol(gateP,PCOL[nx?nx.theme:'ash']||PCOL.ash);u.w=LVok('portal')?PORTAL_R:1.15;u.h=LVok('portal')?PORTAL_R:1.55;u.int=1;u.spin=1;ripple(gateP)}
  gateP.position.set(gt.x,1.75,gt.z);gateP.rotation.set(0,0,0);u.open=Math.min(1,u.open+0.02);if(!CS.on){u.int=lerp(u.int,1,0.05);u.spin=lerp(u.spin,1,0.05)}updPortal(gateP)}
-function updChapter(ts){if(LV.kak){updKak(ts);return}if(LV.env.hdoor)updDuelDoor();
+function updChapter(ts){if(LV.kak){updKak(ts);return}if(LV.peak){updPeak(ts);return}if(LV.env.hdoor)updDuelDoor();
  if(LV.house){updHouse(ts);if(G.rainFreeze>0)G.rainFreeze-=ts;return}
  if(!LV.started){LV.waveT+=ts;if(LV.waveT>300||Math.hypot(P.x,P.z+12)>4){LV.started=true;LV.waveT=150}}
  else if(!LV.active&&LV.wave<LV.c.waves.length){LV.waveT+=ts;if(LV.waveT>180&&!G.subs.length||LV.waveT>420){spawnWave();LV.waveT=0}}
@@ -116,7 +117,7 @@ function updChapter(ts){if(LV.kak){updKak(ts);return}if(LV.env.hdoor)updDuelDoor
  const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<2.6&&!G.trans&&!CS.on&&P.state!=='dead')startPortalExit()}
  if(G.rainFreeze>0){G.rainFreeze-=ts;if(G.rainFreeze<=0)G.rainUp=true}}
 function updWorld(ts){
- for(const e of enemies){if(!CS.on)updEnemy(e,ts);stepTilt(e.tl,ts)}separate();if(LV.env.nav)for(const e of enemies)if(!e.dead)navClamp(e);
+ for(const e of enemies){if(!CS.on&&!(LV.peak&&!e.dead&&!e.awake&&Math.hypot(e.x-P.x,e.z-P.z)>34))updEnemy(e,ts);stepTilt(e.tl,ts)}separate();if(LV.env.nav)for(const e of enemies)if(!e.dead)navClamp(e);
  for(let i=0;i<enemies.length;i++)for(let j=i+1;j<enemies.length;j++){const a=enemies[i],b=enemies[j];if(a.dead||b.dead)continue;const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad+0.2;if(d<m&&d>0.001){const p=(m-d)*0.1;a.x-=dx/d*p;a.z-=dz/d*p;b.x+=dx/d*p;b.z+=dz/d*p}}
  enemies=enemies.filter(e=>{if(e.dead&&e.pending<=0&&e.deathT>700){removeRig(e);return false}return true});
  const orb=hero.arms.L.orb;orb.getWorldPosition(tv1);const gx=tv1.x,gy=tv1.y,gz=tv1.z;
@@ -135,6 +136,7 @@ function updWorld(ts){
    if(!p.defl&&Math.hypot(p.x-P.x,p.z-P.z)<0.5&&p.y>P.y&&p.y<P.y+1.9){const r=hitPlayer(p,p.dmg,{proj:true});if(r==='block'){p.defl=true;p.vx*=-0.3;p.vz*=-0.3;p.vy=0.06}else if(r!=='dodge')p.life=0}if(p.y<0)p.life=0}
   else if(p.k==='fire'){p.m.position.set(p.x,p.y,p.z);embers(p.x,p.y,p.z,2);for(const e of enemies)if(!e.dead&&!p.hit.has(e)&&Math.hypot(e.x-p.x,e.z-p.z)<1.4){p.hit.add(e);e.burn=180;dmgEnemy(e,40,p.vx*5,p.vz*5,{knock:5})}}
   else if(p.k==='orb')updOrb(p,ts);
+  else if(p.k==='wind'){PK.windN=(PK.windN||0)+1;p.m.position.set(p.x,p.y,p.z);p.m.rotation.z+=0.5*ts;p.m.rotation.y=Math.atan2(p.vx,p.vz);if(!p.done&&Math.hypot(p.x-P.x,p.z-P.z)<0.72&&Math.abs(p.y-(1.0+P.y))<1.35){p.done=true;p.life=0;PK.windH=(PK.windH||0)+1;PK.windRes=hitPlayer(p,p.dmg,{});PK.windP=[+P.x.toFixed(2),+P.y.toFixed(2),+P.z.toFixed(2),+P.state]}}
   else if(p.k==='tarw'){p.m.position.set(p.x,0.3+Math.sin(p.life*0.3)*0.1,p.z);if(Math.random()<0.8)tar(p.x,0.2,p.z,1);if(!p.done&&Math.hypot(p.x-P.x,p.z-P.z)<0.8&&P.y<0.4){p.done=true;hitPlayer(p,p.dmg,{})}}
   if(p.life<=0)scene.remove(p.m)}
  proj=proj.filter(p=>p.life>0);

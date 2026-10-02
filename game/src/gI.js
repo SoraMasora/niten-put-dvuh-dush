@@ -36,7 +36,7 @@ const CHESTS0={ash:[[8.5,3.5],[-7.5,10.5]],forest:[[9.5,-3.5],[-9,7],[6,12]],due
 const CHESTS_LOC={ash:[[12,-6],[-12,-2]],forest:[[4.5,-3.5],[-4.5,7],[4,14]],duel:[[5.8,-8.5]]};
 const CHESTS=new Proxy({},{get:(o,k)=>(LOCN[k]&&LVok(LOCN[k])?CHESTS_LOC:CHESTS0)[k]});
 G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;
-function invReset(){G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;G.noteRead=false;G.hcleared=new Set();G.hreveal=new Set();G.hseen=new Set();G.hasMap=false;G.oneBlade=false;G.ambushDone=false;G.mapOpen=false}
+function invReset(){G.inv=Array(24).fill(null);G.buf={def:0,dmg:0,spd:0,tea:0,sake:0,ofuda:0};G.opened={};G.maxB=0;G.noteRead=false;G.hcleared=new Set();G.hreveal=new Set();G.hseen=new Set();G.hasMap=false;G.oneBlade=false;G.ambushDone=false;G.mapOpen=false;G.worldMap=false;G.mapK=false;G.visited=new Set()}
 function invCount(id){return G.inv.reduce((a,s)=>a+(s&&s.id===id?s.n:0),0)}
 function addItem(id,n=1){const D=ITEMS[id];for(const s of G.inv)if(s&&s.id===id&&s.n<D.max){const k=Math.min(n,D.max-s.n);s.n+=k;n-=k;if(!n)return 0}
  while(n>0){const i=G.inv.indexOf(null);if(i<0)break;const k=Math.min(n,D.max);G.inv[i]={id,n:k};n-=k}return n}
@@ -147,7 +147,7 @@ function startChestCS(c){const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),S=[c.x+fx*0
   if(t>=450)item.scale.setScalar(Math.max(0.001,1-ek(t,450,466)));
   if(t>=488){CS.card=null;done()}},()=>{c.open=1;CS.card=null;done()})}
 // ---------- босс пал: записка у колокола
-function bossDown(e){if(e.t==='shogun')return houseBossDown(e);spawnWI('note',e.x,1.3,e.z,rnd(-0.01,0.01),0.05,rnd(-0.01,0.01));spawnWI('housekey',e.x+0.5,1.1,e.z+0.3,0.015,0.06,0.01);say('Юки','Он что-то обронил… Бумага и ключ. Подбери их (X).')}
+function bossDown(e){if(e.t==='tgen')return;if(e.t==='shogun')return houseBossDown(e);spawnWI('note',e.x,1.3,e.z,rnd(-0.01,0.01),0.05,rnd(-0.01,0.01));spawnWI('housekey',e.x+0.5,1.1,e.z+0.3,0.015,0.06,0.01);say('Юки','Он что-то обронил… Бумага и ключ. Подбери их (X).')}
 const noteImg=new Image();noteImg.src=NOTE_IMG;
 function readNote(){if(CS.on)return;INV.open=false;const p=camera.position.clone();csStart('read',()=>{},null);CS.cam.p.copy(p);CS.cam.l.set(P.x,1.3,P.z);CS.bars=0;CS.img=noteImg;CS.imgT=0;CS.onImgClose=()=>{CS.img=null;csEnd();try{renderer.domElement.requestPointerLock()}catch(_){}}}
 function pickPoint(x,z){const d=Math.hypot(P.x-x,P.z-z)||1,ux=(x-P.x)/d,uz=(z-P.z)/d;return[x-ux*0.46+uz*0.02,z-uz*0.46-ux*0.02]}// встать так, чтобы предмет был под правой рукой (G0 клипа pickup)

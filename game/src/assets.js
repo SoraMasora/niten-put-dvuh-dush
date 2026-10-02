@@ -35,7 +35,7 @@ function bake(mesh){const g=new THREE.BufferGeometry();for(const k of(/^PK__/.te
 function b64ToBuf(s){const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer}
 export async function loadAssets(){
  const src=(window.__NITEN_ASSETS_PARTS||[]).join('')||window.__NITEN_ASSETS;if(!src)return false;
- const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);const hs=(window.__NITEN_HOUSE_PARTS||[]).join('')||window.__NITEN_HOUSE;if(ok&&hs)await loadGLB(hs);const xs=(window.__NITEN_EXT_PARTS||[]).join('')||window.__NITEN_EXT;if(ok&&xs)await loadGLB(xs);const cs=(window.__NITEN_LOC_PARTS||[]).join('')||window.__NITEN_LOC;if(ok&&cs)await loadGLB(cs);const ks=(window.__NITEN_KAK_PARTS||[]).join('')||window.__NITEN_KAK;if(ok&&ks)await loadGLB(ks);return ok}
+ const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);const hs=(window.__NITEN_HOUSE_PARTS||[]).join('')||window.__NITEN_HOUSE;if(ok&&hs)await loadGLB(hs);const xs=(window.__NITEN_EXT_PARTS||[]).join('')||window.__NITEN_EXT;if(ok&&xs)await loadGLB(xs);const cs=(window.__NITEN_LOC_PARTS||[]).join('')||window.__NITEN_LOC;if(ok&&cs)await loadGLB(cs);const ks=(window.__NITEN_KAK_PARTS||[]).join('')||window.__NITEN_KAK;if(ok&&ks)await loadGLB(ks);const ps=(window.__NITEN_PEAK_PARTS||[]).join('')||window.__NITEN_PEAK;if(ok&&ps)await loadGLB(ps);return ok}
 async function loadGLB(src){
  try{const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf=await new Promise((res,rej)=>loader.parse(b64ToBuf(src),'',res,rej));

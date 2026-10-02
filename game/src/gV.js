@@ -17,7 +17,7 @@ function kakRoomNav(k){const R=KAKD.rooms[k];if(R.N)return R.N;const cs=0.2,m=0.
  R.N={x0:R.ox-R.w/2-m,z0:-R.d/2-m,cs,w,h,g,Ht,Hl,hs:0.1,ho:0,dist:new Int32Array(n).fill(-1),q:new Int32Array(n),pc:-1,ft:-99};return R.N}
 function buildKakEnv(g,env){KK.vill=[locAdd(g,'kak'),locAdd(g,'kaks'),locAdd(g,'kakd')];KK.rooms=[0,1,2].map(k=>{const r=locAdd(g,'kakin'+k);r.visible=false;const R=KAKD.rooms[k];
   if(R.fire)addFire(r,R.ox+R.fire[0],R.fire[1]-0.35,R.fire[2],0.45,99);r.traverse(o=>{const m=o.material;if(m&&m.emissive&&!m.userData.kdim){m.userData.kdim=1;m.emissiveIntensity=Math.min(m.emissiveIntensity??1,0.35)}});return r});
- const F=KAKD.smithy.pts.forge;addFire(KK.vill[1],F[0],F[1]-0.4,F[2],0.45,99);KK.view=-1;env.kak=true}
+ const F=KAKD.smithy.pts.forge;addFire(KK.vill[1],F[0],F[1]-0.4,F[2],0.45,99);KK.view=-1;env.kak=true;vstairAdd(g)}
 function kakRig(id,name,sc){const r=rigHumanX(name,'npc',{scale:sc});scene.remove(r.gl);r.arms.L.sw.visible=false;r.arms.R.sw.visible=false;if(r.human.saya)for(const s of r.human.saya)s.visible=false;return r}
 function kakLoad(cp){LV.kak=true;G.kak=G.kak||{map:false,girl:false,fixed:false,n:{}};G.forge=G.forge||{R:0,L:0};KK.room=-1;KK.door=null;KK.npcs=[];KK.smith=null;KK.hilt=null;
  const sp=KAKD.spawn;P.x=sp[0];P.z=sp[1];P.yaw=1.85;G.camYaw=P.yaw;G.camDist=4.6;P._nx=undefined;GY=kakGH(P.x,P.z);
@@ -41,14 +41,14 @@ function kakView(k){KK.view=k;const T=THEMES.kak;for(const g of KK.vill)g.visibl
   if(R.fire)L(0,R.ox+R.fire[0],R.fire[1]+0.3,R.fire[2],0xff8a40,3.2,10);(R.lamps||[]).forEach((p,i)=>{if(i<4)L(i+1,R.ox+p[0],p[1],p[2],0xffc070,2.4,8)})}
  if(LV.env&&LV.env.rays)for(const r of LV.env.rays)r.visible=k<0}
 function kakCamFix(C){if(KK.room>=0){const R=KAKD.rooms[KK.room];C.x=clamp(C.x,R.ox-R.w/2+0.25,R.ox+R.w/2-0.25);C.z=clamp(C.z,-R.d/2+0.25,R.d/2-0.25);C.y=clamp(C.y,0.5,R.h-0.3)}
- else{const g=kakGH(C.x,C.z)+0.45;if(C.y<g)C.y=g}}
+ else{const v=vstairGH(C.x,C.z),g=(v!=null?v:kakGH(C.x,C.z))+0.45;if(C.y<g)C.y=g}}
 // ---------- кадр: высота земли, НПС, кузнец
 function kakNpcAnim(n,ts){n.t+=ts;const r=n.r;r.root.position.set(n.x,n.y,n.z);r.root.rotation.y=n.yaw;applyPose(r,POSE.sheath,0,0,n.t/60,{idle:1,seed:n.x});
  if(n.forge&&!n.talk){const p=n.ft;n.ft+=n.spd*ts;applyClip(r,'forge',n.ft%36,1);if(Math.floor(n.ft/36)>Math.floor(p/36))kakStrike()}
  else if(n.talk){n.tt+=ts;applyClip(r,'talk',n.tt%104,1)}else{applyClip(r,'talk',0,0.92);r.torso.rotateX(Math.sin(n.t*0.03)*0.015)}}
 function kakStrike(){const A=KAKD.smithy.pts.anvil;if(KK.view>=0)return;const d=Math.hypot(P.x-A[0],P.z-A[2]);if(d<40){sparks(A[0],A[1]+0.04,A[2],22,[1,0.72,0.32]);flashL(A[0],A[1]+0.3,A[2],0xffa040,5,9)}SFX.anvil&&SFX.anvil(Math.pow(clamp(1-d/26,0,1),1.4))}
 function kakAnim(ts){if(!KK.npcs)return;
- if(KK.room<0){const t=kakGH(P.x,P.z);GY=Math.abs(t-GY)>1.2?t:lerp(GY,t,0.3)}else GY=0;
+ if(KK.room<0){const t=kakGH(P.x,P.z);GY=Math.abs(t-GY)>1.2?t:lerp(GY,t,0.3);const v=vstairGH(P.x,P.z);if(v!=null)GY=v}else GY=0;
  for(const n of KK.npcs){if(n.room===KK.view)kakNpcAnim(n,ts)}
  if(KK.smith&&KK.view<0)kakNpcAnim(KK.smith,ts);
  if(KK.view<0&&G.frame%6===0){const F=KAKD.smithy.pts.forge;embers(F[0]+rnd(-.2,.2),F[1]-0.2,F[2]+rnd(-.2,.2),1)}
@@ -58,7 +58,7 @@ function updKak(ts){const push=(o,r)=>{const dx=P.x-o.x,dz=P.z-o.z,d=Math.hypot(
  for(const n of KK.npcs)if(!n.talk)n.yaw=turn(n.yaw,n.yaw0,0.03);if(KK.smith&&!KK.smith.talk)KK.smith.yaw=turn(KK.smith.yaw,KK.smith.yaw0,0.03);
  const K=G.kak;if(K&&!K.hint){K.hint=1;say('Юки','Акира… это твой дом. Гэнма сюда не дошли.');say('Юки','Ёи сломана. Может, здесь найдётся тот, кто её починит. Поговори с людьми (X у дверей).')}}
 // ---------- интеракции (X)
-function kakNear(){if(CS.on)return null;const K=G.kak||{};
+function kakNear(){if(CS.on)return null;const K=G.kak||{};const vs=vstairNear();if(vs)return vs;
  if(KK.room>=0){const R=KAKD.rooms[KK.room];if(Math.hypot(P.x-R.ox,P.z-(R.d/2-0.45))<1.25)return{k:'kak',label:'X — выйти на улицу',f:kakExit};
   for(const n of KK.npcs)if(n.room===KK.room&&Math.hypot(P.x-n.x,P.z-n.z)<1.8)return{k:'kak',label:'X — поговорить: '+n.n,f:()=>kakTalkTo(n)};return null}
  const S=KK.smith;if(S){const tp=KAKD.smithy.pts.talk;if(Math.hypot(P.x-tp[0],P.z-tp[2])<2.0||Math.hypot(P.x-S.x,P.z-S.z)<2.0)return{k:'kak',label:K.fixed?'X — кузница Рэн: улучшить клинки':'X — поговорить: '+S.n,f:()=>kakSmith()}}

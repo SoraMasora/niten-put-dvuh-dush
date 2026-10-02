@@ -428,7 +428,7 @@ function syncHouseEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.s
   if(e.state==='enter'&&e.st<3)for(let i=0;i<20;i++)FX.add.add({x:e.x+rnd(-0.9,0.9),y:rnd(0.1,2),z:e.z,vx:0,vy:0.01,vz:0,life:40,s:0.06,r:1.2,gg:0.4,b:1.8,a:0.6})}}
 function smokeFx(){for(let i=0;i<90;i++){const a=rnd(0,6.28),r=rnd(0.3,5.5);FX.norm.add({x:P.x+Math.cos(a)*r,y:rnd(0.1,1.8),z:P.z+Math.sin(a)*r,vx:Math.cos(a)*rnd(0.1,0.6)/60,vy:rnd(0.2,0.6)/60,vz:Math.sin(a)*rnd(0.1,0.6)/60,life:rnd(120,220),s:rnd(0.3,0.6),r:0.3,gg:0.3,b:0.32,a:0.5})}flashL(P.x,1,P.z,0xffffff,6,10);SFX.fire();G.shake=0.1}
 // ================================================================ КАРТА (M)
-function drawMap(){if(LV.kak)return drawKakMap();const HH=LV.H;X.fillStyle='rgba(0,0,0,0.78)';X.fillRect(0,0,W,H);
+function drawMap(){if(G.worldMap)return drawWorldMap();if(LV.kak)return drawKakMap();const HH=LV.H;X.fillStyle='rgba(0,0,0,0.78)';X.fillRect(0,0,W,H);
  const mx0=-21,mx1=21,mz0=-18,mz1=26,s=Math.min((W-420)/(mx1-mx0),(H-150)/(mz1-mz0)),cx=W/2-80,cy=H/2+12,zc=(mz0+mz1)/2;
  const SX=x=>cx-x*s,SY=z=>cy-(z-zc)*s;
  const pw=(mx1-mx0)*s+60,ph=(mz1-mz0)*s+60;X.fillStyle='#d9c9a3';X.fillRect(cx-pw/2,cy-ph/2,pw,ph);X.fillStyle='#5a3a1a';X.fillRect(cx-pw/2-10,cy-ph/2-12,pw+20,12);X.fillRect(cx-pw/2-10,cy+ph/2,pw+20,12);
