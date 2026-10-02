@@ -10,7 +10,7 @@ if(ANIMS.poses&&ANIMS.poses.sheath)POSE.sheath=ANIMS.poses.sheath;
 import {loadAssets,addPart} from './assets.js';
 import {clone as skClone} from 'three/examples/jsm/utils/SkeletonUtils.js';
 await loadAssets();
-import {audioInit,SFX} from './audio.js';
+import {audioInit,SFX,music,musicDuck,musicOn} from './audio.js';
 const {Group,Mesh,MeshStandardMaterial:MS,MeshBasicMaterial:MB,Vector3:V3}=THREE;
 const rnd=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>{t=clamp(t,0,1);return t*t*(3-2*t)};

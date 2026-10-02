@@ -5,7 +5,7 @@ const RAR={c:['Обычный','#d8cfb8'],r:['Редкий','#62b0ff'],e:['Ле�
 const sec=f=>Math.round(f/60)+' с';
 const ITEMS={
  gourd:{n:'Тыква «Пламя Феникса»',r:'r',type:'Зелье',max:5,w:0.6,cost:45,desc:'Восстанавливает 60 здоровья и очищает тело от смолы Гэнма.',lore:'Лакированная горлянка. Внутри — саке, настоянное на пепле птицы, что сгорает и возрождается.',stats:[['Здоровье','+60'],['Очищение','смола']],
-  use(){if(P.hp>=P.max&&P.tar<=0)return'Здоровье и так полное';P.hp=Math.min(P.max,P.hp+60);P.tar=0;G.tarScreen=0;fxUse(0xff6030);return true}},
+  use(){if(P.hp>=P.max&&P.tar<=0)return'Здоровье и так полное';P.hp=Math.min(P.max,P.hp+60);P.tar=0;G.tarScreen=0;fxUse(0xff6030);SFX.heal();return true}},
  flask:{n:'Флакон «Лунная роса»',r:'c',type:'Зелье',max:5,w:0.4,cost:30,desc:'Восполняет 50 маны для магии перчатки Они.',lore:'Роса, собранная в ночь полнолуния с листьев бамбука. Пахнет холодом.',stats:[['Мана','+50']],
   use(){if(P.mana>=100)return'Мана и так полная';P.mana=Math.min(100,P.mana+50);fxUse(0x4aa8ff);return true}},
  omamori:{n:'Омамори «Хранитель пути»',r:'r',type:'Амулет',max:3,w:0.05,cost:60,desc:'На 40 секунд снижает получаемый урон на 35%.',lore:'Шёлковый мешочек с молитвой храма Ивате. Не открывай — иначе защита уйдёт.',stats:[['Защита','+35%'],['Действует',sec(2400)]],
@@ -17,7 +17,7 @@ const ITEMS={
  scroll:{n:'Свиток «Тень ветра»',r:'e',type:'Техника',max:2,w:0.3,cost:150,desc:'На 30 секунд скорость +25%, уворот не тратит выносливость.',lore:'Техника школы, о которой не осталось записей. Только этот свиток.',stats:[['Скорость','+25%'],['Уворот','без выносливости'],['Действует',sec(1800)]],
   use(){G.buf.spd=1800;fxUse(0x9ae0ff);return true}},
  mask:{n:'Маска Хання',r:'e',type:'Реликвия',max:1,w:0.8,cost:300,desc:'Навсегда +20 к максимуму здоровья. Отдав силу, маска рассыпается пеплом.',lore:'Лик женщины, ставшей демоном от ревности и горя. Внутри выжжено имя: Сота.',stats:[['Макс. здоровье','+20 навсегда']],
-  use(){G.maxB=(G.maxB||0)+20;P.max+=20;P.hp+=20;fxUse(0xff4030);return true}},
+  use(){G.maxB=(G.maxB||0)+20;P.max+=20;P.hp+=20;fxUse(0xff4030);SFX.heal();return true}},
  bento:{n:'Дзюбако с онигири',r:'c',type:'Еда',max:5,w:0.7,cost:20,desc:'Пополняет запас онигири на 2 (не больше 3).',lore:'Лаковая коробка в два яруса, перевязанная шнуром. Рис ещё тёплый.',stats:[['Онигири','+2']],
   use(){if(P.food>=3)return'Запас онигири полон';P.food=Math.min(3,P.food+2);fxUse(0xfff0d0);return true}},
  key:{n:'Бронзовый ключ',r:'c',type:'Ключ',max:9,w:0.1,cost:5,desc:'Открывает сундук, запечатанный о-фуда. Тратится при открытии.',lore:'Гэнма носили его в смоле вместо сердца. Бронза ещё тёплая.',stats:[['Открывает','1 сундук']],use(){return'Подойди к сундуку и нажми X'}},
@@ -25,7 +25,7 @@ const ITEMS={
  map:{n:'План Забытого дома',r:'q',type:'Карта',max:1,w:0.1,cost:0,desc:'План усадьбы с пометками «?» — там спрятано ценное. M — открыть карту.',lore:'Тушь выцвела, но пометки свежие. Кто-то хотел, чтобы их нашли.',stats:[['Клавиша','M']],use(){if(LV&&LV.house){INV.open=false;G.mapOpen=true;return'keep'}return'Карта нужна только в доме'}},
  housekey:{n:'Ключ от Забытого дома',r:'q',type:'Ключ',max:1,w:0.3,cost:0,desc:'Кованый ключ с родовым моном. Открывает дверь дома за двором колокола.',lore:'Сота носил его на шнуре у сердца.',stats:[['Открывает','дверь дома']],use(){return'Подойди к двери дома и нажми X'}},
  yoihilt:{n:'Рукоять Ёи',r:'q',type:'Реликвия',max:1,w:0.4,cost:0,desc:'Всё, что осталось от левой катаны. Лазурит в навершии ещё тёплый.',lore:'Ёи сломалась, пронзив Мукуро-муся. Отец говорил: клинок отдаёт себя один раз.',stats:[['Клинок','сломан']],use(){return'Ёи не вернуть… пока'}},
- tea:{n:'Чаша маття «Тихий сад»',r:'c',type:'Зелье',max:5,w:0.3,cost:25,desc:'20 секунд восстанавливает по 3 здоровья в секунду.',lore:'Горький, густой, ещё тёплый — будто заварили минуту назад.',stats:[['Реген','3 / с'],['Действует',sec(1200)]],use(){if(P.hp>=P.max)return'Здоровье и так полное';G.buf.tea=1200;fxUse(0x80d060);return true}},
+ tea:{n:'Чаша маття «Тихий сад»',r:'c',type:'Зелье',max:5,w:0.3,cost:25,desc:'20 секунд восстанавливает по 3 здоровья в секунду.',lore:'Горький, густой, ещё тёплый — будто заварили минуту назад.',stats:[['Реген','3 / с'],['Действует',sec(1200)]],use(){if(P.hp>=P.max)return'Здоровье и так полное';G.buf.tea=1200;fxUse(0x80d060);SFX.heal();return true}},
  smoke:{n:'Дымовая бомба «Ночной туман»',r:'r',type:'Бомба',max:5,w:0.3,cost:40,desc:'Оглушает всех врагов в радиусе 6 м на 3 секунды (босса — на 1,5).',lore:'Порох, перец и пепел в глиняной скорлупе. Ниндзя звали это «ладонью ночи».',stats:[['Оглушение',sec(180)],['Радиус','6 м']],use(){if(!enemies.some(e=>!e.dead&&Math.hypot(e.x-P.x,e.z-P.z)<6))return'Рядом никого нет';for(const e of enemies)if(!e.dead&&Math.hypot(e.x-P.x,e.z-P.z)<6&&e.state!=='intro'&&e.state!=='trans'&&e.state!=='cs'){e.state='stag';e.st=0;e.stagT=e.d.boss?90:180;e.atk=e.atk||{k:'none',wind:1,act:1,rec:1}}smokeFx();return true}},
  ofuda:{n:'О-фуда Райдзина',r:'r',type:'Талисман',max:3,w:0.05,cost:70,desc:'Следующие 6 ударов на 40% сильнее и бьют молнией.',lore:'Печать громовержца. Бумага трещит, если поднести её к стали.',stats:[['Урон','+40%'],['Ударов','6']],use(){G.buf.ofuda=6;fxUse(0x9ad0ff);SFX.thunder&&SFX.thunder(0.6);return true}},
  sake:{n:'Токкури «Кровь Они»',r:'e',type:'Усиление',max:2,w:0.6,cost:110,desc:'40 секунд: урон +40%, но получаемый урон +20%.',lore:'Саке, настоянное на рогах. Его пьют перед последним боем.',stats:[['Урон','+40%'],['Защита','−20%'],['Действует',sec(2400)]],use(){G.buf.sake=2400;fxUse(0xff3020);return true}}};
@@ -104,57 +104,74 @@ function nearInteract(){if(!LV)return null;let best=null,bd=1.45;for(const o of 
  if(LV.chests)for(const c of LV.chests){if(c.state==='open'||c.state==='hidden')continue;const fx=c.x+Math.sin(c.yaw)*0.9,fz=c.z+Math.cos(c.yaw)*0.9,d=Math.hypot(fx-P.x,fz-P.z);if(d<Math.min(bd,1.4)){bd=d;best={k:'chest',c}}}return best}
 function promptText(n){if(!n)return null;if(n.k==='spot')return n.s.label;if(n.k==='door')return invCount('housekey')?'X — отпереть дверь дома':'Дверь заперта';if(n.k==='item')return'X — подобрать: '+ITEMS[n.o.id].n;const c=n.c;if(c.state==='sealed')return'Сундук запечатан — сначала зачисти локацию';return invCount('key')?'X — открыть сундук ключом':'Сундук заперт — нужен ключ'}
 function interact(){const n=nearInteract();if(!n)return;if(n.k==='spot'){houseSpot(n.s);return}if(n.k==='door'){if(invCount('housekey'))startDoorCS();else pop('Нужен ключ','#c9a0a0');return}
- if(n.k==='item'&&n.o.id==='housekey'){const o=n.o;removeWI(o);startHouseKeyCS(o.x,o.z);return}if(n.k==='item'){const o=n.o;if(o.id==='note'){removeWI(o);addItem('note');startNoteCS();return}const left=addItem(o.id);if(left){INV.msg=['Инвентарь полон',90];pop('Инвентарь полон','#c9a0a0');return}removeWI(o);pop('Подобрано: '+ITEMS[o.id].n,RAR[ITEMS[o.id].r][1]);SFX.soul()}
+ if(n.k==='item'&&n.o.id==='housekey'){const o=n.o;removeWI(o);startHouseKeyCS(o.x,o.z);return}if(n.k==='item'){const o=n.o;if(o.id==='note'){removeWI(o);addItem('note');startNoteCS(o.x,o.z);return}const left=addItem(o.id);if(left){INV.msg=['Инвентарь полон',90];pop('Инвентарь полон','#c9a0a0');return}removeWI(o);pop('Подобрано: '+ITEMS[o.id].n,RAR[ITEMS[o.id].r][1]);SFX.pickup()}
  else{const c=n.c;if(c.state==='sealed'){pop('Печать держит, пока рядом Гэнма','#c9a0a0');return}if(!invCount('key')){pop('Нужен ключ — его носят Гэнма','#c9a0a0');return}startChestCS(c)}}
 function updItems(ts){updWI(ts);updChests(ts);for(const k of['def','dmg','spd','tea','sake'])if(G.buf[k]>0)G.buf[k]-=ts;if(G.buf.tea>0&&P.state!=='dead'){P.hp=Math.min(P.max,P.hp+0.05*ts);if(G.frame%20===0)FX.add.add({x:P.x+rnd(-.3,.3),y:rnd(0.3,1.6),z:P.z+rnd(-.3,.3),vx:0,vy:0.01,vz:0,life:40,s:0.05,r:0.8,gg:1.8,b:0.6,a:0.6})}
  if(!CS.on&&P.state!=='dead'){G.prompt=promptText(nearInteract());if(hit('KeyX'))interact()}else G.prompt=null;
  if(G.buf.dmg>0){M.blade.emissive.set(0x803010)}}
 // ---------- катсцена: открыть сундук ключом, достать предмет и осмотреть его
 function startChestCS(c){const fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),S=[c.x+fx*0.92,c.z+fz*0.92],rx=fz,rz=-fx;const key=itemModel('key');key.visible=false;scene.add(key);const item=itemModel(c.item);item.visible=false;scene.add(item);
- const lock=new V3(c.x+fx*0.34,0.5,c.z+fz*0.34),hand=new V3(),kq=new THREE.Quaternion(),D=ITEMS[c.item];
+ const lock=new V3(c.x+fx*0.34,0.5,c.z+fz*0.34),kp=lock.clone().addScaledVector(new V3(fx,0,fz),0.02),dir=new V3(-fx,0,-fz),kq0=new THREE.Quaternion().setFromUnitVectors(new V3(0,-1,0),dir),kq=kq0.clone(),D=ITEMS[c.item];
+ const KM=holdM(-Math.PI/2,0,0,0,0,0.12),IM=holdM(0,0,0,0,-0.02,0.07),U0=66,T0=U0+168;// unlock: t 66..234, chestTake: 234..324
+ const keyRoll=a=>{kq.copy(new THREE.Quaternion().setFromAxisAngle(dir,a)).multiply(kq0);key.position.copy(kp);key.quaternion.copy(kq)};
  if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}
- const done=()=>{takeItem('key');c.state='open';c.open=1;G.opened[G.chap][c.i]=true;scene.remove(item);c.keyObj=key;key.visible=true;key.position.copy(lock).addScaledVector(new V3(fx,0,fz),0.02);key.quaternion.copy(kq);c.g.attach(key);
+ const done=()=>{takeItem('key');c.state='open';c.open=1;G.opened[G.chap][c.i]=true;scene.remove(item);c.keyObj=key;key.visible=true;keyRoll(Math.PI/2);c.g.attach(key);
   const left=addItem(c.item);if(left)spawnWI(c.item,c.x+fx*1.2,0.5,c.z+fz*1.2);pop('Добавлено в инвентарь: '+D.n,RAR[D.r][1]);csEnd()};
- const handPos=()=>{hero.arms.R.hand.getWorldPosition(hand);return hand};
- csStart('chest',t=>{const H=CS.H;CS.bars=Math.min(ek(t,0,18),1-ek(t,392,410));
+ csStart('chest',t=>{const H=CS.H;CS.bars=Math.min(ek(t,0,18),1-ek(t,470,488));const u=t-U0,v=t-T0;
   if(t===1){H.to=S;H.spd=0.032;H.gait=0}
   if(t>=1&&t<70){const m=new V3((P.x+c.x)/2,0.7,(P.z+c.z)/2);cam([m.x+rx*2.7+fx*1.4,1.7,m.z+rz*2.7+fz*1.4],[m.x,0.75,m.z],ek(t,0,70),[m.x+rx*2.3+fx*1.1,1.5,m.z+rz*2.3+fz*1.1],[m.x,0.7,m.z])}
   if(t===62){H.to=null;H.yaw=c.yaw+Math.PI;H.yawK=0.25}
-  if(t>=66&&t<150){if(!P.csPose)P.csPose={p:POSE.unlock,w:0};P.csPose.p=POSE.unlock;P.csPose.w=ek(t,66,92)}
-  if(t===80){key.visible=true;SFX.draw(true)}
-  if(t>=80&&t<150){const hp=handPos(),k=ek(t,100,124),p=hp.clone().lerp(lock.clone().addScaledVector(new V3(fx,0,fz),0.02),k);key.position.copy(p);
-   const dir=new V3(-fx,0,-fz);kq.setFromUnitVectors(new V3(0,-1,0),dir);const tw=new THREE.Quaternion().setFromAxisAngle(dir,(t>=126?ek(t,126,142):0)*Math.PI/2);key.quaternion.copy(tw.multiply(kq.clone()));
-   if(t===142){kq.copy(key.quaternion);SFX.clang();sparks(lock.x,lock.y,lock.z,14,[1,0.8,0.4]);G.shake=0.05}}
-  if(t>=96&&t<150)cam([lock.x+fx*0.85+rx*0.55,0.95,lock.z+fz*0.85+rz*0.55],[lock.x,0.52,lock.z],ek(t,96,150),[lock.x+fx*0.6+rx*0.4,0.82,lock.z+fz*0.6+rz*0.4],[lock.x,0.5,lock.z]);
-  if(t>=142&&t<300){key.position.copy(lock).addScaledVector(new V3(fx,0,fz),0.02);key.quaternion.copy(kq)}
-  // крышка распахивается, изнутри золотой свет
-  if(t>=150){c.open=t<196?(1-Math.pow(1-ek(t,150,190),3))*1.04:lerp(c.open,1,0.2);if(t===152){SFX.bell();flashL(c.x,0.9,c.z,0xffc070,8,40)}if(t<260&&t%2===0)FX.add.add({x:c.x+rnd(-0.3,0.3),y:0.45,z:c.z+rnd(-0.2,0.2),vx:0,vy:rnd(0.006,0.014),vz:0,life:rnd(40,70),s:rnd(0.03,0.06),r:2,gg:1.5,b:0.6,a:0.8})}
-  if(t>=150&&t<235)cam([S[0]+rx*1.7+fx*1.3,1.75,S[1]+rz*1.7+fz*1.3],[c.x,0.45,c.z],ek(t,150,235),[S[0]+rx*1.25+fx*1.0,1.55,S[1]+rz*1.25+fz*1.0],[c.x,0.5,c.z]);
-  if(t>=150&&t<205)P.csPose.w=1-ek(t,150,170)*0.4;
-  if(t>=195&&t<245){P.csPose.p=POSE.take;P.csPose.w=ek(t,195,215)}
-  if(t===210){item.visible=true;item.position.set(c.x,0.12,c.z);SFX.soul()}
-  if(t>=210&&t<250){const hp=handPos();item.position.lerpVectors(new V3(c.x,0.12,c.z),hp.clone().add(new V3(0,0.02,0)),ek(t,214,240));item.rotation.y+=0.02}
+  // Blender-клипы: unlock (ключ с пояса -> замок -> поворот -> руки поднимают крышку) и chestTake
+  if(t>=U0){P.csClip=u<168?{n:'unlock',t:u}:{n:'chestTake',t:Math.min(v,89)};if(H.to)H.to=null;P.x=lerp(P.x,S[0],0.2);P.z=lerp(P.z,S[1],0.2)}
+  // ключ: в правой руке с пояса (16), вставлен (52), поворот (58–68), остаётся в замке
+  if(u===16){key.visible=true;SFX.draw(true)}
+  if(u>=16&&u<52){P.csPost=()=>handXf('R',KM,key,u>=40?ek(u,40,52):0,kp,kq0)}
+  if(u===52){P.csPost=null;keyRoll(0);SFX.lockIn();G.shake=0.02}
+  if(u>=52&&u<84)keyRoll((u<68?Math.pow(ek(u,58,68),1.4):1)*Math.PI/2);
+  if(u===66){SFX.lockTurn();sparks(lock.x,lock.y,lock.z,14,[1,0.8,0.4]);G.shake=0.05}
+  if(t>=100&&t<150)cam([lock.x+fx*0.5-rx*0.95,0.85,lock.z+fz*0.5-rz*0.95],[lock.x+fx*0.1,0.52,lock.z+fz*0.1],ek(t,100,150),[lock.x+fx*0.42-rx*0.75,0.74,lock.z+fz*0.42-rz*0.75],[lock.x+fx*0.05,0.5,lock.z+fz*0.05]);
+  // крышка идёт за ладонями (θ клипа: 100→116: 0.65, 116→128: 1.12), затем распахивается сама
+  if(u>=100){const th=u<116?0.65*ek(u,100,116):u<128?0.65+0.47*ek(u,116,128):1.12+(1.95*1.04-1.12)*(1-Math.pow(1-ek(u,128,150),3));c.open=u<150?th/1.95:lerp(c.open,1,0.15);
+   if(u===100)SFX.lidCreak();if(u===128){SFX.bell();flashL(c.x,0.9,c.z,0xffc070,8,40)}if(u>=128&&u<240&&t%2===0)FX.add.add({x:c.x+rnd(-0.3,0.3),y:0.45,z:c.z+rnd(-0.2,0.2),vx:0,vy:rnd(0.006,0.014),vz:0,life:rnd(40,70),s:rnd(0.03,0.06),r:2,gg:1.5,b:0.6,a:0.8})}
+  if(t>=150&&t<T0)cam([S[0]+rx*1.7+fx*1.3,1.75,S[1]+rz*1.7+fz*1.3],[c.x,0.45,c.z],ek(t,150,T0),[S[0]+rx*1.25+fx*1.0,1.55,S[1]+rz*1.25+fz*1.0],[c.x,0.5,c.z]);
+  // предмет: рука опускается в сундук (18–26), берёт, подносит к глазам
+  if(v===14){item.visible=true;item.position.set(c.x+fx*0.1,0.14,c.z+fz*0.1)}
+  if(v>=14&&v<26)item.rotation.y+=0.01;
+  if(v===24)SFX.pickup();
+  if(v>=22)P.csPost=()=>handXf('R',IM,item,v<26?1-ek(v,22,26):0,item.position.clone(),item.quaternion.clone());
+  if(t>=T0&&t<T0+90){cam([S[0]+rx*1.25+fx*1.0,1.55,S[1]+rz*1.25+fz*1.0],[c.x,0.5,c.z],ek(t,T0,T0+90),(()=>{const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);return[P.x+hf.x*1.15+hr.x*0.55,1.62,P.z+hf.z*1.15+hr.z*0.55]})(),[P.x+fwdX(P.yaw)*0.3,1.38,P.z+fwdZ(P.yaw)*0.3])}
   // осмотр предмета
-  if(t>=245){P.csPose.p=POSE.inspect;P.csPose.w=ek(t,245,275);const hp=handPos();item.position.lerp(hp.clone().add(new V3(0,0.03,0)),0.35);item.rotation.y+=0.018;item.rotation.x=Math.sin(t*0.03)*0.25;P.csLook=Math.sin(t*0.02)*0.2}
-  if(t>=250&&t<392){const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);cam([P.x+hf.x*1.15+hr.x*0.55,1.62,P.z+hf.z*1.15+hr.z*0.55],[P.x+hf.x*0.3,1.38,P.z+hf.z*0.3],ek(t,250,392),[P.x+hf.x*0.85+hr.x*0.4,1.55,P.z+hf.z*0.85+hr.z*0.4],[P.x+hf.x*0.3,1.4,P.z+hf.z*0.3]);CS.card=t>=270?c.item:null}
-  if(t===372){flashL(item.position.x,item.position.y,item.position.z,0xffe0a0,6,20);SFX.soul()}
-  if(t>=372)item.scale.setScalar(Math.max(0.001,1-ek(t,372,388)));
-  if(t>=410){CS.card=null;done()}},()=>{c.open=1;CS.card=null;done()})}
+  if(t>=T0+90&&t<470){const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);P.csLook=Math.sin(t*0.02)*0.2;cam([P.x+hf.x*1.15+hr.x*0.55,1.62,P.z+hf.z*1.15+hr.z*0.55],[P.x+hf.x*0.3,1.38,P.z+hf.z*0.3],ek(t,T0+90,470),[P.x+hf.x*0.85+hr.x*0.4,1.55,P.z+hf.z*0.85+hr.z*0.4],[P.x+hf.x*0.3,1.4,P.z+hf.z*0.3])}
+  CS.card=t>=T0+70&&t<470?c.item:null;
+  if(t===450){flashL(item.position.x,item.position.y,item.position.z,0xffe0a0,6,20);SFX.soul()}
+  if(t>=450)item.scale.setScalar(Math.max(0.001,1-ek(t,450,466)));
+  if(t>=488){CS.card=null;done()}},()=>{c.open=1;CS.card=null;done()})}
 // ---------- босс пал: записка у колокола
 function bossDown(e){if(e.t==='shogun')return houseBossDown(e);spawnWI('note',e.x,1.3,e.z,rnd(-0.01,0.01),0.05,rnd(-0.01,0.01));spawnWI('housekey',e.x+0.5,1.1,e.z+0.3,0.015,0.06,0.01);say('Юки','Он что-то обронил… Бумага и ключ. Подбери их (X).')}
 const noteImg=new Image();noteImg.src=NOTE_IMG;
 function readNote(){if(CS.on)return;INV.open=false;const p=camera.position.clone();csStart('read',()=>{},null);CS.cam.p.copy(p);CS.cam.l.set(P.x,1.3,P.z);CS.bars=0;CS.img=noteImg;CS.imgT=0;CS.onImgClose=()=>{CS.img=null;csEnd();try{renderer.domElement.requestPointerLock()}catch(_){}}}
-function startNoteCS(){P.csPose={p:POSE.kneel,w:1};const nt=itemModel('note');scene.add(nt);
+function pickPoint(x,z){const d=Math.hypot(P.x-x,P.z-z)||1,ux=(x-P.x)/d,uz=(z-P.z)/d;return[x-ux*0.46+uz*0.02,z-uz*0.46-ux*0.02]}// встать так, чтобы предмет был под правой рукой (G0 клипа pickup)
+function startNoteCS(x=P.x+fwdX(P.yaw)*0.46,z=P.z+fwdZ(P.yaw)*0.46){const nt=itemModel('note');scene.add(nt);nt.position.set(x,0.03,z);nt.rotation.set(0,rnd(0,6.28),0);nt.updateMatrixWorld(true);const g0=nt.position.clone(),q0=nt.quaternion.clone();
+ if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}
+ const NM=holdM(-0.3,0,0,0,-0.02,0.06),mid=new V3(),nq=new THREE.Quaternion(),tq=new THREE.Quaternion();let c0=null,jump=false;
  const close=()=>{scene.remove(nt);CS.img=null;csEnd();if(LV.winPending){LV.winPending=false;G.winT=1}};
- csStart('note',t=>{const H=CS.H;CS.bars=1;if(!P.csPose)P.csPose={p:POSE.kneel,w:1};const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);
-  if(t<40)P.csPose.w=1;if(t>=20&&P.csPose.p===POSE.kneel)P.csPose.w=1-ek(t,20,60);
-  if(t===60)P.csPose={p:POSE.read,w:0};if(P.csPose.p===POSE.read)P.csPose.w=ek(t,60,90);
-  hero.arms.R.hand.getWorldPosition(tv1);hero.arms.L.hand.getWorldPosition(_tv2);nt.position.lerpVectors(tv1,_tv2,0.5);nt.position.y+=0.02;nt.rotation.set(-1.0,P.yaw+Math.PI,0);
-  // медленный наезд камеры на героя
-  if(t<300){const k=ease(t/300)*0.85+Math.pow(t/300,4)*0.15;cam([P.x+hf.x*3.6+hr.x*1.3,1.9,P.z+hf.z*3.6+hr.z*1.3],[P.x,1.45,P.z],k,[P.x+hf.x*0.7+hr.x*0.18,1.6,P.z+hf.z*0.7+hr.z*0.18],[P.x,1.55,P.z]);CS.fov=55-k*10}
-  if(t%70===35&&t<300)SFX.heart();
-  if(t===300){CS.img=noteImg;CS.imgT=0;CS.onImgClose=close;SFX.bell()}
-  },()=>{if(CS.t<300){CS.t=299}else close()})
+ csStart('note',t=>{const H=CS.H;CS.bars=Math.min(1,t/14);const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);
+  if(t===1){const pp=pickPoint(x,z);if(Math.hypot(pp[0]-P.x,pp[1]-P.z)>0.07){H.to=pp;H.spd=0.03;H.gait=0}}
+  if(c0==null){if(!H.to||t>110){H.to=null;H.yaw=Math.atan2(x-P.x,z-P.z);H.yawK=0.25;if(t>110||Math.abs(((P.yaw-H.yaw+9.42)%6.283)-3.14)<0.12)c0=t}
+   cam([P.x+hf.x*3.2+hr.x*1.6,1.5,P.z+hf.z*3.2+hr.z*1.6],[x,0.5,z],0);return}
+  if(jump){jump=false;c0=t-260}const u=t-c0;
+  P.csClip={n:'pickup',t:Math.min(u,109)};
+  // записка лежит -> пальцы берут (38–44) -> правая рука -> к груди, между ладоней (70–92)
+  if(u===38)SFX.paper();
+  if(u<70)P.csPost=()=>handXf('R',NM,nt,u<44?1-ek(u,36,44):0,g0,q0);
+  else P.csPost=()=>{hero.arms.R.hand.getWorldPosition(tv1);hero.arms.L.hand.getWorldPosition(_tv2);mid.lerpVectors(tv1,_tv2,0.5);mid.y+=0.03;tq.setFromEuler(new THREE.Euler(-1.0,P.yaw+Math.PI,0,'YXZ'));handXf('R',NM,nt);const k=ek(u,70,92);nt.position.lerp(mid,k);nt.quaternion.slerp(tq,k);nt.updateMatrixWorld(true)};
+  if(u===80)SFX.paper();
+  // камера: сбоку на подъём, затем медленный наезд на героя с запиской
+  if(u<80)cam([P.x+hf.x*2.6+hr.x*1.5,1.45,P.z+hf.z*2.6+hr.z*1.5],[P.x+hf.x*0.3,0.75,P.z+hf.z*0.3],ek(u,0,80),[P.x+hf.x*2.3+hr.x*1.3,1.55,P.z+hf.z*2.3+hr.z*1.3],[P.x,1.1,P.z]);
+  else if(u<260){const k=ease((u-80)/180)*0.85+Math.pow((u-80)/180,4)*0.15;cam([P.x+hf.x*2.3+hr.x*1.3,1.55,P.z+hf.z*2.3+hr.z*1.3],[P.x,1.1,P.z],k,[P.x+hf.x*0.7+hr.x*0.18,1.6,P.z+hf.z*0.7+hr.z*0.18],[P.x,1.5,P.z]);CS.fov=55-k*10}
+  if(u%70===35&&u<260)SFX.heart();
+  if(u===260){CS.img=noteImg;CS.imgT=0;CS.onImgClose=close;SFX.bell()}
+  },()=>{if(!CS.img){jump=true;if(c0==null)c0=CS.t}else close()})
 }
 // ---------- инвентарь: отрисовка и управление мышью
 const SL={x:120,y:150,s:84,g:10,cols:6};

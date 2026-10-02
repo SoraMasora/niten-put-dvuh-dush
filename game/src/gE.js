@@ -1,5 +1,5 @@
 // ---------- visual sync
-function heroPose(){const st=P.stance,base=P.drawn?[POSE.tiger,POSE.crane,POSE.water][st]:POSE.sheath;let p=base;const s=P.state;
+function heroPose(){const st=P.stance,base=P.drawn?(G.oneBlade&&POSE.one?POSE.one:[POSE.tiger,POSE.crane,POSE.water][st]):POSE.sheath;let p=base;const s=P.state;
  if(s==='atk'){const a=P.atk,T=P.t*P.atkSpd,k1=ease(T/a.s),k2=ease((T-a.s)/a.a),k3=ease((T-a.s-a.a)/a.r);
   if(a.spin){p=T<a.s?mixPose(base,POSE.spinA,k1):T<a.s+a.a?mixPose(POSE.spinA,POSE.spinB,k2):mixPose(POSE.spinB,base,k3)}
   else if(a.type==='R'){p=T<a.s?mixPose(base,POSE.rUp,k1):T<a.s+a.a?mixPose(POSE.rUp,POSE.rDown,k2):mixPose(POSE.rDown,base,k3)}
@@ -14,10 +14,10 @@ const glV=new V3();
 // клипы Blender поверх процедурной позы + мечи (ножны / рука / полёт)
 const HC={name:null,t:0,w:0},swS={p:new V3(),q:new THREE.Quaternion(),a:0},_hm=new THREE.Matrix4(),_hi=new THREE.Matrix4(),_hp=new V3(),_hq=new THREE.Quaternion(),_hs=new V3(),_bp=new V3(),_bq=new THREE.Quaternion();
 function heroClips(){let cn=null,ct=0,atk=false;
- if(P.state==='atk'&&P.clipName){cn=P.clipName;ct=P.t*P.atkSpd;atk=true}else if(P.state==='draw'||P.state==='sheathe'){cn=P.state;ct=P.t*P.drawSpd}else if(P.idleClip){cn='toss';ct=P.idleClip.t}
+ if(P.state==='atk'&&P.clipName){cn=P.clipName;ct=P.t*P.atkSpd;atk=true}else if(P.state==='charge'){cn='OZc';ct=Math.min(P.t,23)}else if(P.csClip){cn=P.csClip.n;ct=P.csClip.t}else if(P.state==='draw'||P.state==='sheathe'){cn=P.state;ct=P.t*P.drawSpd}else if(P.idleClip){cn='toss';ct=P.idleClip.t}
  if(window.__clip){cn=__clip[0];ct=__clip[1];if(__clip[2]!=null)P.drawn=__clip[2]}
  const C=cn&&ANIMS.clips[cn];
- if(C){const nw=HC.name!==cn||ct<HC.t-1;HC.name=cn;HC.t=ct;let w=Math.min(1,ct/(atk?5:4));if(atk)w*=clamp((C.n-ct)/9,0,1);HC.w=nw?Math.min(w,0.35):lerp(HC.w,w,0.6)}
+ if(C){const nw=HC.name!==cn||ct<HC.t-1;HC.name=cn;HC.t=ct;let w=Math.min(1,ct/(atk?5:4));if(atk)w*=clamp((C.n-ct)/9,0,1);if(P.csClip&&cn===P.csClip.n){w=P.csClip.w!=null?P.csClip.w:1;HC.w=nw?w:lerp(HC.w,w,0.5)}else HC.w=nw?Math.min(w,0.35):lerp(HC.w,w,0.6)}
  else HC.w=Math.max(0,HC.w-0.14);
  if(HC.w>0.001)applyClip(hero,HC.name,HC.t,HC.w,HC.w*(1-0.75*P.walk));
  hero.root.updateMatrixWorld(true);_hi.copy(hero.hips.matrixWorld).invert();
@@ -33,11 +33,16 @@ function syncHero(t){const p=heroPose();const lk=P.idleT>200?Math.sin(t*0.37)*Ma
  heroMats.skin.color.copy(heroMats.skinBase).multiplyScalar(1-P.tar*0.7);
  const glow=P.muso>0||P.stance===0;M.blade.emissive=M.blade.emissive||new THREE.Color();M.blade.emissive.set(P.muso>0?0x802000:G.buf&&G.buf.dmg>0?0x6a2a08:0x000000);
  hero.arms.L.orb.scale.setScalar(1+Math.sin(t*6)*0.15+(P.absorbing?0.8:0));
- const attacking=P.state==='atk'||P.state==='issen';updTrail(trails.R,hero.arms.R.sw,attacking&&P.atk&&P.atk.type!=='L'||P.state==='issen');updTrail(trails.L,hero.arms.L.sw,attacking&&P.atk&&P.atk.type!=='R'&&!G.oneBlade);
+ const attacking=P.state==='atk'||P.state==='issen';if(G.oneBlade){const f=P.fire&&P.state==='atk';trails.R.col=f?[3.2,1.25,0.22]:[2.5,0.42,0.14];if(P.ign>0&&P.drawn&&G.frame%4===0){hero.arms.R.sw.userData.tip.getWorldPosition(tv1);embers(tv1.x,tv1.y,tv1.z,1,[1,0.45,0.08])}hero.arms.L.orb.scale.multiplyScalar(1+(P.ign||0)*0.25)}else trails.R.col=[2.2,0.75,0.2];updTrail(trails.R,hero.arms.R.sw,attacking&&P.atk&&P.atk.type!=='L'||P.state==='issen');updTrail(trails.L,hero.arms.L.sw,attacking&&P.atk&&P.atk.type!=='R'&&!G.oneBlade);
  for(const [i,g] of ghosts.entries()){g.visible=P.muso>0;if(g.visible){const a=t*3+i*Math.PI;g.position.set(P.x-fwdX(P.yaw)*0.4+Math.cos(a)*0.5,1.5+Math.sin(a*1.3)*0.3,P.z-fwdZ(P.yaw)*0.4+Math.sin(a)*0.5);g.rotation.set(-0.8+Math.sin(a)*0.5,P.yaw+Math.cos(a),0)}}
  // absorb bolts
  const pos=[];if(P.absorbing){hero.arms.L.orb.getWorldPosition(glV);for(let i=0;i<7;i++){let x=glV.x,y=glV.y,z=glV.z;const tgt=souls[i%Math.max(1,souls.length)];for(let k=0;k<5;k++){const nx=tgt&&!tgt.black?lerp(x,tgt.x,0.35)+rnd(-.15,.15):x+fwdX(P.yaw)*0.4+rnd(-.2,.2),ny=tgt?lerp(y,tgt.y,0.35)+rnd(-.15,.15):y+rnd(-.2,.2),nz=tgt&&!tgt.black?lerp(z,tgt.z,0.35)+rnd(-.15,.15):z+fwdZ(P.yaw)*0.4+rnd(-.2,.2);pos.push(x,y,z,nx,ny,nz);x=nx;y=ny;z=nz}}}
- bolts.geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));bolts.visible=pos.length>0}
+ bolts.geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));bolts.visible=pos.length>0;
+ if(P.csPost){hero.root.updateMatrixWorld(true);P.csPost()}}
+// предмет в руке героя: мировая поза кисти * смещение (k>0 — подмешать фиксированную позу FP/FQ)
+const _am=new THREE.Matrix4(),_ap=new V3(),_aq=new THREE.Quaternion(),_as=new V3();
+function handXf(s,m,o,k=0,FP=null,FQ=null){_am.multiplyMatrices(hero.arms[s].hand.matrixWorld,m);_am.decompose(_ap,_aq,_as);o.position.copy(_ap);o.quaternion.copy(_aq);if(k>0){if(FP)o.position.lerp(FP,k);if(FQ)o.quaternion.slerp(FQ,k)}o.updateMatrixWorld(true)}
+function holdM(rx=0,ry=0,rz=0,x=0,y=0,z=0){return new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rx,ry,rz,'XYZ')).setPosition(x,y,z)}
 function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.atk.wind):0,act=e.state==='act',rec=e.state==='rec';
  if(!e.dead){r.root.position.set(e.x,e.y,e.z);r.root.rotation.order='YXZ';const T=e.tl;r.root.rotation.set((T?T.x:0)+(e.csRx||0),e.yaw,T?T.z:0)}
  if(r.mat){r.mat.emissive.set(e.flash>0?0x606060:e.frozen>0?0x103060:e.burn>0?0x401000:0x000000)}
@@ -59,14 +64,17 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
  else if(r.kind==='chochin'||r.kind==='moku')syncHouseEnemy(e,t);
  else if(r.kind==='sota'||r.kind==='musha'){let p=POSE.crane;const a=e.atk;
   if(wind&&a){p=a.k==='iai'?mixPose(POSE.crane,POSE.iai,k):mixPose(POSE.crane,POSE.nUp,k)}else if(act||rec){p=a&&a.k==='iai'?POSE.issen:POSE.nDown}else if(e.state==='stag'||e.state==='trans')p=POSE.hurt;if(e.csPose)p=e.csPose;
-  e.pose=mixPose(e.pose||POSE.crane,p,e.csPose?0.5:0.35);applyPose(r.human,e.pose,mv,ph*1.2,t,{run:0.8,idle:e.state==='idle'||e.state==='circle'?1:0.4,seed:1.7,look:Math.sin(t*0.4)*0.2})}
+  if(e.t==='shogun'&&!e.csPose)p=e.state==='stag'?POSE.hurt:POSE.crane;
+  e.pose=mixPose(e.pose||POSE.crane,p,e.csPose?0.5:0.35);applyPose(r.human,e.pose,mv,ph*1.2,t,{run:0.8,idle:e.state==='idle'||e.state==='circle'?1:0.4,seed:1.7,look:Math.sin(t*0.4)*0.2});
+  // Кагэмару: клипы о-дати из Blender поверх процедурной позы; вне атак — стойка с о-дати двумя руками (кадр 0 K_slam)
+  if(e.t==='shogun'&&!e.csPose){if(e.clip){e.lc=e.clip;e.cw=lerp(e.cw||0,1,0.35)}else e.cw=lerp(e.cw||0,0,0.2);const g=e.state==='stag'?0.3:0.85*(1-0.25*mv);applyClip(r.human,'K_slam',0,g,0);if(e.cw>0.01&&e.lc)applyClip(r.human,e.lc.n,e.lc.t,e.cw,e.cw*(1-0.6*mv))}}
  const tele=wind&&e.atk.wind-e.st<=30;r.gl.visible=tele;if(tele){r.tip.getWorldPosition(tv1);r.gl.position.copy(tv1);const kk=1-(e.atk.wind-e.st)/30,sc=0.25+kk*0.7;r.gl.scale.set(sc,sc,1);
-  r.gl.material.color.set(e.atk.k==='grab'?glintCols.purple:e.atk.k==='iai'?glintCols.blue:glintCols.red);r.gl.material.rotation=t*2}}
+  r.gl.material.color.set(e.atk.k==='grab'||e.atk.k==='sweep'?glintCols.purple:e.atk.k==='iai'||e.atk.k==='back'?glintCols.blue:glintCols.red);r.gl.material.rotation=t*2}}
 const iaiLine=new Mesh(new THREE.BoxGeometry(0.06,0.06,1),new MB({color:0x80c8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false,depthWrite:false}));iaiLine.visible=false;scene.add(iaiLine);
 const tmpC=new THREE.Color();
 function windGust(t){return clamp(0.45+0.35*Math.sin(t*0.21)+0.25*Math.sin(t*0.53+1.3)+0.18*Math.sin(t*1.37+0.4),0,1)}
 function syncWorld(t){
- updHitFx();G.wind=windGust(t);WU.uT.value=t;WU.uW.value=G.wind;GRADE.uniforms.uT.value=t;
+ updHitFx();updQuake();G.wind=windGust(t);WU.uT.value=t;WU.uW.value=G.wind;GRADE.uniforms.uT.value=t;
  if(LV.env.rays)for(const r of LV.env.rays){r.rotation.set(0,Math.atan2(camera.position.x-r.position.x,camera.position.z-r.position.z),0);r.rotateZ(r.userData.tilt);r.material.opacity=r.userData.op*(0.6+0.4*Math.sin(t*0.3+r.userData.ph))}if(G.frame%6===0){if(G.mode==='play')SFX.wind(LV.env.theme,G.wind);else SFX.windOff()}
  for(const f of flames){const k=0.85+Math.sin(t*9+f.ph)*0.1+Math.sin(t*23+f.ph)*0.05;f.s.scale.set(0.6*f.b*k,1.1*f.b*(2-k),1);if(Math.random()<0.05*f.b)embers(f.x,f.y+0.5*f.b,f.z)}
  for(const l of STATIC)if(l.userData.base)l.intensity=l.userData.base*(0.85+Math.sin(t*11+l.position.x)*0.08+Math.random()*0.07);
@@ -82,7 +90,7 @@ function syncWorld(t){
  DYN.forEach((l,i)=>{const s=src[i];if(!s){l.intensity=0;return}l.position.set(s[0],s[1],s[2]);l.color.set(s[3]);l.intensity=s[4];l.distance=s[5]});
  moon.position.set(P.x-10,20,P.z-8);moon.target.position.set(P.x,0,P.z);
  // iai line
- const L=lines[0];iaiLine.visible=!!L;if(L){iaiLine.position.set((L.x1+L.x2)/2,1.2,(L.z1+L.z2)/2);iaiLine.lookAt(L.x2,1.2,L.z2);iaiLine.scale.set(1,1,Math.hypot(L.x2-L.x1,L.z2-L.z1)||0.1);iaiLine.material.opacity=L.life/24}
+ const L=lines[0];iaiLine.visible=!!L;if(L){iaiLine.position.set((L.x1+L.x2)/2,1.2,(L.z1+L.z2)/2);iaiLine.lookAt(L.x2,1.2,L.z2);iaiLine.scale.set(1,1,Math.hypot(L.x2-L.x1,L.z2-L.z1)||0.1);iaiLine.material.opacity=L.life/(L.max||24);iaiLine.material.color.set(L.col||0x80c8ff);iaiLine.scale.x=iaiLine.scale.y=L.col?2.2:1}
  // rain
  {const wr=!!rain.obj&&G.mode==='play';if(wr!==!!rain.snd&&SFX.rain(wr)!==false)rain.snd=wr}
  if(rain.obj){const dt=rain.last==null?0:Math.min(0.1,t-rain.last);rain.last=t;const fz=G.rainFreeze>0,up=G.rainUp;rain.T+=dt*(fz?0:up?-0.35:1);const U=rain.U;U.uT.value=rain.T;U.uC.value.set(camera.position.x,0,camera.position.z);U.uCam.value.copy(camera.position);U.uStr.value=fz?0.25:1;rain.rip.visible=!fz&&!up;

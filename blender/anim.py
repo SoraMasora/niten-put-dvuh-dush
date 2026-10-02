@@ -213,6 +213,8 @@ def build(out_js):
     A('N',[(0,crane,'SINE'),(9,P_(nU,tx2=-0.12,dp=(0,0.02,-0.03),nk=(-0.2,0,0)),'SINE'),(14,P_(nU,tx2=-0.18,dp=(0,0.03,-0.04),R=[-3.05,0.3,0.15,-0.45,-3.7],L=[-3.05,0.3,0.15,-0.45,-3.6]),'EXPO'),
         (20,P_(nD,tx2=0.2,dp=(0,-0.07,0.12),thR=(-0.35,0,0),knR=0.4),'SINE'),(28,P_(nD,tx2=0.25,dp=(0,-0.08,0.13),thR=(-0.35,0,0),knR=0.4,R=[-0.6,0.5,0.1,-0.05,1.0],L=[-0.6,0.5,0.1,-0.05,1.05]),'SINE'),(40,crane,'BEZIER')])
     A('X',[(0,crane,'SINE'),(6,P_(nD,c=0.5,tx2=0.15),'SINE'),(8,P_(nD,c=0.55,tx2=0.18),'EXPO'),(14,P_(nU,c=0.05,dp=(0,0.06,0.05),tx2=-0.2,nk=(-0.3,0,0)),'SINE'),(22,P_(nU,c=0.05,dp=(0,0.05,0.05),tx2=-0.25),'SINE'),(32,crane,'BEZIER')])
+    # --- v0.13: катсцены, «Путь одной катаны», клипы Кагэмару (blender/anim13.py)
+    import anim13,sys as _s;anim13.setup(_s.modules[__name__]);clips+=anim13.clips()
     # --- запекание
     for name,n,keys,sw in clips:
         key_clip(name,keys);frames=sample(n);q,h=pack(frames);C=dict(n=n,q=q,h=h)

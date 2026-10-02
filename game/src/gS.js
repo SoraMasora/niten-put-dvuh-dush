@@ -30,9 +30,9 @@ function csPrecompile(on){for(const p of[gateP,csP]){p.visible=on;p.position.set
 // ---------- движок
 function csSay(n,t,a,b){CS.subs.push({n,t,a,b})}
 function csStart(k,fn,skip){for(const q of KILLS){q.life=0;q.m.visible=false}CS.card=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
- P.atk=null;P.buf=null;P.pendR=P.pendL=false;P.idleClip=null;P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;P.vx=P.vz=0;P.mvS=0;
+ P.atk=null;P.csClip=null;P.csPost=null;P.buf=null;P.pendR=P.pendL=false;P.idleClip=null;P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;P.vx=P.vz=0;P.mvS=0;
  for(const k in K)K[k]=0;mdx=mdy=0}
-function csEnd(subs){CS.card=null;CS.img=null;CS.onImgClose=null;CS.on=false;CS.fn=CS.skip=null;CS.bars=0;CS.fade=0;CS.subs=[];P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;
+function csEnd(subs){P.csClip=null;P.csPost=null;CS.card=null;CS.img=null;CS.onImgClose=null;CS.on=false;CS.fn=CS.skip=null;CS.bars=0;CS.fade=0;CS.subs=[];P.csPose=null;P.csLook=null;P.csScale=null;P.csHide=false;
  csP.userData.open=0;csP.visible=false;beam.visible=false;if(P.state!=='draw'&&P.state!=='sheathe'){P.state='idle';P.t=0}
  G.csBlend={p:camera.position.clone(),l:CS.cam.l.clone(),t:0};G.camYaw=P.yaw;G.camPitch=0.28;G.fov=G.fovT=55;
  G.subs=[];if(subs)for(const s of subs)say(s[0],s[1]);for(const k in K)K[k]=0}
@@ -50,7 +50,7 @@ function csTick(){mdx=mdy=0;CS.t++;
  if(CS.img){CS.imgT++;if(CS.onImgClose&&CS.imgT>40&&(hit('Enter')||hit('Space')||MP[0]||hit('KeyX')||hit('Escape'))){CS.onImgClose();return}}
  CS.fn(CS.t);if(!CS.on)return;
  csHero(1);updWorld(1);updPortal(csP);
- const sh=G.shake;camera.position.set(CS.cam.p.x+rnd(-sh,sh)*0.3,CS.cam.p.y+rnd(-sh,sh)*0.3,CS.cam.p.z);camera.lookAt(CS.cam.l);
+ if(window.__camOv){CS.cam.p.copy(__camOv[0]);CS.cam.l.copy(__camOv[1])}const sh=G.shake;camera.position.set(CS.cam.p.x+rnd(-sh,sh)*0.3,CS.cam.p.y+rnd(-sh,sh)*0.3,CS.cam.p.z);camera.lookAt(CS.cam.l);
  G.fov=lerp(G.fov,CS.fov,0.1);camera.fov=G.fov;camera.updateProjectionMatrix()}
 function cam(p,l,k=1,p2,l2){if(p2){CS.cam.p.set(lerp(p[0],p2[0],k),lerp(p[1],p2[1],k),lerp(p[2],p2[2],k));CS.cam.l.set(lerp(l[0],l2[0],k),lerp(l[1],l2[1],k),lerp(l[2],l2[2],k))}else{CS.cam.p.set(...p);CS.cam.l.set(...l)}}
 function drawCS(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const b=CS.bars*H*0.115;X.fillStyle='#000';X.fillRect(0,0,W,b);X.fillRect(0,H-b,W,b);X.textAlign='center';X.textBaseline='alphabetic';

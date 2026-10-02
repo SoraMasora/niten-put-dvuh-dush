@@ -12,7 +12,7 @@ function separate(){for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.de
 function dmgEnemy(e,dmg,dx,dz,o={}){
  if(e.dead||(e.inv&&!o.force))return;if(ADM.x10)dmg*=10;
  if((e.t==='sota'||e.d.block)&&e.state==='move'&&!o.noBlock&&!o.gb&&P.muso<=0&&Math.random()<(e.d.block||0.4)){sparks((e.x+P.x)/2,1.4,(e.z+P.z)/2,180);SFX.clang();e.cd=Math.min(e.cd,12);P.vx-=dx*0.06;P.vz-=dz*0.06;G.hitstop=3;pop(e.t==='sota'?'Сота блокирует':'Блок','#bba');return}
- e.hp-=dmg;G.hitstop=Math.max(G.hitstop,o.stop==null?4:o.stop);e.flash=6;tar(e.x,e.d.h*0.6,e.z,10);SFX.hit();P.tar=Math.min(1,P.tar+0.03);G.shake=Math.max(G.shake,0.06+(o.knock||0)*0.012);
+ e.hp-=dmg;G.hitstop=Math.max(G.hitstop,o.stop==null?4:o.stop);e.flash=6;tar(e.x,e.d.h*0.6,e.z,10);SFX.hit(dmg>=40||o.gb);P.tar=Math.min(1,P.tar+0.03);G.shake=Math.max(G.shake,0.06+(o.knock||0)*0.012);
  if(dx||dz)hitFx(e.x-dx*e.d.rad*0.6,Math.min(1.35,e.d.h*0.6),e.z-dz*e.d.rad*0.6,dx,dz,{big:(o.knock||0)>=8,roll:P.atk&&P.atk.type==='L'?rnd(-0.3,0.3):P.atk&&P.atk.type==='N'?rnd(0.9,1.2):rnd(-1.1,-0.5),col:P.atk&&P.atk.type==='L'?0xb8dcff:0xffe0c0});
  if(e.hp<=0)return killEnemy(e,dx,dz,o);
  const ms=e.d.boss?2.2:e.d.poise?1.7:1,kb=(o.knock||2)*0.014/ms;e.vx+=dx*kb;e.vz+=dz*kb;hitTilt(e,dx,dz,(0.012+(o.knock||2)*0.004)/ms);if(o.launch&&!e.d.boss)e.vy=0.12;
@@ -26,7 +26,7 @@ function killEnemy(e,dx,dz,o={}){
  {const sy=Math.sin(e.yaw),cy=Math.cos(e.yaw);e.fall={a:0.05,v:0.02+kn*0.003,f:dx*sy+dz*cy,s:dx*cy-dz*sy,sx:dx*(0.02+kn*0.003),sz:dz*(0.02+kn*0.003),n:0};const L=Math.hypot(e.fall.f,e.fall.s)||1;e.fall.f/=L;e.fall.s/=L;if(!(dx||dz)){e.fall.f=-1;e.fall.s=0}}
  e.rig.gl.visible=false;tar(e.x,e.d.h*0.55,e.z,40,1.5);if(!o.issen)G.hitstop=Math.max(G.hitstop,6);
  killFx(e,dx,dz);if(!o.issen){const last=!enemies.some(x=>!x.dead&&x!==e);G.slow=Math.max(G.slow,last?50:14);G.slowTs=last?0.25:0.4;if(last){G.fovT=46;G.fovHold=30;G.shake=Math.max(G.shake,0.2)}}
- spawnSouls(e);if(e.d.boss){G.bossBar=null;SFX.bell();bossDown(e)}}
+ spawnSouls(e);if(e.d.boss){G.bossBar=null;SFX.bell();SFX.victory();bossDown(e)}}
 const soulGeo=new THREE.SphereGeometry(0.07,10,8),soulMats={r:new MB({color:0xff3020,toneMapped:false}),b:new MB({color:0x2a9aff,toneMapped:false}),y:new MB({color:0xffd93a,toneMapped:false}),p:new MB({color:0xb050ff,toneMapped:false}),k:new MB({color:0x0a0510})};
 const soulCol={r:[1,0.2,0.1],b:[0.2,0.6,1],y:[1,0.85,0.2],p:[0.7,0.3,1]};
 function spawnSouls(e){let n=0;const list=[...e.d.souls];if(Math.random()<0.3)list.push(['y',1]);
@@ -100,7 +100,7 @@ function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;const c=CH[i];const e
  G.card={t:0,title:c.title,name:c.name}}
 function activateMirror(m,silent){if(m.act)return;m.act=true;m.face.material=M.mirrorOn;m.lant.material=M.lampOn;if(!silent){P.food=3;P.hp=P.max;pop('Зеркало-сакр: путь сохранён','#e6c98a');SFX.bell()}}
 function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s[1]);
- const used=[];w.en.forEach((t,i)=>{let x,z,tries=0;if(LV.env.nav){[x,z]=navSpawn(t,i,used);const e=mkEnemy(t,x,z);e.yaw=Math.atan2(P.x-x,P.z-z);enemies.push(e);if(t==='sota'){G.bossBar=e;SFX.bell()}return}do{const a=G.camYaw+rnd(-1.3,1.3)+(i%2?0.4:-0.4),r=t==='yumi'?rnd(11,14):t==='sota'?7:rnd(8,11);x=P.x+Math.sin(a)*r;z=P.z+Math.cos(a)*r;tries++}while(Math.hypot(x,z)>LV.env.R-1.5&&tries<30);
+ SFX.spawn(true);const used=[];w.en.forEach((t,i)=>{let x,z,tries=0;if(LV.env.nav){[x,z]=navSpawn(t,i,used);const e=mkEnemy(t,x,z);e.yaw=Math.atan2(P.x-x,P.z-z);enemies.push(e);if(t==='sota'){G.bossBar=e;SFX.bell()}return}do{const a=G.camYaw+rnd(-1.3,1.3)+(i%2?0.4:-0.4),r=t==='yumi'?rnd(11,14):t==='sota'?7:rnd(8,11);x=P.x+Math.sin(a)*r;z=P.z+Math.cos(a)*r;tries++}while(Math.hypot(x,z)>LV.env.R-1.5&&tries<30);
   if(Math.hypot(x,z)>LV.env.R-1.5){const k=(LV.env.R-1.5)/Math.hypot(x,z);x*=k;z*=k}
   const e=mkEnemy(t,x,z);enemies.push(e);if(t==='sota'){G.bossBar=e;SFX.bell()}});LV.active=true}
 function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){u.open=0;gateP.visible=false;return}
@@ -110,8 +110,8 @@ function updChapter(ts){if(LV.env.hdoor)updDuelDoor();
  if(LV.house){updHouse(ts);if(G.rainFreeze>0)G.rainFreeze-=ts;return}
  if(!LV.started){LV.waveT+=ts;if(LV.waveT>300||Math.hypot(P.x,P.z+12)>4){LV.started=true;LV.waveT=150}}
  else if(!LV.active&&LV.wave<LV.c.waves.length){LV.waveT+=ts;if(LV.waveT>180&&!G.subs.length||LV.waveT>420){spawnWave();LV.waveT=0}}
- else if(LV.active&&!enemies.some(e=>!e.dead)){LV.active=false;LV.wave++;LV.waveT=0;if(LV.wave>=LV.c.waves.length){unsealChests();if(G.chap<CH.length-1&&!LV.c.noGate){LV.env.gate.t.visible=true;say('Юки','Путь открыт. Иди к вратам.');SFX.bell()}}else pop('Волна отбита','#cfc6b0')}
- if(LV.active&&G.frame%30===0)SFX.taiko(G.frame%120===0?1:0.55);
+ else if(LV.active&&!enemies.some(e=>!e.dead)){LV.active=false;LV.wave++;LV.waveT=0;if(LV.wave>=LV.c.waves.length){unsealChests();SFX.victory();if(G.chap<CH.length-1&&!LV.c.noGate){LV.env.gate.t.visible=true;say('Юки','Путь открыт. Иди к вратам.');SFX.bell()}}else{pop('Волна отбита','#cfc6b0');SFX.clear()}}
+ if(LV.active&&G.frame%30===0&&!musicOn())SFX.taiko(G.frame%120===0?1:0.55);
  for(const [i,m] of LV.env.mirrors.entries())if(!m.act&&Math.hypot(P.x-m.x,P.z-m.z)<1.8){activateMirror(m);G.cp={chap:G.chap,wave:LV.wave+(LV.active?0:0),mi:i,oni:P.oni}}
  const gt=LV.env.gate;if(gt.t.visible){gt.glow.material.opacity=0.25+Math.sin(G.frame*0.05)*0.1;if(Math.hypot(P.x-gt.x,P.z-gt.z)<2.6&&!G.trans&&!CS.on&&P.state!=='dead')startPortalExit()}
  if(G.rainFreeze>0){G.rainFreeze-=ts;if(G.rainFreeze<=0)G.rainUp=true}}
@@ -140,7 +140,7 @@ function updWorld(ts){
  proj=proj.filter(p=>p.life>0);
  FX.add.update(ts);FX.norm.update(ts);
  for(const f of flashes)f.life-=ts;for(let i=flashes.length-1;i>=0;i--)if(flashes[i].life<=0)flashes.splice(i,1);
- for(const l of lines)l.life-=ts;lines=lines.filter(l=>l.life>0);
+ updKWave(ts);for(const l of lines)l.life-=ts;lines=lines.filter(l=>l.life>0);
  if(!CS.on)updChapter(ts);updGate();updItems(ts);
  if(LV.env.theme==='ash'&&G.frame%2===0)FX.norm.add({x:P.x+rnd(-12,12),y:0,z:P.z+rnd(-12,12),vx:rnd(-.3,.3)/60,vy:rnd(0.3,0.9)/60,vz:rnd(-.3,.3)/60,life:rnd(200,400),s:rnd(0.03,0.06),r:0.55,gg:0.52,b:0.5,a:0.7});
  if(LV.env.theme==='ash'&&G.frame%3===0)embers(P.x+rnd(-10,10),rnd(0,1),P.z+rnd(-10,10));

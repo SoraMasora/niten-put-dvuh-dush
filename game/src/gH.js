@@ -21,25 +21,27 @@ const stepY=z=>LVok('manor')?(z>MSTEP[0][0]?0:z>MSTEP[1][0]?MSTEP[0][2]:z>MSTEP[
 function updDuelDoor(){const D=LV.env.hdoor;if(!D)return;D.glow.material.opacity=LV.duelOpen&&!CS.on?0.18+Math.sin(G.frame*0.06)*0.08:CS.on&&CS.k==='door'?D.glow.material.opacity:0;
  const hw=D.hw||0.6;D.L.position.x=-hw-2*hw*D.open;D.R.position.x=hw+2*hw*D.open;D.inner.visible=D.open>0.02}
 // ключ с тела Соты: поднять, осмотреть, понять, от чего он
-function startHouseKeyCS(x,z){const key=itemModel('housekey');scene.add(key);key.position.set(x,0.03,z);key.rotation.set(Math.PI/2,0,0);const hand=new V3();
+function startHouseKeyCS(x,z){const key=itemModel('housekey');scene.add(key);key.position.set(x,0.03,z);key.rotation.set(Math.PI/2,0,rnd(0,6.28));key.updateMatrixWorld(true);const g0=key.position.clone(),q0=key.quaternion.clone(),KM=holdM(-Math.PI/2,0,0.4,0,0.03,0.03);
  if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}
  const fin=()=>{scene.remove(key);LV.duelOpen=true;addItem('housekey');P.csRx=0;csEnd([['Юки','Дом ждёт. Подойди к двери и нажми X.']]);pop('Получено: '+ITEMS.housekey.n,RAR.q[1])};
- csStart('hkey',t=>{const H=CS.H;CS.bars=Math.min(ek(t,0,18),1-ek(t,600,620));const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x);
-  if(t===1){const d=Math.hypot(P.x-x,P.z-z)||1;H.to=[x+(P.x-x)/d*0.5,z+(P.z-z)/d*0.5];H.spd=0.032;H.gait=0}
-  if(t===60){H.to=null;H.yaw=Math.atan2(x-P.x,z-P.z);H.yawK=0.2}
-  if(t<130)cam([P.x+hr.x*2.3+hf.x*1.7,1.25,P.z+hr.z*2.3+hf.z*1.7],[x,0.35,z],0,[0,0,0],[0,0,0]);
-  if(t>=60&&t<130){P.csPose=P.csPose||{p:POSE.take,w:0};P.csPose.p=POSE.take;P.csPose.w=ek(t,62,92)}
-  if(t>=95){hero.arms.R.hand.getWorldPosition(hand);const k=t<125?ek(t,95,118):1;key.position.lerpVectors(new V3(x,0.03,z),hand,k);key.rotation.set(Math.PI/2*(1-k)+Math.sin(t*0.03)*0.3*k,P.yaw+t*0.01,0.4*k)}
-  if(t===96){SFX.soul();flashL(x,0.4,z,0xffd27a,4,20)}
-  if(t>=125&&t<330){P.csPose.p=POSE.inspect;P.csPose.w=ek(t,125,160);P.csLook=Math.sin(t*0.02)*0.15;
-   cam([P.x+hf.x*1.2+hr.x*0.5,1.6,P.z+hf.z*1.2+hr.z*0.5],[P.x+hf.x*0.3,1.38,P.z+hf.z*0.3],ek(t,125,330),[P.x+hf.x*0.85+hr.x*0.35,1.52,P.z+hf.z*0.85+hr.z*0.35],[P.x+hf.x*0.3,1.4,P.z+hf.z*0.3]);CS.card=t>=150&&t<320?'housekey':null}
-  if(t===150)csSay('Акира','Ключ… кованый, тяжёлый. На бородке — родовой мон.',150,270);
-  if(t===275)csSay('Акира','Он от того дома впереди. Двери там такие же старые.',275,390);
-  if(t===330){H.yaw=Math.atan2(0-P.x,HX.door-P.z);H.yawK=0.05;P.csLook=null}
-  if(t>=330&&t<480){P.csPose.w=lerp(P.csPose.w,0.35,0.05);const b=new V3(P.x-fwdX(P.yaw)*2.2+hr.x*0.6,1.85,P.z-fwdZ(P.yaw)*2.2+hr.z*0.6);cam([b.x,b.y,b.z],[0,2.0,HX.door],0)}
-  if(t===395)csSay('Акира','Что ты прятал там, Сота?',395,500);
-  if(t>=480){const k=ek(t,480,620);cam([1.3,2.0,-11],[0,2.6,HX.door],k,[1.1,2.5,-19.0],[0,2.4,HX.door]);if(t%14===0)flashL(0,1.6,HX.door+0.6,0xffb060,3,24)}
-  if(t>=620){CS.card=null;fin()}},()=>{CS.card=null;fin()})}
+ csStart('hkey',t=>{const H=CS.H;CS.bars=Math.min(ek(t,0,18),1-ek(t,650,670));const hf=new V3(fwdX(P.yaw),0,fwdZ(P.yaw)),hr=new V3(hf.z,0,-hf.x),u=t-66,s=t-50;
+  if(t===1){H.to=pickPoint(x,z);H.spd=0.032;H.gait=0}
+  if(t===58){H.to=null;H.yaw=Math.atan2(x-P.x,z-P.z);H.yawK=0.25}
+  if(t<175)cam([P.x+hr.x*2.3+hf.x*1.7,1.25,P.z+hr.z*2.3+hf.z*1.7],[x,0.35,z],0,[0,0,0],[0,0,0]);
+  // Blender-клип pickup: присел, пальцы берут ключ (38–44), поднял к груди; затем осмотр
+  if(u>=0&&u<130){P.csClip={n:'pickup',t:Math.min(u,109),w:u<110?1:1-ek(u,110,130)}}else if(u>=130)P.csClip=null;
+  if(u>=0){P.csPost=()=>handXf('R',KM,key,u<44?1-ek(u,36,44):0,g0,q0)}
+  if(u===40){SFX.pickup();flashL(x,0.4,z,0xffd27a,4,20)}
+  if(u>=104){P.csPose=P.csPose||{p:POSE.inspect,w:0};P.csPose.p=POSE.inspect}
+  if(s>=125&&s<330){P.csPose.w=ek(s,125,160);P.csLook=Math.sin(t*0.02)*0.15;
+   cam([P.x+hf.x*1.2+hr.x*0.5,1.6,P.z+hf.z*1.2+hr.z*0.5],[P.x+hf.x*0.3,1.38,P.z+hf.z*0.3],ek(s,125,330),[P.x+hf.x*0.85+hr.x*0.35,1.52,P.z+hf.z*0.85+hr.z*0.35],[P.x+hf.x*0.3,1.4,P.z+hf.z*0.3]);CS.card=s>=150&&s<320?'housekey':null}
+  if(s===150)csSay('Акира','Ключ… кованый, тяжёлый. На бородке — родовой мон.',150+50,270+50);
+  if(s===275)csSay('Акира','Он от того дома впереди. Двери там такие же старые.',275+50,390+50);
+  if(s===330){H.yaw=Math.atan2(0-P.x,HX.door-P.z);H.yawK=0.05;P.csLook=null}
+  if(s>=330&&s<480){P.csPose.w=lerp(P.csPose.w,0.35,0.05);const b=new V3(P.x-fwdX(P.yaw)*2.2+hr.x*0.6,1.85,P.z-fwdZ(P.yaw)*2.2+hr.z*0.6);cam([b.x,b.y,b.z],[0,2.0,HX.door],0)}
+  if(s===395)csSay('Акира','Что ты прятал там, Сота?',395+50,500+50);
+  if(s>=480){const k=ek(s,480,620);cam([1.3,2.0,-11],[0,2.6,HX.door],k,[1.1,2.5,-19.0],[0,2.4,HX.door]);if(s%14===0)flashL(0,1.6,HX.door+0.6,0xffb060,3,24)}
+  if(s>=620){CS.card=null;fin()}},()=>{CS.card=null;fin()})}
 // дверь: подняться на крыльцо, отпереть, створки разъезжаются, войти
 function startDoorCS(){const D=LV.env.hdoor;const key=itemModel('housekey');key.visible=false;scene.add(key);const hand=new V3(),lock=new V3(0.04,1.25,HX.door+0.06);
  if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1.4;SFX.draw(false)}
@@ -210,14 +212,14 @@ function saveHouseCP(mi){G.cp={chap:3,wave:0,mi,oni:P.oni}}
 function setBars(id,on){for(const op of LV.H.open){if(op.type==='door'||op.type==='exit')continue;if(!op.rooms.includes(id))continue;if(op.type==='gate'&&!G.hcleared.has('garden')){continue}op.want=on?1:0}}
 function startRoomFight(r){const H=LV.H,Wv=HWAVES[r.id];H.fight=r.id;LV.active=true;setBars(r.id,true);for(const s of Wv.say||[])say(s[0],s[1]);SFX.taiko(1.3);SFX.clang();
  Wv.en.forEach((q,i)=>H.queue.push({q,at:G.frame+30+i*28}))}
-function spawnHouseEnemy(q){const [t,x0,z0,a]=q;let x=x0,z=z0,e;
+function spawnHouseEnemy(q){const [t,x0,z0,a]=q;let x=x0,z=z0,e;SFX.spawn(t==='shogun');
  if(typeof a==='string'&&a.startsWith('case')){const c=LV.H.cases.find(c=>c.tag===a);x=c.x+Math.sin(c.ry)*0.95;z=c.z+Math.cos(c.ry)*0.95;for(const m of c.glass)m.visible=false;c.rig.root.visible=false;
   for(let i=0;i<60;i++)FX.add.add({x:c.x+rnd(-0.5,0.5),y:rnd(0.6,2.4),z:c.z+rnd(-0.5,0.5),vx:Math.sin(c.ry)*rnd(0.01,0.05)+rnd(-.02,.02),vy:rnd(0,0.03),vz:Math.cos(c.ry)*rnd(0.01,0.05)+rnd(-.02,.02),g:0.003,life:rnd(30,60),s:rnd(0.02,0.05),r:1.4,gg:1.6,b:1.9,a:0.8});
   SFX.clang();SFX.hit();flashL(c.x,1.5,c.z,0x80c0ff,6,20);e=mkEnemy(t,x,z);e.yaw=c.ry}
  else{e=mkEnemy(t,x,z);if(t==='chochin'){e.y=2.4;e.vy=-0.01}if(t==='moku'){e.yaw=a;e.hx=x;e.hz=z}
   for(let i=0;i<26;i++)FX.add.add({x:x+rnd(-.4,.4),y:rnd(0.1,1.8),z:z+rnd(-.4,.4),vx:0,vy:rnd(0.005,0.02),vz:0,life:rnd(30,60),s:rnd(0.05,0.1),r:0.5,gg:1.0,b:1.8,a:0.6});flashL(x,1.2,z,t==='moku'?0xb050ff:0x7ab0ff,5,18);SFX.grab()}
  if(e.d.boss){G.bossBar=e;SFX.bell()}enemies.push(e)}
-function endRoomFight(){const H=LV.H,id=H.fight;H.fight=null;LV.active=false;G.hcleared.add(id);setBars(id,false);SFX.bell();pop(HR.find(r=>r.id===id).n+' — очищено','#cfc6b0');
+function endRoomFight(){const H=LV.H,id=H.fight;H.fight=null;LV.active=false;G.hcleared.add(id);setBars(id,false);SFX.clear();pop(HR.find(r=>r.id===id).n+' — очищено','#cfc6b0');
  let n=0;for(const c of LV.chests){if(c.room!==id||c.state==='open')continue;n++;if(c.state==='sealed'){c.state='locked';c.burn=1}}
  const lack=n;if(n)pop('Печати о-фуда сгорели','#ffd27a');for(let i=0;i<lack;i++)spawnWI('key',P.x+rnd(-1,1),1.5,P.z+rnd(-1,1),rnd(-0.02,0.02),0.06,rnd(-0.02,0.02));
  if(id==='garden'){for(const op of H.open)if(op.type==='gate'){op.want=0}say('Юки','Кости у дверей додзё рассыпались. Там — хозяин дома.')}
@@ -256,8 +258,8 @@ function startHouseArrival(){const H=LV.H;const dr=H.open.find(o=>o.type==='door
 function startAmbushCS(){const H=LV.H,e=H.ambushE;if(!e){G.ambushDone=true;return}
  if(!P.drawn){P.drawn=true}const props=[];let yoi=null,hilt=null;const shards=[];const tv=new V3(),tv3=new V3();
  const fin=()=>{for(const p of props)ENV.attach(p);if(yoi)scene.remove(yoi);P.csRx=0;P.y=0;P.hideL=false;G.oneBlade=true;G.ambushDone=true;H.ambushE=null;
-  if(!e.dead){killEnemy(e,-1,0,{knock:8});}if(hilt)hilt.visible=false;addItem('yoihilt');pop('Ёи сломана. Дальше — одна катана · ПКМ — удар перчаткой Они','#e6c98a');
-  csEnd([['Юки','Акацуки ещё с тобой. Левой — бей перчаткой Они (ПКМ).']]);saveHouseCP(0)};
+  if(!e.dead){killEnemy(e,-1,0,{knock:8});}if(hilt)hilt.visible=false;addItem('yoihilt');pop('Путь одной катаны: ЛКМ ×4 — цепь · ПКМ — перчатка Они · ЛКМ+ПКМ — Кулак Они · удерживай ЛКМ — Дзан','#e6c98a');
+  csEnd([['Юки','Акацуки ещё с тобой. Бей перчаткой Они (ПКМ) — её пламя зажжёт клинок.'],['Юки','Удержи удар (ЛКМ) — и рассеки их одним рывком. Вместе — о землю (ЛКМ+ПКМ).']]);saveHouseCP(0)};
  csStart('ambush',t=>{const C=CS.H;CS.bars=1;
   if(t===1){C.to=[2.0,-10.35];C.spd=0.03;C.gait=0.2;e.state='cs';e.x=-0.7;e.z=-10.1;e.yaw=Math.PI/2}
   if(t<40)cam([2.5,1.75,-13.6],[1.7,1.35,-9.6],ek(t,0,40),[2.4,1.7,-13.2],[1.6,1.35,-9.6]);
@@ -360,6 +362,47 @@ function updMusha(e,ts,d,ty){e.st+=ts;const B=e.t==='shogun',sp=(B&&e.phase===2?
  case'act':if(e.atk.k==='dash'&&!e.hitDone&&d<1.3){e.hitDone=true;hitPlayer(e,e.atk.dmg,{issen:true})}if(e.st>=e.atk.act){e.state='rec';e.st=0}break;
  case'rec':if(e.st>=e.atk.rec){if(e.comboN>1){e.comboN--;e.atk={...e.atk,wind:Math.round((B?14:18)/sp)};e.state='wind';e.st=0}else{e.state='move';e.st=0;e.cd=rnd(B?40:60,B?90:130)/sp}}break;
  case'stag':if(e.st>=e.stagT){e.state='move';e.st=0;e.cd=20}break;}}
+// ИИ Кагэмару (Страж Дома): о-дати двумя руками, Blender-клипы K_*. Удар в пол с обманной задержкой и волной по полу (прыжок),
+// круговой низкий взмах (прыжок/уворот), три укола с шагами, шаг-тень за спину + удар наотмашь, рёв второй фазы.
+const KAGE={slam:{n:110,hit:60,dmg:34,col:'red'},sweep:{n:92,hit:48,dmg:26,col:'purple'},thrust:{n:92,hit:24,dmg:18,col:'red'},back:{n:66,hit:28,dmg:30,col:'blue'}},KWAVE=[];
+const KW_M=[...Array(3)].map(()=>{const m=new Mesh(new THREE.RingGeometry(0.9,1,64),new MB({color:0xa070ff,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;m.visible=false;m.renderOrder=14;scene.add(m);return m});let kwI=0;
+function kageWave(e,x,z){KWAVE.push({x,z,r:0.3,life:48,hit:false,src:e,m:KW_M[kwI++%KW_M.length]})}
+function updKWave(ts){for(const w of KWAVE){w.life-=ts;w.r+=0.17*ts;w.m.visible=w.life>0;w.m.position.set(w.x,0.07,w.z);w.m.scale.setScalar(w.r);w.m.material.opacity=Math.min(1,w.life/20)*0.85;
+  if(G.frame%2===0)for(let i=0;i<6;i++){const a=rnd(0,6.283);FX.add.add({x:w.x+Math.cos(a)*w.r,y:0.1,z:w.z+Math.sin(a)*w.r,vx:0,vy:rnd(0.01,0.03),vz:0,life:16,s:0.09,r:1.1,gg:0.6,b:2.2})}
+  const dp=Math.hypot(P.x-w.x,P.z-w.z);if(!w.hit&&w.life>0&&Math.abs(dp-w.r)<0.45&&P.y<0.22){w.hit=true;if(hitPlayer(w.src,14,{unblock:true})==='hit'){P.vy=0.08}}}
+ for(let i=KWAVE.length-1;i>=0;i--)if(KWAVE[i].life<=0){KWAVE[i].m.visible=false;KWAVE.splice(i,1)}}
+function kageAtk(e,k){const A=KAGE[k],sp=e.phase===2?1.3:1;e.state='wind';e.st=0;e.ct=0;e.hitDone=false;e.hits=0;e.atk={k,wind:A.hit/sp,act:1,rec:1,dmg:Math.round(A.dmg*(e.d.dm||1))};e.clip={n:'K_'+k,t:0};
+ e.hold=k==='slam'?(e.phase===2?rnd(0,34):rnd(0,12)):0;
+ if(k==='back'){tar(e.x,1.2,e.z,26,1.4);flashL(e.x,1.4,e.z,0x7040ff,6,16);SFX.portal();const bx=P.x-fwdX(P.yaw)*1.7,bz=P.z-fwdZ(P.yaw)*1.7;e.x=bx;e.z=bz;arenaClamp(e,0.6);e.yaw=Math.atan2(P.x-e.x,P.z-e.z);tar(e.x,1.2,e.z,26,1.4);SFX.warp()}}
+function kagePick(e,d){const p2=e.phase===2,r=Math.random();
+ if(d>7)return r<(p2?0.6:0.35)?'back':'thrust';if(d>3.4)return r<0.5?'thrust':r<0.8?'slam':'back';
+ return r<0.32?'sweep':r<0.62?'slam':r<0.82?'thrust':'back'}
+function updKage(e,ts,d,ty){e.st+=ts;const sp=e.phase===2?1.3:1;
+ if(e.state==='cs'||e.state==='csIdle'){e.vx=e.vz=0;e.clip=null;return}
+ if(e.state==='intro'){e.yaw=ty;e.inv=1;if(!G.subs.length){e.state='move';e.st=0;e.cd=50;e.inv=0}return}
+ if(e.state==='trans'){e.inv=1;e.clip={n:'K_roar',t:Math.min(139,e.st)};if(e.st>=20&&e.st-ts<20){SFX.bossRoar();G.shake=0.45;flashL(e.x,1.8,e.z,0x9050ff,9,30);if(d<5){P.vx+=(P.x-e.x)/(d||1)*0.22;P.vz+=(P.z-e.z)/(d||1)*0.22}}
+  if(e.st>20&&e.st<110&&e.st%6<1)tar(e.x,1.3,e.z,6,1.2);if(e.st>150){e.state='move';e.st=0;e.inv=0;e.cd=30;e.clip=null}return}
+ if(e.state==='enter'){e.yaw=turn(e.yaw,ty,0.1);if(e.st>30){e.state='move';e.st=0;e.cd=rnd(30,70)}return}
+ if(e.phase===1&&e.hp<e.max*0.5){e.phase=2;e.state='trans';e.st=0;e.inv=1;e.clip=null;SFX.bell();say('Кагэмару','Дом, встань за меня!');say('Юки','Фонари! Сначала их — потом его.');
+  if(LV.H)LV.H.queue.push({q:['chochin',e.x+3,e.z-2],at:G.frame+40},{q:['chochin',e.x-3,e.z-2],at:G.frame+70});return}
+ const dx=P.x-e.x,dz=P.z-e.z,v=e.d.spd/60*sp,fx=fwdX(e.yaw),fz=fwdZ(e.yaw);
+ if(e.state!=='wind'&&e.state!=='act')e.clip=null;
+ switch(e.state){
+ case'move':e.yaw=turn(e.yaw,ty,0.1);if(d>3.0){e.x+=dx/d*v*ts;e.z+=dz/d*v*ts}else if(d<1.8){e.x-=dx/d*v*0.5*ts;e.z-=dz/d*v*0.5*ts}else{e.x+=-dz/d*v*0.35*ts;e.z+=dx/d*v*0.35*ts}
+  e.cd-=ts*sp;if(e.cd<=0&&P.state!=='dead')kageAtk(e,kagePick(e,d));break;
+ case'wind':case'act':{const a=e.atk,A=KAGE[a.k],c0=e.ct;
+  if(a.k==='slam'&&e.ct>=44&&e.hold>0){e.hold-=ts;if(e.hold<=0)SFX.bigSwing()}else e.ct+=ts*sp;const c=e.ct;e.clip.t=Math.min(A.n-0.01,c);a.wind=e.st+(A.hit-c)/sp;
+  const X=f=>c0<f&&c>=f,fw=(dx*fx+dz*fz),lat=Math.abs(dx*fz-dz*fx);
+  if(c<A.hit-8)e.yaw=turn(e.yaw,ty,a.k==='sweep'?0.06:0.12);
+  e.state=c<A.hit?'wind':'act';
+  if(a.k==='slam'){if(X(52)&&e.hold<=0)SFX.bigSwing();if(c>54&&c<60&&d>2.2){e.x+=fx*0.06*ts;e.z+=fz*0.06*ts}
+   if(X(60)){const ix=e.x+fx*2.3,iz=e.z+fz*2.3;SFX.slam();G.shake=0.5;flashL(ix,0.5,iz,0xa070ff,10,20);dust(ix,iz,40);sparks(ix,0.2,iz,40,[0.8,0.6,1]);kageWave(e,ix,iz);if(Math.hypot(P.x-ix,P.z-iz)<1.6)hitPlayer(e,a.dmg,{issen:true})}}
+  else if(a.k==='sweep'){if(X(42))SFX.bigSwing();if(c>=46&&c<=58&&!e.hitDone&&d<3.8&&P.y<0.3){const r=hitPlayer(e,a.dmg,{});if(r!=='none')e.hitDone=true}if(X(52))G.shake=0.2}
+  else if(a.k==='thrust'){for(const f of[24,40,56]){if(c>f-6&&c<f&&d>1.4){e.x+=fx*0.08*ts;e.z+=fz*0.08*ts}if(X(f)){SFX.swingR();if(fw>0&&fw<3.6&&lat<0.7)hitPlayer(e,a.dmg,{issen:f===56});e.hits++}}}
+  else if(a.k==='back'){if(X(22))SFX.swingL();if(X(28)&&d<3.0&&fw/(d||1)>0.2)hitPlayer(e,a.dmg,{issen:true})}
+  if(c>=A.n){e.state='move';e.st=0;e.clip=null;e.cd=rnd(40,95)/sp;if(e.phase===2&&a.k==='sweep'&&Math.random()<0.5){kageAtk(e,'slam');e.hold=0}}
+  break;}
+ case'stag':e.clip=null;if(e.st>=e.stagT){e.state='move';e.st=0;e.cd=20}break;}}
 // мокумокурэн: неподвижен на стене, глаза копят взгляд и выпускают самонаводящиеся сферы
 function updMoku(e,ts,d,ty){e.st+=ts;if(e.hx!=null){e.x=e.hx;e.z=e.hz}e.vx=e.vz=0;
  switch(e.state){case'enter':if(e.st>50){e.state='move';e.st=0;e.cd=rnd(40,90)}break;

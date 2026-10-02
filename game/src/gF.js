@@ -40,7 +40,11 @@ function drawTitle(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const gr=X.create
  X.font='15px Georgia,serif';X.fillStyle='rgba(230,220,200,0.65)';X.fillText('↑ / ↓ — сложность  ·  Enter — начать',W*0.72,470);X.fillText('В игре: клик — захват мыши, Esc — пауза и управление',W*0.72,494);
  X.fillStyle=`rgba(255,210,140,${0.5+Math.sin(G.frame*0.08)*0.3})`;X.font='18px Georgia';X.fillText('Нажмите Enter',W*0.72,545);X.textAlign='left'}
 // ---------- loop
-function update(){G.frame++;admTick();
+// v0.13: музыка локаций: 1 — пепел (деревня), 2 — бамбуковый лес, 3 — двор колокола, 4 — дом (до босса / бой с Кагэмару)
+const MUSK={ash:'ash',forest:'forest',duel:'duel',house:'house'};
+function updMusic(){if(G.frame%10)return;let k='ash';if(G.mode!=='title'&&LV){k=MUSK[LV.env.theme]||'ash';const b=G.bossBar;if(k==='house'&&b&&!b.dead&&b.t==='shogun')k='boss'}
+ music(k);musicDuck(G.mode==='dead'?0.35:G.paused||INV.open?0.6:CS.on&&G.subs.length?0.7:1)}
+function update(){G.frame++;admTick();updMusic();
  if(G.mode==='title'){if(hit('ArrowUp')||hit('KeyW'))G.menuSel=(G.menuSel+2)%3;if(hit('ArrowDown')||hit('KeyS'))G.menuSel=(G.menuSel+1)%3;
   if(hit('Enter')||hit('Space')){G.diff=G.menuSel;G.souls={r:0,b:0,p:0};G.stats={kills:0,issen:0,time:0,deaths:0};invReset();G.lootPlan=null;G.mode='play';loadChapter(0);startIntro();try{renderer.domElement.requestPointerLock()}catch(_){}}
   P.yaw+=0.004;return}
@@ -61,7 +65,7 @@ function update(){G.frame++;admTick();
  let ts=1;if(G.slow>0){G.slow--;ts=G.slowTs}G.stats.time++;
  updPlayer(ts);updWorld(ts);
  if(P.state==='dead'){G.deadT++;if(G.deadT>150){G.mode='dead';G.noPauseOnUnlock=true;document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>G.noPauseOnUnlock=false,100)}}
- if(G.winT){G.winT++;if(G.winT>240){G.mode='victory';G.noPauseOnUnlock=true;document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>G.noPauseOnUnlock=false,100)}}
+ if(G.winT){G.winT++;if(G.winT===2)SFX.victory();if(G.winT>240){G.mode='victory';G.noPauseOnUnlock=true;document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>G.noPauseOnUnlock=false,100)}}
  if(G.trans){G.trans++;if(G.trans>60){G.trans=0;const oni=P.oni,mana=P.mana,hp=P.hp;loadChapter(G.chap+1);P.oni=oni;P.mana=mana}}}
 let lastT=0,acc=0;const clock={t:0};
 function frame(now){requestAnimationFrame(frame);if(!lastT)lastT=now;acc+=Math.min(100,now-lastT)*ADM.ts;lastT=now;let n=0;
@@ -85,5 +89,5 @@ addEventListener('resize',resize);resize();
  try{renderIcons()}catch(err){console.warn('icons',err)}
  if(ld)ld.remove()}
 loadChapter(1);G.card=null;G.subs=[];resetPlayer(0,0);
-window.__G=G;window.__P=P;window.__ASSET=ASSET;window.__addPart=addPart;window.__THREE=THREE;window.__hero=hero;window.__rain=rain;window.__scene=scene;window.__cam0=camera;window.__E=()=>enemies;window.__load=loadChapter;window.__K=K;window.__KP=KP;window.__mk=(t,x,z)=>{const e=mkEnemy(t,x,z);e.state='move';enemies.push(e);return e};window.__S=()=>souls;window.__LV=()=>LV;window.__CS=CS;window.__INV=INV;window.__WI=WI;window.__add=addItem;window.__chestCS=i=>startChestCS(LV.chests[i]);window.__unseal=unsealChests;window.__note=startNoteCS;window.__spawnWI=spawnWI;window.__upd=n=>{for(let i=0;i<n;i++){update();for(const k in KP)delete KP[k]}};window.__intro=()=>{G.mode='play';loadChapter(0);startIntro()};window.__top=(x,z,h)=>{csStart('top',()=>{cam([x,h,z+0.01],[x,0,z])},null);CS.bars=0};window.__kill=e=>killEnemy(e,0,0);window.__act=interact;window.__use=useSlot;window.__H=()=>LV.H;window.__map=()=>{G.hasMap=true;G.mapOpen=true};window.__amb=startAmbushCS;window.__hkey=()=>startHouseKeyCS(P.x,P.z-1);window.__door=startDoorCS;window.__room=id=>{const r=HR.find(q=>q.id===id);P.x=(r.x0+r.x1)/2;P.z=(r.z0+r.z1)/2};window.__exit=()=>{LV.env.gate.t.visible=true;startPortalExit()};window.__nav={free:navFree,los:navLOS,ok:LVok,steer:navSteer,spawn:()=>{LV.waveT=999;LV.started=true}};
+window.__G=G;window.__P=P;window.__itemModel=itemModel;window.__atk=k=>startAttack(k,null);window.__MH=MH;window.__kage=k=>{const e=enemies.find(e=>e.t==='shogun'&&!e.dead);if(e)kageAtk(e,k)};window.__handXf=handXf;window.__holdM=holdM;window.__ASSET=ASSET;window.__addPart=addPart;window.__THREE=THREE;window.__hero=hero;window.__rain=rain;window.__scene=scene;window.__cam0=camera;window.__E=()=>enemies;window.__load=loadChapter;window.__K=K;window.__KP=KP;window.__mk=(t,x,z)=>{const e=mkEnemy(t,x,z);e.state='move';enemies.push(e);return e};window.__S=()=>souls;window.__LV=()=>LV;window.__CS=CS;window.__INV=INV;window.__WI=WI;window.__add=addItem;window.__chestCS=i=>startChestCS(LV.chests[i]);window.__unseal=unsealChests;window.__note=startNoteCS;window.__spawnWI=spawnWI;window.__upd=n=>{for(let i=0;i<n;i++){update();for(const k in KP)delete KP[k]}};window.__intro=()=>{G.mode='play';loadChapter(0);startIntro()};window.__top=(x,z,h)=>{csStart('top',()=>{cam([x,h,z+0.01],[x,0,z])},null);CS.bars=0};window.__kill=e=>killEnemy(e,0,0);window.__act=interact;window.__use=useSlot;window.__H=()=>LV.H;window.__map=()=>{G.hasMap=true;G.mapOpen=true};window.__amb=startAmbushCS;window.__hkey=()=>startHouseKeyCS(P.x,P.z-1);window.__door=startDoorCS;window.__room=id=>{const r=HR.find(q=>q.id===id);P.x=(r.x0+r.x1)/2;P.z=(r.z0+r.z1)/2};window.__exit=()=>{LV.env.gate.t.visible=true;startPortalExit()};window.__nav={free:navFree,los:navLOS,ok:LVok,steer:navSteer,spawn:()=>{LV.waveT=999;LV.started=true}};
 requestAnimationFrame(frame);
