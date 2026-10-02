@@ -327,7 +327,7 @@ function startExitCS(){const H=LV.H,ex=H.open.find(o=>o.type==='exit');if(P.draw
   CS.fadeC='255,248,236';CS.fade=ek(t,170,230);
   if(t===150)csSay('Акира','Сота… я узнаю, что здесь случилось.',150,230);
   if(t>=240){CS.fadeC='0,0,0';csEnd();G.mode='victory';G.noPauseOnUnlock=true;document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>G.noPauseOnUnlock=false,100)}},null)}
-function houseBossDown(e){const H=LV.H;const ex=H.open.find(o=>o.type==='exit');ex.w.off=true;ex.open=0.08;
+function houseBossDown(e){const H=LV.H;if(!H)return;const ex=H.open.find(o=>o.type==='exit');ex.w.off=true;ex.open=0.08;
  H.spots.push({k:'exit',x:0,z:23.9,r:1.6,label:'X — открыть дверь в глубину дома'});spawnWI('key',e.x,1.2,e.z,0.01,0.08,0.01);
  say('Кагэмару','…Он… ждёт тебя… внизу…');say('Юки','Страж пал. Дверь за додзё открыта.')}
 // ================================================================ ЁКАИ ДОМА
@@ -347,7 +347,7 @@ function updMusha(e,ts,d,ty){e.st+=ts;const B=e.t==='shogun',sp=(B&&e.phase===2?
  if(e.state==='trans'){e.inv=1;if(e.st%10<1)tar(e.x,1.3,e.z,8,1.2);if(e.st>150){e.state='move';e.st=0;e.inv=0;e.cd=30}return}
  if(e.state==='enter'){e.yaw=turn(e.yaw,ty,0.1);if(e.st>30){e.state='move';e.st=0;e.cd=rnd(30,70)}return}
  if(B&&e.phase===1&&e.hp<e.max*0.5){e.phase=2;e.state='trans';e.st=0;e.inv=1;G.shake=0.3;SFX.bell();SFX.roar&&SFX.roar();say('Кагэмару','Дом, встань за меня!');say('Юки','Фонари! Сначала их — потом его.');
-  LV.H.queue.push({q:['chochin',e.x+3,e.z-2],at:G.frame+40},{q:['chochin',e.x-3,e.z-2],at:G.frame+70});return}
+  if(LV.H)LV.H.queue.push({q:['chochin',e.x+3,e.z-2],at:G.frame+40},{q:['chochin',e.x-3,e.z-2],at:G.frame+70});return}
  const dx=P.x-e.x,dz=P.z-e.z,v=e.d.spd/60*sp,dm=e.d.dm||1;
  switch(e.state){
  case'move':e.yaw=turn(e.yaw,ty,0.12);if(d>2.6){e.x+=dx/d*v*ts;e.z+=dz/d*v*ts}else if(d<1.6){e.x-=dx/d*v*0.5*ts;e.z-=dz/d*v*0.5*ts}else{e.x+=-dz/d*v*0.4*ts;e.z+=dx/d*v*0.4*ts}

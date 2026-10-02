@@ -40,7 +40,7 @@ function drawTitle(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const gr=X.create
  X.font='15px Georgia,serif';X.fillStyle='rgba(230,220,200,0.65)';X.fillText('↑ / ↓ — сложность  ·  Enter — начать',W*0.72,470);X.fillText('В игре: клик — захват мыши, Esc — пауза и управление',W*0.72,494);
  X.fillStyle=`rgba(255,210,140,${0.5+Math.sin(G.frame*0.08)*0.3})`;X.font='18px Georgia';X.fillText('Нажмите Enter',W*0.72,545);X.textAlign='left'}
 // ---------- loop
-function update(){G.frame++;
+function update(){G.frame++;admTick();
  if(G.mode==='title'){if(hit('ArrowUp')||hit('KeyW'))G.menuSel=(G.menuSel+2)%3;if(hit('ArrowDown')||hit('KeyS'))G.menuSel=(G.menuSel+1)%3;
   if(hit('Enter')||hit('Space')){G.diff=G.menuSel;G.souls={r:0,b:0,p:0};G.stats={kills:0,issen:0,time:0,deaths:0};invReset();G.lootPlan=null;G.mode='play';loadChapter(0);startIntro();try{renderer.domElement.requestPointerLock()}catch(_){}}
   P.yaw+=0.004;return}
@@ -64,7 +64,7 @@ function update(){G.frame++;
  if(G.winT){G.winT++;if(G.winT>240){G.mode='victory';G.noPauseOnUnlock=true;document.exitPointerLock&&document.exitPointerLock();setTimeout(()=>G.noPauseOnUnlock=false,100)}}
  if(G.trans){G.trans++;if(G.trans>60){G.trans=0;const oni=P.oni,mana=P.mana,hp=P.hp;loadChapter(G.chap+1);P.oni=oni;P.mana=mana}}}
 let lastT=0,acc=0;const clock={t:0};
-function frame(now){requestAnimationFrame(frame);if(!lastT)lastT=now;acc+=Math.min(100,now-lastT);lastT=now;let n=0;
+function frame(now){requestAnimationFrame(frame);if(!lastT)lastT=now;acc+=Math.min(100,now-lastT)*ADM.ts;lastT=now;let n=0;
  while(acc>=1000/60&&n<4){update();acc-=1000/60;n++;if(n===1){for(const k in KP)delete KP[k];MP[0]=MP[1]=MP[2]=0}}
  if(n===0)return;clock.t=now/1000;const t=clock.t;
  if(G.mode==='title'){camera.position.set(P.x+Math.sin(t*0.1)*4.5,1.6,P.z+Math.cos(t*0.1)*4.5);camera.lookAt(P.x,1.2,P.z);P.state='idle';P.walk=0}

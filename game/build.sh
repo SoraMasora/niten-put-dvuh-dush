@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)";cd "$ROOT"
 [ "$SKIP_MODELS" = "1" ] || { python3 blender/build.py; node tools/optimize.mjs blender/out/niten_assets.glb blender/out/niten_assets.opt.glb; python3 blender/loot.py; node tools/optimize.mjs blender/out/niten_loot.glb blender/out/niten_loot.opt.glb; python3 blender/fetch_tex.py; python3 blender/house.py; node tools/optimize.mjs blender/out/niten_house.glb blender/out/niten_house.opt.glb; }
 # v0.10: внешние модели (исходники в $NITEN_SRC, см. blender/ext/cfg.py): blender/ext/prep.py + rig.py -> build_ext.py -> niten_ext.glb
 [ "$SKIP_MODELS" = "1" ] || [ "$SKIP_EXT" = "1" ] || { python3 blender/ext/build_ext.py; RATIO=0.6 node tools/optimize.mjs blender/out/niten_ext.glb blender/out/niten_ext.opt.glb; }
-cat game/src/gA.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gI.js game/src/gH.js game/src/gF.js > game/src/game.js
+cat game/src/gA.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gI.js game/src/gH.js game/src/gAdm.js game/src/gF.js > game/src/game.js
 npx esbuild game/src/game.js --bundle --minify --format=esm --target=es2022 --outfile=dist/niten.js --log-level=warning
 python3 - "$ROOT" <<'PY'
 import base64,os,sys

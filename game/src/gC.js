@@ -2,7 +2,7 @@
 const K={},KP={},MP=[0,0,0];let mdx=0,mdy=0;
 addEventListener('keydown',e=>{const k=e.code;if(!K[k])KP[k]=1;K[k]=1;if(['Space','Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k))e.preventDefault();audioInit()});
 addEventListener('keyup',e=>{K[e.code]=0});
-addEventListener('mousedown',e=>{MP[e.button]=1;audioInit();if(G.mode==='play'&&!INV.open&&!CS.img&&document.pointerLockElement!==renderer.domElement){try{renderer.domElement.requestPointerLock()}catch(_){}if(G.paused){G.paused=false;MP[0]=MP[2]=0}}});
+addEventListener('mousedown',e=>{if(ADM.open&&e.target!==renderer.domElement)return;MP[e.button]=1;audioInit();if(G.mode==='play'&&!INV.open&&!CS.img&&document.pointerLockElement!==renderer.domElement){try{renderer.domElement.requestPointerLock()}catch(_){}if(G.paused){G.paused=false;MP[0]=MP[2]=0}}});
 addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement){mdx+=e.movementX;mdy+=e.movementY}});
 addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&G.mode==='play'&&!G.noPauseOnUnlock)G.paused=true});
@@ -112,7 +112,7 @@ function startMuso(){if(P.muso>0)return;if(P.oni<100){pop('Шкала Они н�
 function eat(){if(P.food<=0){pop('Онигири кончились','#c9a0a0');return}if(P.hp>=P.max)return;P.state='eat';P.t=0;P.eatDone=false}
 function perfectDodge(){G.slow=72;G.slowTs=0.3;P.oni=Math.min(100,P.oni+10);P.pdWin=50;SFX.heart();pop('Идеальный уворот — ЛКМ: Иссэн-рывок','#bfe3ff')}
 function toward(src){const dx=src.x-P.x,dz=src.z-P.z,d=Math.hypot(dx,dz)||1;return(dx*fwdX(P.yaw)+dz*fwdZ(P.yaw))/d>0.35}
-function hitPlayer(src,dmg,o={}){if(G.buf&&G.buf.def>0)dmg=Math.round(dmg*0.65);if(G.buf&&G.buf.sake>0)dmg=Math.round(dmg*1.2);
+function hitPlayer(src,dmg,o={}){if(ADM.god)return'none';if(G.buf&&G.buf.def>0)dmg=Math.round(dmg*0.65);if(G.buf&&G.buf.sake>0)dmg=Math.round(dmg*1.2);
  if(P.state==='dead'||P.invT>0||P.state==='issen')return'none';
  if(P.state==='dodge'&&P.t<P.dodgeLen-4){if(P.t<=8&&!o.proj)perfectDodge();return'dodge'}
  if(o.issen&&src.d&&P.stance!==0&&G.frame-P.blockTap<=DIFF[G.diff].win&&P.iss<=0){doIssen(src);return'issen'}

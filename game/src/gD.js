@@ -10,7 +10,7 @@ function stepTilt(T,ts){if(!T)return;const k=0.028,c=0.16;T.vx+=(-k*T.x-c*T.vx)*
 function separate(){for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.dead)continue;for(let j=i+1;j<enemies.length;j++){const b=enemies[j];if(b.dead)continue;
  const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad;if(d<m&&d>0.0001){const p=(m-d)*0.5,ux=dx/d,uz=dz/d,wa=b.d.boss?0.9:a.d.boss?0.1:0.5;a.x-=ux*p*wa*2*0.5;a.z-=uz*p*wa*2*0.5;b.x+=ux*p*(1-wa);b.z+=uz*p*(1-wa)}}}}
 function dmgEnemy(e,dmg,dx,dz,o={}){
- if(e.dead||(e.inv&&!o.force))return;
+ if(e.dead||(e.inv&&!o.force))return;if(ADM.x10)dmg*=10;
  if((e.t==='sota'||e.d.block)&&e.state==='move'&&!o.noBlock&&!o.gb&&P.muso<=0&&Math.random()<(e.d.block||0.4)){sparks((e.x+P.x)/2,1.4,(e.z+P.z)/2,180);SFX.clang();e.cd=Math.min(e.cd,12);P.vx-=dx*0.06;P.vz-=dz*0.06;G.hitstop=3;pop(e.t==='sota'?'Сота блокирует':'Блок','#bba');return}
  e.hp-=dmg;G.hitstop=Math.max(G.hitstop,o.stop==null?4:o.stop);e.flash=6;tar(e.x,e.d.h*0.6,e.z,10);SFX.hit();P.tar=Math.min(1,P.tar+0.03);G.shake=Math.max(G.shake,0.06+(o.knock||0)*0.012);
  if(dx||dz)hitFx(e.x-dx*e.d.rad*0.6,Math.min(1.35,e.d.h*0.6),e.z-dz*e.d.rad*0.6,dx,dz,{big:(o.knock||0)>=8,roll:P.atk&&P.atk.type==='L'?rnd(-0.3,0.3):P.atk&&P.atk.type==='N'?rnd(0.9,1.2):rnd(-1.1,-0.5),col:P.atk&&P.atk.type==='L'?0xb8dcff:0xffe0c0});
