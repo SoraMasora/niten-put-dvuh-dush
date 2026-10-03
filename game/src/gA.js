@@ -37,7 +37,7 @@ const GRADE=new ShaderPass({uniforms:{tDiffuse:{value:null},uTint:{value:new THR
   c=c*uTint+uShadow*(1.0-smoothstep(0.0,0.45,l));vec2 d=vUv-0.5;c*=1.0-uVig*smoothstep(0.25,0.85,length(d*vec2(1.25,1.0)));
   c+=(h(vUv*vec2(1931.0,1377.0)+fract(uT*7.13))-0.5)*uGrain;gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`});
 composer.addPass(GRADE);
-const GRADES={ash:{t:[1.06,0.97,0.88],s:[0.025,0.008,0.0],sat:0.88,con:1.07},forest:{t:[0.95,1.04,1.0],s:[0.0,0.015,0.012],sat:0.92,con:1.05},duel:{t:[0.92,0.97,1.08],s:[0.0,0.006,0.03],sat:0.78,con:1.1},house:{t:[1.05,0.99,0.92],s:[0.012,0.006,0.014],sat:0.9,con:1.07},kak:{t:[1.06,1.0,0.92],s:[0.014,0.006,0.012],sat:0.95,con:1.05},green:{t:[1.0,1.03,0.97],s:[0.006,0.012,0.0],sat:1.02,con:1.04},temple:{t:[0.97,0.98,1.05],s:[0.004,0.006,0.02],sat:0.96,con:1.06}};
+const GRADES={ash:{t:[1.06,0.97,0.88],s:[0.025,0.008,0.0],sat:0.88,con:1.07},forest:{t:[0.95,1.04,1.0],s:[0.0,0.015,0.012],sat:0.92,con:1.05},duel:{t:[0.92,0.97,1.08],s:[0.0,0.006,0.03],sat:0.78,con:1.1},house:{t:[1.05,0.99,0.92],s:[0.012,0.006,0.014],sat:0.9,con:1.07},kak:{t:[1.06,1.0,0.92],s:[0.014,0.006,0.012],sat:0.95,con:1.05},green:{t:[1.0,1.03,0.97],s:[0.006,0.012,0.0],sat:1.02,con:1.04},ps1:{t:[0.96,1.0,1.08],s:[0.006,0.004,0.02],sat:0.86,con:1.12},temple:{t:[0.97,0.98,1.05],s:[0.004,0.006,0.02],sat:0.96,con:1.06}};
 function setGrade(th){const q=GRADES[th]||GRADES.ash,U=GRADE.uniforms;U.uTint.value.set(...q.t);U.uShadow.value.set(...q.s);U.uSat.value=q.sat;U.uCon.value=q.con}
 // ветер для травы/бамбука (vertex shader)
 const WU={uT:{value:0},uW:{value:0.5}};
@@ -75,15 +75,16 @@ class PSys{constructor(n,additive){this.n=n;this.list=[];const g=new THREE.Buffe
  g.setAttribute('position',new THREE.BufferAttribute(this.pos,3));g.setAttribute('col',new THREE.BufferAttribute(this.col,4));g.setAttribute('size',new THREE.BufferAttribute(this.size,1));
  this.mat=new THREE.ShaderMaterial({uniforms:PU,vertexShader:PVS,fragmentShader:PFS,transparent:true,depthWrite:false,blending:additive?THREE.AdditiveBlending:THREE.NormalBlending});
  this.pts=new THREE.Points(g,this.mat);this.pts.frustumCulled=false;scene.add(this.pts);this.g=g}
- add(p){if(this.list.length>=this.n)this.list.shift();p.max=p.max||p.life;this.list.push(p)}
+ add(p){if(this.list.length>=this.n)this.list.shift();p.max=p.max||p.life;if(p.oy==null)p.oy=typeof FXY!=='undefined'?FXY:0;this.list.push(p)}
  update(ts){const L=this.list;let j=0;for(let i=0;i<L.length;i++){const p=L[i];p.life-=ts;if(p.life<=0)continue;
   if(p.w){const w=(typeof G!=='undefined'?G.wind:0.5)||0;p.vx+=(0.0016*w-p.vx*0.02)*p.w*ts;p.vz+=(0.0006*w-p.vz*0.02)*p.w*ts}if(p.sw){p.x+=Math.sin(p.life*0.07+p.sw)*0.006*ts;p.z+=Math.cos(p.life*0.05+p.sw)*0.004*ts}
   p.vy-=(p.g||0)*ts;p.vx*=p.drag||1;p.vz*=p.drag||1;p.vy*=p.drag||1;p.x+=p.vx*ts;p.y+=p.vy*ts;p.z+=p.vz*ts;
   if(p.y<0.02&&p.g){p.y=0.02;if(p.stick){p.vx=p.vz=p.vy=0;p.g=0}else{p.vy*=-0.35;p.vx*=0.6;p.vz*=0.6}}
   L[j++]=p}L.length=j;
-  for(let i=0;i<this.n;i++){if(i<L.length){const p=L[i],a=clamp(p.life/p.max,0,1);this.pos[i*3]=p.x;this.pos[i*3+1]=p.y;this.pos[i*3+2]=p.z;
+  for(let i=0;i<this.n;i++){if(i<L.length){const p=L[i],a=clamp(p.life/p.max,0,1);this.pos[i*3]=p.x;this.pos[i*3+1]=p.y+(p.oy||0);this.pos[i*3+2]=p.z;
    const f=(p.fade===false?1:a)*(p.pulse?0.25+0.75*Math.max(0,Math.sin(p.life*0.09+p.pulse)):1);this.col[i*4]=p.r;this.col[i*4+1]=p.gg;this.col[i*4+2]=p.b;this.col[i*4+3]=(p.a==null?1:p.a)*f;this.size[i]=p.s*(p.grow?1+(1-a)*p.grow:1)}else{this.size[i]=0;this.col[i*4+3]=0}}
   this.g.attributes.position.needsUpdate=true;this.g.attributes.col.needsUpdate=true;this.g.attributes.size.needsUpdate=true}}
+let FXY=0;// v0.18: база высоты эффектов (многоуровневые локации): частица хранит oy
 const FX={add:new PSys(2500,true),norm:new PSys(2000,false)};
 function sparks(x,y,z,n,col=[1,0.6,0.25]){for(let i=0;i<n;i++){const a=rnd(0,Math.PI*2),e=rnd(-0.2,1.2),v=rnd(2,9);FX.add.add({x,y,z,vx:Math.cos(a)*Math.cos(e)*v/60,vy:Math.sin(e)*v/60,vz:Math.sin(a)*Math.cos(e)*v/60,g:0.003,life:rnd(30,70),s:rnd(0.03,0.07),r:col[0]*2,gg:col[1]*2,b:col[2]*2,drag:0.985})}flashL(x,y,z,0xff9a50,6,10)}
 function tar(x,y,z,n,sp=1){for(let i=0;i<n;i++){const a=rnd(0,Math.PI*2),v=rnd(0.5,4)*sp;FX.norm.add({x:x+rnd(-.1,.1),y:y+rnd(-.15,.15),z:z+rnd(-.1,.1),vx:Math.cos(a)*v/60,vy:rnd(1,4)/60,vz:Math.sin(a)*v/60,g:0.2/60,stick:true,life:rnd(100,220),s:rnd(0.04,0.11),r:0.01,gg:0.01,b:0.03,a:0.95})}}
@@ -91,7 +92,7 @@ function petals(x,y,z,n){for(let i=0;i<n;i++)FX.norm.add({x,y,z,vx:rnd(-2,2)/60,
 function embers(x,y,z,n=1,col=[1,0.45,0.1]){for(let i=0;i<n;i++)FX.add.add({x:x+rnd(-.1,.1),y,z:z+rnd(-.1,.1),vx:rnd(-.3,.3)/60,vy:rnd(0.5,1.8)/60,vz:rnd(-.3,.3)/60,life:rnd(30,70),s:rnd(0.02,0.05),r:col[0]*1.6,gg:col[1]*1.6,b:col[2]*1.6})}
 function dust(x,z,n){for(let i=0;i<n;i++)FX.norm.add({x:x+rnd(-1,1),y:0.1,z:z+rnd(-1,1),vx:rnd(-2,2)/60,vy:rnd(0,1)/60,vz:rnd(-2,2)/60,drag:0.96,life:rnd(30,60),s:rnd(0.3,0.6),grow:1.5,r:0.35,gg:0.32,b:0.3,a:0.25})}
 // ---------- flash lights
-const flashes=[];function flashL(x,y,z,col,int,life){flashes.push({x,y,z,col,int,life,max:life})}
+const flashes=[];function flashL(x,y,z,col,int,life){flashes.push({x,y:y+FXY,z,col,int,life,max:life})}
 // ---------- sprites
 function glintSprite(){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:TX.star,color:0xff3030,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false}));s.scale.set(0.01,0.01,1);s.renderOrder=10;return s}
 function flameSprite(){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:TX.flame,color:0xffffff,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));return s}

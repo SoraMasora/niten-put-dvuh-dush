@@ -183,7 +183,7 @@ function tpBlueCS(){const a=TEMPLED.alt.blue,s=TP.sw.blue,{sx,sz,yaw,L}=tpStand(
    if(u>=1725)tpEnd('true')}},skip)}
 // ---------- 4) Шиори — дремлющая птица: клинок пробуждается красным пламенем
 function tpRedCS(){const a=TEMPLED.alt.red,s=TP.sw.red,{sx,sz,yaw,L}=tpStand(a);
- const skip=()=>{tpEnd('red')};
+ const skip=()=>{qSpaceCS()};
  csStart('tpRed',t=>{const H=CS.H;CS.bars=1;
   if(t===1){H.to=[sx,sz];H.spd=0.03}
   if(t>1&&!H.to)H.yaw=yaw;
@@ -204,14 +204,15 @@ function tpRedCS(){const a=TEMPLED.alt.red,s=TP.sw.red,{sx,sz,yaw,L}=tpStand(a);
   if(t===262)G.card={t:0,title:'КАТАНА ПРОБУДИЛАСЬ',name:'Шиори — дремлющая птица'};
   if(t===300)csSay('Юки','Птица проснулась, Акира. Теперь её пламя — твоё.',300,400);
   if(t>=410){TP.ov={c:'0,0,0',a:ek(t,410,470)}}
-  if(t>=472)tpEnd('red')},skip)}
+  if(t>=472)qSpaceCS()},skip)}
 // ---------- экраны концовок
 function updTpEnding(){G.endT=(G.endT||0)+1;if(G.endT>90&&(hit('Enter')||hit('Space')||MP[0])){tpVoiceOff();tpWhite(false);TP.end=null;G.mode='title';loadChapter(1);G.card=null;G.subs=[];resetPlayer(0,0)}}
-function drawTpEnding(){X.clearRect(0,0,W,H);const t=G.endT||0,a=clamp(t/60,0,1),tr=TP.end==='true',cx=W/2;X.textAlign='center';
+function drawTpEnding(){X.clearRect(0,0,W,H);const t=G.endT||0,a=clamp(t/60,0,1),tr=TP.end==='true',q9=TP.end==='ps1',cx=W/2;X.textAlign='center';
  X.fillStyle=tr?`rgba(255,255,255,${0.4+0.57*a})`:`rgba(0,0,0,${0.55+0.42*a})`;X.fillRect(0,0,W,H);X.globalAlpha=a;
  const L=tr?[['ИСТИННАЯ КОНЦОВКА','15px','#8a8ea0'],['Пробуждение','bold 54px','#2a2c3a'],['',''],['Акира открыл глаза.','italic 20px','#3a3c4c'],['Кьору — горькая истина — не убила его. Она разбудила.','italic 20px','#3a3c4c'],['Всё, что было, — лишь сон на пороге собственной жизни.','italic 20px','#3a3c4c'],['',''],['Настоящее приключение только начинается.','bold 22px','#2a4a8a']]
+  :q9?[['ГЛАВА 9 ПРОЙДЕНА','15px','#b9a27a'],['Пробуждение','bold 48px','#c8b0ff'],['',''],['Тени рассеялись, но Старец так и не появился.','italic 20px','#e8dcc8'],['Акэбоно и Ёиями тихо звенят в ножнах — будто зовут дальше.','italic 20px','#e8dcc8'],['Сон это или явь — Акира решит сам.','italic 20px','#e8dcc8'],['',''],['Путь продолжится…','bold 22px','#f0c890']]
   :[['ГЛАВА 8 ПРОЙДЕНА','15px','#b9a27a'],['Шиори — дремлющая птица','bold 48px','#ff8a70'],['',''],['Пламя пробудилось в руке Акиры.','italic 20px','#e8dcc8'],['Сон продолжается — и с ним Путь Двух Душ.','italic 20px','#e8dcc8'],['',''],['Путь продолжится…','bold 22px','#f0c890']];
- let y=H*0.3;for(const l of L){if(l[0]){X.font=l[1]+' Georgia,serif';X.fillStyle=l[2];if(!tr&&/48px/.test(l[1])){X.shadowColor='#ff4020';X.shadowBlur=24}X.fillText(l[0],cx,y);X.shadowBlur=0}y+=l[1]&&/54|48/.test(l[1])?64:34}
+ let y=H*0.3;for(const l of L){if(l[0]){X.font=l[1]+' Georgia,serif';X.fillStyle=l[2];if(!tr&&/48px/.test(l[1])){X.shadowColor=q9?'#7a50ff':'#ff4020';X.shadowBlur=24}X.fillText(l[0],cx,y);X.shadowBlur=0}y+=l[1]&&/54|48/.test(l[1])?64:34}
  X.font='15px Georgia,serif';X.fillStyle=tr?'rgba(40,42,56,0.75)':'rgba(230,220,200,0.7)';X.fillText('Спасибо за игру',cx,H-96);if(t>90){X.globalAlpha=a*(0.6+0.4*Math.sin(t*0.08));X.fillText('Enter — в главное меню',cx,H-64)}
  X.globalAlpha=1;X.textAlign='left'}
 function tpHook(){return{D:TEMPLED,gh:tpGH,load:tpLoad,arrive:tpArrival,portal:tpPortalCS,near:tpNear,choose:tpChoose,blue:tpBlueCS,red:tpRedCS,end:tpEnd,grip:tpGrip,white:tpWhite,TP,reset:tpSwordReset}}

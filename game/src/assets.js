@@ -43,13 +43,13 @@ function fistCurl(pos,nor,si,sw,n,h,hj,sd,nm){const {K,R,max}=FIST;let x0=0,c=0,
  (ASSET.grip=ASSET.grip||{})[hj===9?'R':'L']=[x0+sd*R,K-R*0.3,z0]}
 const SPECIAL=/^(cape|orb|horn\d)$/;
 function floatAttr(a){const n=a.count,s=a.itemSize,f=new Float32Array(n*s);for(let i=0;i<n;i++){f[i*s]=a.getX(i);if(s>1)f[i*s+1]=a.getY(i);if(s>2)f[i*s+2]=a.getZ(i);if(s>3)f[i*s+3]=a.getW(i)}return new THREE.BufferAttribute(f,s)}
-function bake(mesh){const g=new THREE.BufferGeometry();for(const k of(/^PK__/.test(mesh.name)?['position','normal','uv','color']:['position','normal','uv']))if(mesh.geometry.attributes[k])g.setAttribute(k,floatAttr(mesh.geometry.attributes[k]));
- if(mesh.geometry.index)g.setIndex(new THREE.BufferAttribute(new Uint32Array(mesh.geometry.index.array),1));mesh.updateMatrix();g.applyMatrix4(mesh.matrix);
+function bake(mesh){const g=new THREE.BufferGeometry();for(const k of((/^(PK|V8\w*)__/.test(mesh.name)||(mesh.parent&&/^V8\w*__/.test(mesh.parent.name)))?['position','normal','uv','color']:['position','normal','uv']))if(mesh.geometry.attributes[k])g.setAttribute(k,floatAttr(mesh.geometry.attributes[k]));
+ if(mesh.geometry.index)g.setIndex(new THREE.BufferAttribute(new Uint32Array(mesh.geometry.index.array),1));mesh.updateMatrix();g.applyMatrix4(mesh.matrix);if(mesh.parent&&!mesh.parent.isMesh&&/^V8\w*__/.test(mesh.parent.name)){mesh.parent.updateMatrix();g.applyMatrix4(mesh.parent.matrix)}
  if(!g.attributes.uv)g.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));if(!g.attributes.normal)g.computeVertexNormals();return g}
 function b64ToBuf(s){const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer}
 export async function loadAssets(){
  const src=(window.__NITEN_ASSETS_PARTS||[]).join('')||window.__NITEN_ASSETS;if(!src)return false;
- const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);const hs=(window.__NITEN_HOUSE_PARTS||[]).join('')||window.__NITEN_HOUSE;if(ok&&hs)await loadGLB(hs);const xs=(window.__NITEN_EXT_PARTS||[]).join('')||window.__NITEN_EXT;if(ok&&xs)await loadGLB(xs);const cs=(window.__NITEN_LOC_PARTS||[]).join('')||window.__NITEN_LOC;if(ok&&cs)await loadGLB(cs);const ks=(window.__NITEN_KAK_PARTS||[]).join('')||window.__NITEN_KAK;if(ok&&ks)await loadGLB(ks);const ps=(window.__NITEN_GREEN_PARTS||[]).join('')||window.__NITEN_GREEN;if(ok&&ps)await loadGLB(ps);const ts=(window.__NITEN_TEMPLE_PARTS||[]).join('')||window.__NITEN_TEMPLE;if(ok&&ts)await loadGLB(ts);return ok}
+ const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);const hs=(window.__NITEN_HOUSE_PARTS||[]).join('')||window.__NITEN_HOUSE;if(ok&&hs)await loadGLB(hs);const xs=(window.__NITEN_EXT_PARTS||[]).join('')||window.__NITEN_EXT;if(ok&&xs)await loadGLB(xs);const cs=(window.__NITEN_LOC_PARTS||[]).join('')||window.__NITEN_LOC;if(ok&&cs)await loadGLB(cs);const ks=(window.__NITEN_KAK_PARTS||[]).join('')||window.__NITEN_KAK;if(ok&&ks)await loadGLB(ks);const ps=(window.__NITEN_GREEN_PARTS||[]).join('')||window.__NITEN_GREEN;if(ok&&ps)await loadGLB(ps);const ts=(window.__NITEN_TEMPLE_PARTS||[]).join('')||window.__NITEN_TEMPLE;if(ok&&ts)await loadGLB(ts);const qs=(window.__NITEN_V18_PARTS||[]).join('')||window.__NITEN_V18;if(ok&&qs)await loadGLB(qs);return ok}
 async function loadGLB(src){
  try{const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf=await new Promise((res,rej)=>loader.parse(b64ToBuf(src),'',res,rej));
@@ -57,7 +57,8 @@ async function loadGLB(src){
   const km=gltf.scene.getObjectByName('KM_rig');if(km){km.parent.remove(km);km.position.set(0,0,0);km.updateMatrixWorld(true);ASSET.km={src:km,clips:gltf.animations.filter(a=>/^KM_/.test(a.name))};km.traverse(o=>{if(o.isMesh&&o.material&&o.material.name)ASSET.mats[o.material.name]=o.material})}
   gltf.scene.traverse(o=>{
    if(o.isSkinnedMesh){skinned.push(o);return}
-   const t=o.name.split('__');if(t.length<2)return;const pre=t[0];
+   let nm=o.name;if(o.isMesh&&nm.indexOf('__')<0&&o.parent&&!o.parent.isMesh&&/^V8\w*__/.test(o.parent.name))nm=o.parent.name;
+   const t=nm.split('__');if(t.length<2)return;const pre=t[0];
    if(t[t.length-1]==='TIP'){o.updateMatrix();ASSET.tips[t.length>2?pre+'__'+t[1]:pre]=o.position.clone();return}
    if(!o.isMesh)return;const part=t[1],det=t.slice(2).join('__')||part;
    const m=o.material;if(m&&m.name)ASSET.mats[m.name]=m;

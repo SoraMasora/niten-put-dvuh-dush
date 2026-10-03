@@ -6,6 +6,7 @@ const THEMES={
  kak:{bg:0x6c5a66,fog:0x7a6470,dens:0.011,hemi:[0xe0c8b4,0x40302a,1.2],moon:[0xffc890,2.1],exp:1.1,ground:'dirt',R:200},
  house:{bg:0x05070d,fog:0x0b0d13,dens:0.022,hemi:[0x8c7c6c,0x1c1612,0.55],moon:[0x9ab0e0,0.7],exp:1.2,ground:'stone',R:60},
  green:{bg:0x9fbfd8,fog:0xa9c2c4,dens:0.0032,hemi:[0xe4f0ff,0x4a5a30,1.35],moon:[0xfff0d8,2.6],exp:1.05,ground:'moss',R:200},
+ ps1:{bg:0x05060b,fog:0x090b12,dens:0.03,hemi:[0x8a94c0,0x1c1610,0.62],moon:[0xb8c4ff,0.55],exp:1.1,ground:'stone',R:999},
  temple:{bg:0x070914,fog:0x0c1022,dens:0.016,hemi:[0x6a78b8,0x1a1410,0.42],moon:[0x9fb4ff,0.85],exp:1.0,ground:'stone',R:30}
 };
 let ENV=null;const flames=[],rain={obj:null};
@@ -66,7 +67,7 @@ function puddleTex(){const c=document.createElement('canvas');c.width=c.height=5
  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(18,18);return t}
 // лучи света (god rays): мягкие аддитивные полосы, повёрнутые к камере вокруг своей оси
 const rayTex=(()=>{const c=document.createElement('canvas');c.width=64;c.height=256;const x=c.getContext('2d');for(let i=0;i<64;i++){const e=Math.pow(Math.sin(Math.PI*i/63),2.2);const gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,`rgba(255,255,255,${0.9*e})`);gr.addColorStop(0.7,`rgba(255,255,255,${0.35*e})`);gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(i,0,1,256)}return new THREE.CanvasTexture(c)})();
-function godRays(g,theme){if(theme==='duel'||theme==='house')return[];const col=theme==='ash'?0xffa070:0xc8f0d8,n=theme==='forest'?9:5,out=[];
+function godRays(g,theme){if(theme==='duel'||theme==='house'||theme==='ps1')return[];const col=theme==='ash'?0xffa070:0xc8f0d8,n=theme==='forest'?9:5,out=[];
  for(let i=0;i<n;i++){const m=new Mesh(new THREE.PlaneGeometry(1,1),new MB({map:rayTex,color:col,transparent:true,opacity:theme==='forest'?0.075:0.05,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,side:THREE.DoubleSide}));
   const a=rnd(0,Math.PI*2),r=rnd(4,16),w=rnd(1.2,3.2),h=rnd(9,15);m.scale.set(w,h,1);m.position.set(Math.cos(a)*r,h*0.45,Math.sin(a)*r);m.userData={tilt:theme==='forest'?0.28:0.4,ph:rnd(0,6),op:m.material.opacity};m.renderOrder=3;g.add(m);out.push(m)}return out}
 function buildEnv(theme){
@@ -112,6 +113,7 @@ function buildEnv(theme){
  }else if(theme==='kak'){gr.visible=false;buildKakEnv(g,env);
  }else if(theme==='green'){gr.visible=false;buildGreenEnv(g,env);
  }else if(theme==='temple'){gr.visible=false;buildTempleEnv(g,env);
+ }else if(theme==='ps1'){gr.visible=false;buildPs1Env(g,env);
  }else{
   const pil=new THREE.CylinderGeometry(0.28,0.3,7,12);pil.translate(0,3.5,0);for(let i=0;i<14;i++){const a=i/14*Math.PI*2;if(EVok('pillar'))evAdd(g,'pillar',Math.cos(a)*17,0,Math.sin(a)*17,-a);else mesh(pil,M.pillar,Math.cos(a)*17,0,Math.sin(a)*17,g)}
   const ring=mesh(new THREE.TorusGeometry(17,0.3,8,96),EVok('pillar')&&ASSET.mats.ev_vermilion||M.pillar,0,EVok('pillar')?7.5:7,0,g);if(EVok('pillar')){const r2=mesh(new THREE.TorusGeometry(17,0.16,6,96),ASSET.mats.ev_vermilion,0,5.4,0,g);r2.rotation.x=Math.PI/2}ring.rotation.x=Math.PI/2;

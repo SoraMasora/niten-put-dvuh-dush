@@ -16,7 +16,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)";cd "$ROOT"
 [ "$SKIP_MODELS" = "1" ] || [ "$SKIP_GREEN" = "1" ] || { python3 blender/ext/green.py; TEX=webp RATIO=1 node tools/optimize.mjs blender/out/niten_green.glb blender/out/niten_green.opt.glb; }
 # v0.17: храм «Путь» (blender/ext/temple.py, исходник $NITEN_SRC/temple/enviroment_temple.glb, CC-BY Lucia Criscuolo) -> niten_temple.glb (+ game/src/gTd.js)
 [ "$SKIP_MODELS" = "1" ] || [ "$SKIP_TEMPLE" = "1" ] || { python3 blender/ext/temple.py; TEX=webp RATIO=1 node tools/optimize.mjs blender/out/niten_temple.glb blender/out/niten_temple.opt.glb; }
-cat game/src/gA.js game/src/gN.js game/src/gL.js game/src/gK.js game/src/gGd.js game/src/gTd.js game/src/gV.js game/src/gG.js game/src/gT.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gI.js game/src/gH.js game/src/gAdm.js game/src/gF.js > game/src/game.js
+# v0.18: ГЛАВА 9 «Пробуждение» (blender/ext/v18.py, исходники $NITEN_SRC/v18: PS1-локация, Старец, катаны, мобы, галактика) -> niten_v18.glb (+ game/src/gQd.js)
+[ "$SKIP_MODELS" = "1" ] || [ "$SKIP_V18" = "1" ] || { python3 blender/ext/v18.py; TEX=webp RATIO=1 node tools/optimize.mjs blender/out/niten_v18.glb blender/out/niten_v18.opt.glb; }
+cat game/src/gA.js game/src/gN.js game/src/gL.js game/src/gK.js game/src/gGd.js game/src/gTd.js game/src/gQd.js game/src/gV.js game/src/gG.js game/src/gT.js game/src/gQ.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gI.js game/src/gH.js game/src/gAdm.js game/src/gF.js > game/src/game.js
 npx esbuild game/src/game.js --bundle --minify --format=esm --target=es2022 --outfile=dist/niten.js --log-level=warning
 python3 - "$ROOT" <<'PY'
 import base64,os,sys
@@ -47,6 +49,9 @@ for i,p in enumerate(pparts):open(d+'/assets/green%02d.js'%i,'w').write('(window
 tb=base64.b64encode(open(R+'/blender/out/niten_temple.opt.glb','rb').read()).decode() if os.path.exists(R+'/blender/out/niten_temple.opt.glb') else ''
 tparts=[tb[i:i+n] for i in range(0,len(tb),n)]
 for i,p in enumerate(tparts):open(d+'/assets/temple%02d.js'%i,'w').write('(window.__NITEN_TEMPLE_PARTS=window.__NITEN_TEMPLE_PARTS||[]).push("'+p+'");\n')
+qb=base64.b64encode(open(R+'/blender/out/niten_v18.opt.glb','rb').read()).decode() if os.path.exists(R+'/blender/out/niten_v18.opt.glb') else ''
+qparts=[qb[i:i+n] for i in range(0,len(qb),n)]
+for i,p in enumerate(qparts):open(d+'/assets/v18%02d.js'%i,'w').write('(window.__NITEN_V18_PARTS=window.__NITEN_V18_PARTS||[]).push("'+p+'");\n')
 import json
 # v0.13: звуковой банк (tools/sfx.py -> blender/out/niten_sfx.json) и музыка локаций ($NITEN_SRC/music/<ключ>.mp3)
 sj=open(R+'/blender/out/niten_sfx.json').read() if os.path.exists(R+'/blender/out/niten_sfx.json') else ''
@@ -62,9 +67,9 @@ for k in('ash','forest','duel','house','boss'):
 src=open(d+'/niten.js').read();m=600000;gp=[src[i:i+m] for i in range(0,len(src),m)]
 for i,p in enumerate(gp):open(d+'/assets/game%02d.js'%i,'w').write('(window.__NITEN_JS=window.__NITEN_JS||[]).push('+json.dumps(p)+');\n')
 boot='<script>(function(){var s=document.createElement("script");s.type="module";s.src=URL.createObjectURL(new Blob([window.__NITEN_JS.join("")],{type:"text/javascript"}));document.body.appendChild(s)})()</script>'
-open(d+'/index.html','w').write(head+''.join('<script src="assets/part%02d.js"></script>'%i for i in range(len(parts)))+''.join('<script src="assets/loot%02d.js"></script>'%i for i in range(len(lparts)))+''.join('<script src="assets/house%02d.js"></script>'%i for i in range(len(hparts)))+''.join('<script src="assets/ext%02d.js"></script>'%i for i in range(len(xparts)))+''.join('<script src="assets/loc%02d.js"></script>'%i for i in range(len(cparts)))+''.join('<script src="assets/kak%02d.js"></script>'%i for i in range(len(kparts)))+''.join('<script src="assets/green%02d.js"></script>'%i for i in range(len(pparts)))+''.join('<script src="assets/temple%02d.js"></script>'%i for i in range(len(tparts)))+''.join('<script src="assets/sfx%02d.js"></script>'%i for i in range(len(sparts)))+''.join('<script src="assets/%s"></script>'%m for m in mfiles)+''.join('<script src="assets/game%02d.js"></script>'%i for i in range(len(gp)))+boot+'</body></html>')
+open(d+'/index.html','w').write(head+''.join('<script src="assets/part%02d.js"></script>'%i for i in range(len(parts)))+''.join('<script src="assets/loot%02d.js"></script>'%i for i in range(len(lparts)))+''.join('<script src="assets/house%02d.js"></script>'%i for i in range(len(hparts)))+''.join('<script src="assets/ext%02d.js"></script>'%i for i in range(len(xparts)))+''.join('<script src="assets/loc%02d.js"></script>'%i for i in range(len(cparts)))+''.join('<script src="assets/kak%02d.js"></script>'%i for i in range(len(kparts)))+''.join('<script src="assets/green%02d.js"></script>'%i for i in range(len(pparts)))+''.join('<script src="assets/temple%02d.js"></script>'%i for i in range(len(tparts)))+''.join('<script src="assets/v18%02d.js"></script>'%i for i in range(len(qparts)))+''.join('<script src="assets/sfx%02d.js"></script>'%i for i in range(len(sparts)))+''.join('<script src="assets/%s"></script>'%m for m in mfiles)+''.join('<script src="assets/game%02d.js"></script>'%i for i in range(len(gp)))+boot+'</body></html>')
 js=open(d+'/niten.js').read().replace('</script','<\\/script')
-open(R+'/NITEN_3D_single.html','w').write(head+'<script>window.__NITEN_ASSETS="'+b64+'";window.__NITEN_LOOT="'+lb+'";window.__NITEN_HOUSE="'+hb+'";window.__NITEN_EXT="'+xb+'";window.__NITEN_LOC="'+cb+'";window.__NITEN_KAK="'+kb+'";window.__NITEN_GREEN="'+pb+'";window.__NITEN_TEMPLE="'+tb+'";window.__NITEN_SFX='+json.dumps(sj)+';window.__NITEN_MUS='+json.dumps(MUS)+'</script><script type="module">'+js+'</script></body></html>')
+open(R+'/NITEN_3D_single.html','w').write(head+'<script>window.__NITEN_ASSETS="'+b64+'";window.__NITEN_LOOT="'+lb+'";window.__NITEN_HOUSE="'+hb+'";window.__NITEN_EXT="'+xb+'";window.__NITEN_LOC="'+cb+'";window.__NITEN_KAK="'+kb+'";window.__NITEN_GREEN="'+pb+'";window.__NITEN_TEMPLE="'+tb+'";window.__NITEN_V18="'+qb+'";window.__NITEN_SFX='+json.dumps(sj)+';window.__NITEN_MUS='+json.dumps(MUS)+'</script><script type="module">'+js+'</script></body></html>')
 print('dist ok, parts:',len(parts))
 PY
 rm -f dist/niten.js

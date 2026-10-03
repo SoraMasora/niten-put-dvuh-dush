@@ -16,7 +16,7 @@ export function initMats(){
 export const mesh=(geo,mat,x=0,y=0,z=0,p)=>{const m=new Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;if(p)p.add(m);return m};
 function bladeGeo(len){const g=new Box(0.007,0.032,len,1,1,12);g.translate(0,0,len/2);const p=g.attributes.position;
  for(let i=0;i<p.count;i++){const z=p.getZ(i),t=z/len;let y=p.getY(i);y*=1-0.55*t*t;if(t>0.94&&y>0)y*=(1-t)/0.06;p.setY(i,y+0.07*t*t);}g.computeVertexNormals();return g}
-const SWL={SW_A:0.74,SW_Y:0.69,SW_S:0.9,SW_G:1.2,KN:0.75};
+const SWL={SW_A:0.74,SW_Y:0.69,SW_S:0.9,SW_G:1.2,KN:0.75,SW_N1:0.78,SW_N2:0.78};
 function makeSwordA(len,tsuba,pre0){const g=new Group();const pre=pre0&&ASSET.parts[pre0]?pre0:len>1.05?'SW_G':tsuba===M.tsubaR?'SW_A':tsuba===M.tsubaL?'SW_Y':'SW_S';
  const inner=new Group();g.add(inner);inner.scale.z=len/SWL[pre];
  for(const p of Object.keys(ASSET.parts[pre]||{}))if(!(pre==='KN'&&p==='saya'))addPart(inner,pre,p,{mat:m=>m&&m.name==='blade_steel'?M.blade:m});

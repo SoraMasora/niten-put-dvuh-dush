@@ -167,7 +167,7 @@ function grArrival(){const L=GREEND.land;P.x=L[0];P.z=L[1];P.yaw=Math.PI;const g
 // ---------- переходы и карта мира (свободное перемещение)
 function grFade(fn){csStart('travel',t=>{CS.bars=0;CS.hint=null;if(t<20)CS.fade=t/20;if(t===20)fn();if(t>20)CS.fade=Math.max(0,1-(t-20)/20);if(t>=42)csEnd()},null)}
 function travelTo(i,from){if(i<0||!CH[i])return;grFade(()=>{loadChapter(i);G.card={t:0,title:CH[i].title,name:CH[i].name}})}
-const TRAVEL=[['Пепел Ивате',0],['Лес Шепчущих Бамбуков',1],['Двор с колоколом',2],['Забытый дом',3],['Родная деревня',4],['Зелёная пустошь',5],['Путь',6]];
+const TRAVEL=[['Пепел Ивате',0],['Лес Шепчущих Бамбуков',1],['Двор с колоколом',2],['Забытый дом',3],['Родная деревня',4],['Зелёная пустошь',5],['Путь',6],['Пробуждение',7]];
 function worldMapOpen(){G.worldMap=true;G.grNote=false;G.mapOpen=true;G.mapK=false;G.mapSel=Math.max(0,TRAVEL.findIndex(t=>t[1]===G.chap))}
 function updWorldMap(){if(G.grNote){if(hit('KeyX')||hit('KeyM')||hit('Escape')||hit('Enter')||hit('Space')||MP[0]){G.mapOpen=false;G.grNote=false}return true}
  if(!G.worldMap)return false;
