@@ -13,6 +13,8 @@ function heroPose(){const st=P.stance,base=P.drawn?(G.oneBlade&&POSE.one?POSE.on
 const glV=new V3();
 // клипы Blender поверх процедурной позы + мечи (ножны / рука / полёт)
 const HC={name:null,t:0,w:0},swS={p:new V3(),q:new THREE.Quaternion(),a:0},_hm=new THREE.Matrix4(),_hi=new THREE.Matrix4(),_hp=new V3(),_hq=new THREE.Quaternion(),_hs=new V3(),_bp=new V3(),_bq=new THREE.Quaternion();
+const _gripM={R:new THREE.Matrix4(),L:new THREE.Matrix4()},_hqF={R:new THREE.Quaternion(),L:new THREE.Quaternion()},_wq=new THREE.Quaternion(),WRIST_MAX=0.85;let _gripOK=false,_wcw=0;
+function wristClamp(q,mx){if(q.w<0)q.set(-q.x,-q.y,-q.z,-q.w);const ang=2*Math.acos(Math.min(1,q.w));if(ang<=mx)return;_wq.identity().slerp(q,mx/ang);q.copy(_wq)}
 function heroClips(){let cn=null,ct=0,atk=false;
  if(P.state==='atk'&&P.clipName){cn=P.clipName;ct=P.t*P.atkSpd;atk=true}else if(P.state==='charge'){cn='OZc';ct=Math.min(P.t,23)}else if(P.csClip){cn=P.csClip.n;ct=P.csClip.t}else if(P.state==='draw'||P.state==='sheathe'){cn=P.state;ct=P.t*P.drawSpd}else if(P.idleClip){cn='toss';ct=P.idleClip.t}
  if(window.__clip){cn=__clip[0];ct=__clip[1];if(__clip[2]!=null)P.drawn=__clip[2]}
@@ -21,8 +23,14 @@ function heroClips(){let cn=null,ct=0,atk=false;
  else HC.w=Math.max(0,HC.w-0.14);
  if(HC.w>0.001)applyClip(hero,HC.name,HC.t,HC.w,HC.w*(1-0.75*P.walk));
  hero.root.updateMatrixWorld(true);_hi.copy(hero.hips.matrixWorld).invert();
+ // v0.17: «сломанная кисть». Поза задаёт наклон клинка поворотом кисти (до ~110°) — кисть выворачивалась, а рукоять
+ // стояла в суставе запястья и уходила в рукав. Теперь: ориентация меча — от полного поворота, видимая кисть
+ // ограничена WRIST_MAX (с мечом в руке), рукоять — в центре кулака (ASSET.grip, пальцы согнуты в assets.js).
+ if(!_gripOK&&ASSET.grip){for(const s of['R','L']){const g=ASSET.grip[s];if(g)_gripM[s].makeTranslation(g[0],g[1],g[2])}_gripOK=true}
+ _wcw=lerp(_wcw,P.drawn||P.csGrip?1:0,0.2);const wmax=lerp(3.2,WRIST_MAX,_wcw);
+ for(const s of['R','L']){const A=hero.arms[s];_hm.multiplyMatrices(_hi,A.hand.matrixWorld).decompose(_hp,_hqF[s],_hs);wristClamp(A.hand.quaternion,wmax);A.el.updateMatrixWorld(true)}
  for(const s of['R','L']){const A=hero.arms[s],sw=A.sw;if(sw.parent!==hero.hips){hero.hips.add(sw)}
-  _hm.multiplyMatrices(_hi,A.hand.matrixWorld).decompose(_hp,_hq,_hs);const S=ANIMS.sockets&&ANIMS.sockets[s];
+  _hm.multiplyMatrices(_hi,A.hand.matrixWorld).multiply(_gripM[s]).decompose(_hp,_hq,_hs);_hq.copy(_hqF[s]);const S=ANIMS.sockets&&ANIMS.sockets[s];
   if(P.drawn||!S){_bp.copy(_hp);_bq.copy(_hq)}else{_bp.set(S[0],S[1],S[2]);_bq.set(S[3],S[4],S[5],S[6])}
   if(HC.w>0.001&&clipSword(HC.name,s,HC.t,swS)){swS.p.lerp(_hp,swS.a);swS.q.slerp(_hq,swS.a);_bp.lerp(swS.p,HC.w);_bq.slerp(swS.q,HC.w)}
   sw.position.copy(_bp);sw.quaternion.copy(_bq);sw.updateMatrixWorld(true)}}
@@ -112,4 +120,4 @@ function updCamera(){
  let tx=P.x,tz=P.z;if(G.lock){tx=lerp(P.x,G.lock.x,0.25);tz=lerp(P.z,G.lock.z,0.25)}
  const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+GY+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
  const rx=-Math.cos(G.camYaw)*0.45,rz=Math.sin(G.camYaw)*0.45;camera.position.x+=rx;camera.position.z+=rz;
- tv1.set(tx+rx,1.35+P.y*0.6+GY,tz+rz);if(LV.house)camClip(tv1,camera.position);else if(LV.env.nav){navCam(tv1,camera.position);if(LV.kak)kakCamFix(camera.position);if(LV.green)grCamFix(camera.position)}if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}
+ tv1.set(tx+rx,1.35+P.y*0.6+GY,tz+rz);if(LV.house)camClip(tv1,camera.position);else if(LV.env.nav){navCam(tv1,camera.position);if(LV.kak)kakCamFix(camera.position);if(LV.green)grCamFix(camera.position);if(LV.temple)tpCamFix(camera.position)}if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}

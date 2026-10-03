@@ -46,7 +46,8 @@ const CH=[
   waves:[{en:['sota'],boss:true,say:[['Сота','Ты пришёл, брат. С отцовским мечом… и с моим.'],['Акира','Я пришёл забрать тебя домой.'],['Сота','Дом сгорел. Умри!']]}]},
  {title:'ГЛАВА 5',name:'Забытый дом',theme:'house',house:true,mirrors:[[-2.95,-15.4,Math.PI/2],[-9.1,7.2,Math.PI/2]],start:[],waves:[]},
  {title:'ГЛАВА 6',name:'Родная деревня',theme:'kak',kak:true,noGate:true,mirrors:[],start:[],waves:[]},
- {title:'ГЛАВА 7',name:'Зелёная пустошь',theme:'green',green:true,noGate:true,mirrors:[],start:[],waves:[]}
+ {title:'ГЛАВА 7',name:'Зелёная пустошь',theme:'green',green:true,noGate:true,mirrors:[],start:[],waves:[]},
+ {title:'ГЛАВА 8',name:'Путь',theme:'temple',temple:true,noGate:true,mirrors:[],start:[],waves:[]}
 ];
 const G={mode:'title',diff:1,frame:0,chap:0,slow:0,slowTs:1,freeze:0,hitstop:0,shake:0,fov:55,fovT:55,camYaw:0,camPitch:0.28,camDist:4.6,card:null,subs:[],pops:[],
  souls:{r:0,b:0,p:0},stats:{kills:0,issen:0,time:0,deaths:0},issenFx:null,flashRed:0,tarScreen:0,rainFreeze:0,rainUp:false,winT:0,deadT:0,cp:null,bossBar:null,paused:false,menuSel:1,reviveHint:false,lock:null,wave:0,waveT:0,trans:0,exposureT:1};

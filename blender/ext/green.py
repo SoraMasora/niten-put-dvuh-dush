@@ -24,8 +24,8 @@ GATE=(6.0,0.5)                     # центр проёма врат (смот�
 POTS=[(3.3,5.2),(6.0,5.6),(8.7,5.2)]   # левая / средняя / правая (стоя лицом к вратам, т.е. глядя на север)
 PORTAL=(6.0,-5.0)
 ITEMS=dict(shovel=(-42.0,29.0),can=(41.0,23.0),book=(CAMP[0]-2.6,CAMP[1]+0.6),flask=(CAMP[0]+2.2,CAMP[1]-0.1),bottle=(-63.0,-4.0))
-CLEAR=[(LAND_P,6.0),(CAMP,7.5),(GATE,6.5),(PORTAL,6.5),((6.0,8.5),5.0),(ITEMS['shovel'],2.6),(ITEMS['can'],2.6),(ITEMS['bottle'],2.6)]
-CLEARG=[(CAMP,4.6),(GATE,3.0),(PORTAL,3.4),((6.0,5.4),3.6)]   # трава убирается только под реквизитом
+CLEAR=[(LAND_P,6.0),(CAMP,7.5),(GATE,8.5),(PORTAL,6.5),((6.0,8.5),5.0),(ITEMS['shovel'],2.6),(ITEMS['can'],2.6),(ITEMS['bottle'],2.6)]
+CLEARG=[(CAMP,4.6),(GATE,4.4),(PORTAL,3.4),((6.0,5.4),3.6)]   # трава убирается только под реквизитом
 def g2b(x,z,y=0.0):return Vector((x,-z,y))
 def b2g(v):return (v.x,v.z,-v.y)
 def clean():bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -67,6 +67,7 @@ def landscape():
         if m.startswith('gr_tree'):trees.append((round(gx,2),round(gz,2),round((mx.x-mn.x)*S,2),m))
         grp.setdefault(m,[]).append(o)
     seam(grp['gr_ground'])
+    add_trees(grp,trees)
     out={}
     for m,objs in grp.items():
         if m.startswith(('gr_tree','gr_grass')):
@@ -77,6 +78,44 @@ def landscape():
             out[m]=[join(v,'%s_%d_%d'%(m,k[0],k[1])) for k,v in ch.items()]
         else:out[m]=[join(objs,m)]
     return out,trees
+# v0.17: локация была пустой (западная равнина без единого дерева) — досаживаем рощи копиями деревьев модели.
+CORR=[(LAND_P,CAMP),(CAMP,GATE),(LAND_P,GATE),(GATE,PORTAL),(LAND_P,ITEMS['can']),(CAMP,ITEMS['bottle']),(CAMP,ITEMS['shovel'])]
+def seg_d(p,a,b):
+    ax,az=a;bx,bz=b;dx,dz=bx-ax,bz-az;L2=dx*dx+dz*dz or 1;t=max(0,min(1,((p[0]-ax)*dx+(p[1]-az)*dz)/L2));return math.hypot(p[0]-ax-dx*t,p[1]-az-dz*t)
+def add_trees(grp,trees):
+    T,_=ground_bvh(grp['gr_ground']);random.seed(1707)
+    protos=[o for m in('gr_treeA','gr_treeB','gr_treeC') for o in grp.get(m,[])]
+    occ={};cell=4.0
+    def ok(x,z,dmin):
+        i,j=int(math.floor(x/cell)),int(math.floor(z/cell))
+        for a in(-1,0,1):
+            for b in(-1,0,1):
+                for (qx,qz) in occ.get((i+a,j+b),()):
+                    if math.hypot(x-qx,z-qz)<dmin:return False
+        return True
+    def put(x,z):occ.setdefault((int(math.floor(x/cell)),int(math.floor(z/cell))),[]).append((x,z))
+    for t in trees:put(t[0],t[1])
+    zones=[((-146.0,-60.0,-85.0,46.0),3.0,16000),((-52.0,40.0,-2.0,40.0),5.5,1400)]
+    added=0
+    for (x0,x1,z0,z1),dmin,tries in zones:
+        for _ in range(tries):
+            x=random.uniform(x0,x1);z=random.uniform(z0,z1)
+            if not in_foot(x,-z,2.2):continue
+            if any(math.hypot(x-p[0],z-p[1])<r+1.5 for p,r in CLEAR):continue
+            if any(seg_d((x,z),a,b)<3.2 for a,b in CORR):continue
+            n=noise.noise(Vector((x*0.035,z*0.035,5.1)))+0.35*noise.noise(Vector((x*0.11,z*0.11,2.3)))
+            grove=n>-0.2
+            if not grove and random.random()>0.3:continue
+            if not ok(x,z,dmin if grove else dmin*2.2):continue
+            h=gh_at(T,x,z)
+            if h is None:continue
+            pr=random.choice(protos);mn,mx=bbox(pr);c=Vector(((mn.x+mx.x)/2,(mn.y+mx.y)/2,mn.z))
+            o=pr.copy();o.data=pr.data.copy();pr.users_collection[0].objects.link(o)
+            sc=random.uniform(0.85,1.25)
+            o.data.transform(Matrix.Translation(Vector((x,-z,h-0.12)))@Matrix.Rotation(random.uniform(0,math.tau),4,'Z')@Matrix.Scale(sc,4)@Matrix.Translation(-c))
+            m=pr.data.materials[0].name;grp[m].append(o);put(x,z);added+=1
+            trees.append((round(x,2),round(z,2),round((mx.x-mn.x)*sc,2),m))
+    print('ADD TREES',added,'total',len(trees))
 def seam(objs):
     # западная равнина стыкуется с основной землёй без ступеньки
     west=[o for o in objs if bbox(o)[0].x<-100][0];main=[o for o in objs if o is not west][0]
@@ -190,44 +229,58 @@ def mats():
     return M
 def P(name,geo,m,part,**kw):
     o=L.mk(name,geo,m,**kw);o['part']=part;return o
-def gate(M):
-    gx,gz=GATE;H=4.4;Wd=2.3
+GW=3.4        # v0.17: полуширина проёма врат (было 2.3)
+GH=5.4        # высота столбов над землёй (было 4.4)
+def gate(M,T):
+    # v0.17: врата стоят на реальной высоте земли (раньше строились от y=0 и уходили под склон на ~2.5 м);
+    # столбы уходят в землю на 0.6 м ниже самой низкой точки под опорой, проём шире.
+    gx,gz=GATE;Wd=GW;H=GH
+    gys=[gh_at(T,gx+sx*Wd+dx,gz+dz) for sx in(-1,1) for dx in(-0.5,0,0.5) for dz in(-0.5,0,0.5)]
+    gy=min(gys)            # основание (самая низкая точка под опорами)
+    gtop=max(gys)          # верх считаем от самой высокой — балка не «тонет» в склоне
+    base={}
     for sx in(-1,1):
-        x=gx+sx*Wd
-        path=[Vector((x+math.sin(t*2.1+sx)*0.08,t*H,gz+math.cos(t*1.7)*0.06)) for t in np.linspace(0,1,9)]
-        P('gr_gpil',L.tube(path,lambda t:0.36-0.08*t,n=10,twist=0.25),M['bark'],'grgate')
-        # корни у основания
-        for k in range(5):
-            a=k/5*math.tau+sx;pth=[Vector((x+math.cos(a)*r*1.0,0.55-r*0.45,gz+math.sin(a)*r)) for r in np.linspace(0.15,1.1,6)]
-            P('gr_groot',L.tube(pth,lambda t:0.16*(1-t)+0.03,n=6,cap1=True),M['bark'],'grgate')
-    # касаги (верхняя балка, слегка изогнута) и нуки
-    kas=[Vector((gx+u*(Wd+1.0),H+0.25+0.18*(abs(u)**2),gz)) for u in np.linspace(-1,1,11)]
-    P('gr_gkas',L.tube(kas,0.24,n=8,flat=0.75),M['bark'],'grgate')
-    nuki=[Vector((gx+u*(Wd+0.55),H-0.75,gz)) for u in np.linspace(-1,1,5)]
-    P('gr_gnuki',L.tube(nuki,0.16,n=6),M['bark'],'grgate')
-    # симэнава с сидэ
-    rope=[Vector((gx+u*Wd*0.95,H-1.15-0.32*(1-u*u),gz+0.05)) for u in np.linspace(-1,1,13)]
-    P('gr_grope',L.tube(rope,0.07,n=6,twist=0.8),M['rope'],'grgate')
-    for u in(-0.6,-0.2,0.2,0.6):
-        x=gx+u*Wd*0.95;y=H-1.15-0.32*(1-u*u)
+        x=gx+sx*Wd;b0=min(gh_at(T,x+dx,gz+dz) for dx in(-0.5,0,0.5) for dz in(-0.5,0,0.5))-0.6;base[sx]=b0;top=gtop+H
+        path=[Vector((x+math.sin(t*2.1+sx)*0.08,b0+(top-b0)*t,gz+math.cos(t*1.7)*0.06)) for t in np.linspace(0,1,10)]
+        P('gr_gpil',L.tube(path,lambda t:0.44-0.1*t,n=12,twist=0.25),M['bark'],'grgate')
+        gl=gh_at(T,x,gz)
+        for k in range(6):   # корни у основания — по земле
+            a=k/6*math.tau+sx;pth=[]
+            for r in np.linspace(0.2,1.5,7):
+                px,pz=x+math.cos(a)*r,gz+math.sin(a)*r;pth.append(Vector((px,gh_at(T,px,pz)+0.12*(1-r/1.5)+0.02,pz)))
+            pth[0]=Vector((x+math.cos(a)*0.2,gl+0.55,gz+math.sin(a)*0.2))
+            P('gr_groot',L.tube(pth,lambda t:0.18*(1-t)+0.035,n=6,cap1=True),M['bark'],'grgate')
+    H=gtop+H        # дальше — абсолютные высоты
+    kas=[Vector((gx+u*(Wd+1.2),H+0.3+0.22*(abs(u)**2),gz)) for u in np.linspace(-1,1,13)]
+    P('gr_gkas',L.tube(kas,0.28,n=8,flat=0.75),M['bark'],'grgate')
+    nuki=[Vector((gx+u*(Wd+0.65),H-0.85,gz)) for u in np.linspace(-1,1,7)]
+    P('gr_gnuki',L.tube(nuki,0.18,n=6),M['bark'],'grgate')
+    rope=[Vector((gx+u*Wd*0.95,H-1.3-0.4*(1-u*u),gz+0.05)) for u in np.linspace(-1,1,15)]
+    P('gr_grope',L.tube(rope,0.08,n=6,twist=0.8),M['rope'],'grgate')
+    for u in(-0.7,-0.35,0.0,0.35,0.7):
+        x=gx+u*Wd*0.95;y=H-1.3-0.4*(1-u*u)
         for k in range(3):
-            P('gr_shide',L.box(0.07,0.09,0.004,(x+(0.05 if k%2 else -0.05),y-0.12-k*0.17,gz+0.08)),M['paper'],'grgate')
-    # лианы-печать в проёме (исчезают после решения загадки)
-    random.seed(7)
-    for k in range(30):
-        y0=random.uniform(0.1,H-1.2);y1=random.uniform(0.1,H-1.2)
-        pts=[Vector((gx+u*(Wd-0.15),y0+(y1-y0)*(u+1)/2+math.sin(u*3+k)*0.4,gz+math.sin(u*5+k*1.3)*0.15)) for u in np.linspace(-1,1,12)]
+            P('gr_shide',L.box(0.08,0.1,0.004,(x+(0.05 if k%2 else -0.05),y-0.13-k*0.19,gz+0.08)),M['paper'],'grgate')
+    # лианы-печать в проёме: от земли до верёвки (исчезают после решения)
+    random.seed(7);lo=gy+0.1;hi=H-1.4
+    for k in range(40):
+        y0=random.uniform(lo,hi);y1=random.uniform(lo,hi)
+        pts=[]
+        for u in np.linspace(-1,1,12):
+            px=gx+u*(Wd-0.2);yy=y0+(y1-y0)*(u+1)/2+math.sin(u*3+k)*0.45;yy=max(yy,gh_at(T,px,gz)+0.08)
+            pts.append(Vector((px,yy,gz+math.sin(u*5+k*1.3)*0.15)))
         P('gr_vine',L.tube(pts,0.06+random.random()*0.05,n=6,twist=0.3),M['bark'],'grvine')
         for u in np.linspace(-0.92,0.92,9):
             i=int((u+1)/2*11);p=pts[i];a=random.uniform(0,math.tau)
             o=P('gr_vleaf',L.plate(0.24,0.13,0.01,c=(0,0,0)),M['leaf'],'grvine',smooth=False)
             o.data.transform(Matrix.Translation(g2b(p.x,p.z+0.06,p.y+0.05))@Matrix.Rotation(a,4,'Y')@Matrix.Rotation(math.pi/2,4,'X'))
-    # печать: светящееся кольцо с тремя точками (три чаши)
-    ring=L.lathe([(0.62,-0.035),(0.68,0.0),(0.62,0.035)],24,c=(0,0,0),f=None)
-    o=P('gr_seal',ring,M['glow'],'grseal');o.data.transform(Matrix.Translation(g2b(gx,gz+0.12,2.05))@Matrix.Rotation(math.pi/2,4,'X'));
+    sy=gh_at(T,gx,gz)+2.4
+    ring=L.lathe([(0.72,-0.035),(0.79,0.0),(0.72,0.035)],24,c=(0,0,0),f=None)
+    o=P('gr_seal',ring,M['glow'],'grseal');o.data.transform(Matrix.Translation(g2b(gx,gz+0.14,sy))@Matrix.Rotation(math.pi/2,4,'X'))
     for k in range(3):
-        a=math.pi/2+k*math.tau/3;o=P('gr_sealdot',L.lathe([(0.0,-0.03),(0.09,-0.02),(0.09,0.02),(0.0,0.03)],10),M['glow'],'grseal')
-        o.data.transform(Matrix.Translation(g2b(gx+math.cos(a)*0.32,gz+0.12,2.05+math.sin(a)*0.32))@Matrix.Rotation(math.pi/2,4,'X'))
+        a=math.pi/2+k*math.tau/3;o=P('gr_sealdot',L.lathe([(0.0,-0.03),(0.1,-0.02),(0.1,0.02),(0.0,0.03)],10),M['glow'],'grseal')
+        o.data.transform(Matrix.Translation(g2b(gx+math.cos(a)*0.37,gz+0.14,sy+math.sin(a)*0.37))@Matrix.Rotation(math.pi/2,4,'X'))
+    return dict(gy=round(gh_at(T,gx,gz),3),seal=round(sy,3),top=round(H,3),w=Wd)
 def pedestals(M,T):
     top=[]
     for i,(x,z) in enumerate(POTS):
@@ -239,7 +292,7 @@ def pedestals(M,T):
         P('gr_tab',L.box(0.18,0.12,0.03,(x,y+0.12,z+0.5)),M['stone'],'grgate')
     # каменные фонари торо по сторонам
     for sx in(-1,1):
-        x=GATE[0]+sx*5.2;z=GATE[1]+3.2;y=gh_at(T,x,z)
+        x=GATE[0]+sx*(GW+2.9);z=GATE[1]+3.2;y=gh_at(T,x,z)
         P('gr_toro',L.lathe([(0.32,y),(0.32,y+0.15),(0.12,y+0.2),(0.1,y+0.95),(0.25,y+1.0),(0.25,y+1.05)],6,c=(x,0,z),cap1=True),M['moss'],'grgate',shade_flat=True)
         P('gr_torob',L.box(0.22,0.2,0.22,(x,y+1.25,z)),M['stone'],'grgate')
         P('gr_torol',L.box(0.15,0.12,0.15,(x,y+1.25,z)),M['bud'],'grlamp')
@@ -361,7 +414,7 @@ def main():
     T,_=ground_bvh(groups['gr_ground'])
     H=hills(T,bpy.data.materials['gr_ground'])
     load_props();M=mats()
-    gate(M);pots=pedestals(M,T);port=portal(M,T);cp,ccols=camp(M,T);sprout(M);shaft(M);skyring(M)
+    gi=gate(M,T);pots=pedestals(M,T);port=portal(M,T);cp,ccols=camp(M,T);sprout(M);shaft(M);skyring(M)
     # предметы загадки (экспорт в нуле; расставляет игра)
     its=dict(shovel=('LittleShovel',1.9,'Садовая лопатка'),can=('Wateringcan',1.35,'Лейка'),book=('Book',1.7,'Травник отшельника'),flask=('Flask',1.8,'Склянка'),bottle=('Bottle',1.6,'Пустая бутыль'))
     items={}
@@ -374,7 +427,7 @@ def main():
     # коллайдеры: стволы деревьев + реквизит + врата + чаши + портал
     cols=[[t[0],t[1],0.42] for t in trees]+ccols
     for (x,z) in POTS:cols.append([x,z,0.5])
-    for sx in(-1,1):cols.append([GATE[0]+sx*2.3,GATE[1],0.5]);cols.append([GATE[0]+sx*5.2,GATE[1]+3.2,0.4])
+    for sx in(-1,1):cols.append([GATE[0]+sx*GW,GATE[1],0.6]);cols.append([GATE[0]+sx*(GW+2.9),GATE[1]+3.2,0.4])
     for k in range(7):
         a=k/7*math.tau+0.2;cols.append([PORTAL[0]+math.cos(a)*3.0,PORTAL[1]+math.sin(a)*3.0,0.45])
     nav,R=navbake(T,[[c[0],c[1],c[2]*0.8] for c in cols],LAND_P)
@@ -406,7 +459,7 @@ def main():
     bpy.ops.export_scene.gltf(filepath=f,export_format='GLB',use_selection=True,export_image_format='WEBP',export_image_quality=80,export_apply=True,export_yup=True,
         export_tangents=False,export_morph=False,export_skins=False,export_animations=False)
     print('GREEN GLB',os.path.getsize(f))
-    D=dict(nav=nav,S=S,land=list(LAND_P),landY=round(gh_at(T,*LAND_P),3),camp=list(CAMP),board=cp['board'],stand=cp['stand'],gate=[GATE[0],round(gh_at(T,*GATE),2),GATE[1]],
+    D=dict(nav=nav,S=S,land=list(LAND_P),landY=round(gh_at(T,*LAND_P),3),camp=list(CAMP),board=cp['board'],stand=cp['stand'],gate=[GATE[0],round(gh_at(T,*GATE),2),GATE[1],GW,gi['seal'],gi['top']],
            pots=pots,portal=port,items=items,cols=[[round(c[0],2),round(c[1],2),round(c[2],2)] for c in cols])
     open(os.path.join(ROOT,'game','src','gGd.js'),'w').write('// v0.16: «Зелёная пустошь» (генерирует blender/ext/green.py): nav с высотами, коллайдеры деревьев, точки загадки.\nconst GREEND='+json.dumps(D,separators=(',',':'))+';\n')
     json.dump({k:v for k,v in D.items() if k!='nav'},open(os.path.join(OUT,'green.json'),'w'),indent=0)

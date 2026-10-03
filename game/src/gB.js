@@ -5,7 +5,8 @@ const THEMES={
  duel:{bg:0x060a14,fog:0x0a1020,dens:0.04,hemi:[0x6a7aa0,0x0a0c14,0.85],moon:[0x9ab0e0,1.5],exp:1.15,ground:'stone',R:16},
  kak:{bg:0x6c5a66,fog:0x7a6470,dens:0.011,hemi:[0xe0c8b4,0x40302a,1.2],moon:[0xffc890,2.1],exp:1.1,ground:'dirt',R:200},
  house:{bg:0x05070d,fog:0x0b0d13,dens:0.022,hemi:[0x8c7c6c,0x1c1612,0.55],moon:[0x9ab0e0,0.7],exp:1.2,ground:'stone',R:60},
- green:{bg:0x9fbfd8,fog:0xa9c2c4,dens:0.0032,hemi:[0xe4f0ff,0x4a5a30,1.35],moon:[0xfff0d8,2.6],exp:1.05,ground:'moss',R:200}
+ green:{bg:0x9fbfd8,fog:0xa9c2c4,dens:0.0032,hemi:[0xe4f0ff,0x4a5a30,1.35],moon:[0xfff0d8,2.6],exp:1.05,ground:'moss',R:200},
+ temple:{bg:0x070914,fog:0x0c1022,dens:0.016,hemi:[0x6a78b8,0x1a1410,0.42],moon:[0x9fb4ff,0.85],exp:1.0,ground:'stone',R:30}
 };
 let ENV=null;const flames=[],rain={obj:null};
 function addFire(g,x,y,z,sc=1,li=0){for(let i=0;i<3;i++){const f=flameSprite();f.position.set(x+rnd(-.15,.15)*sc,y+0.3*sc,z+rnd(-.15,.15)*sc);f.scale.set(0.6*sc,1.1*sc,1);g.add(f);flames.push({s:f,b:sc,ph:rnd(0,9),x,y,z})}
@@ -110,6 +111,7 @@ function buildEnv(theme){
  }else if(theme==='house'){buildHouseEnv(g,env);
  }else if(theme==='kak'){gr.visible=false;buildKakEnv(g,env);
  }else if(theme==='green'){gr.visible=false;buildGreenEnv(g,env);
+ }else if(theme==='temple'){gr.visible=false;buildTempleEnv(g,env);
  }else{
   const pil=new THREE.CylinderGeometry(0.28,0.3,7,12);pil.translate(0,3.5,0);for(let i=0;i<14;i++){const a=i/14*Math.PI*2;if(EVok('pillar'))evAdd(g,'pillar',Math.cos(a)*17,0,Math.sin(a)*17,-a);else mesh(pil,M.pillar,Math.cos(a)*17,0,Math.sin(a)*17,g)}
   const ring=mesh(new THREE.TorusGeometry(17,0.3,8,96),EVok('pillar')&&ASSET.mats.ev_vermilion||M.pillar,0,EVok('pillar')?7.5:7,0,g);if(EVok('pillar')){const r2=mesh(new THREE.TorusGeometry(17,0.16,6,96),ASSET.mats.ev_vermilion,0,5.4,0,g);r2.rotation.x=Math.PI/2}ring.rotation.x=Math.PI/2;

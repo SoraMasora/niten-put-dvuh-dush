@@ -58,6 +58,7 @@ function drawCS(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);const b=CS.bars*H*0.
  for(const s of CS.subs){if(CS.t<s.a||CS.t>s.b)continue;const a=Math.min(1,(CS.t-s.a)/14,(s.b-CS.t)/14);X.globalAlpha=a;X.font='bold 18px Georgia,serif';const nw=X.measureText(s.n).width;X.font='21px Georgia,serif';const tw=X.measureText(s.t).width,x0=W/2-(nw+tw+22)/2,y=H-Math.max(b*0.42,60);
   X.textAlign='left';X.font='bold 18px Georgia,serif';X.fillStyle='#e6c26a';X.fillText(s.n,x0,y);X.font='21px Georgia,serif';X.fillStyle='#f2ede4';X.fillText(s.t,x0+nw+22,y);X.textAlign='center';X.globalAlpha=1;break}
  if(CS.card)itemCard(CS.card,850,130,370,450,1);
+ if(CS.k&&CS.k.startsWith('tp'))drawTpCS();
  if(CS.fade>0.001){X.fillStyle=`rgba(${CS.fadeC},${Math.min(1,CS.fade)})`;X.fillRect(0,0,W,H)}
  if(CS.img&&CS.img.complete){X.drawImage(CS.img,0,0,W,H);if(CS.imgT>40){X.textAlign='right';X.font='14px Georgia,serif';X.fillStyle='rgba(240,230,210,0.7)';X.fillText('Enter / клик — закрыть',W-26,H-18)}X.textAlign='left';return}
  if(CS.k==='forge')drawForge();if(CS.hint&&CS.t>15){X.textAlign='right';X.font='13px Georgia,serif';X.fillStyle='rgba(230,220,200,0.55)';X.fillText(CS.hint,W-26,H-16)}

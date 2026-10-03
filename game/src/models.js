@@ -162,7 +162,7 @@ export function applyPose(h,p,walk=0,ph=0,t=0,o={}){
   L.th.rotation.x=swing-crouch-kneeSw*0.25;L.kn.rotation.x=(i?p.c*1.3:p.c*1.6)+kneeSw+stance+walk*run*0.15;
   L.th.rotation.z=side*(0.06+p.c*0.15)+(i?-1:1)*idle*sway*0.03*side}
  const Ar=h.arms;const r=p.R,l=p.L,as=Math.sin(ph)*walk*(0.12+0.1*run);
- Ar.R.sh.rotation.set(r[0]+as,r[1],-r[2]-idle*br*0.02);Ar.R.el.rotation.x=r[3]-walk*run*0.15;Ar.R.hand.rotation.x=r[4]-r[0]-r[3]-as*0.5;
- const asL=o.lockL?as*0.15:as;Ar.L.sh.rotation.set(l[0]-asL,-l[1],l[2]+idle*br*0.02);Ar.L.el.rotation.x=l[3]-walk*run*0.15;Ar.L.hand.rotation.x=l[4]-l[0]-l[3]+asL*0.5;
+ Ar.R.sh.rotation.set(r[0]+as,r[1],-r[2]-idle*br*0.02);Ar.R.el.rotation.x=r[3]-walk*run*0.15;Ar.R.hand.rotation.set(r[4]-r[0]-r[3]-as*0.5,0,0);
+ const asL=o.lockL?as*0.15:as;Ar.L.sh.rotation.set(l[0]-asL,-l[1],l[2]+idle*br*0.02);Ar.L.el.rotation.x=l[3]-walk*run*0.15;Ar.L.hand.rotation.set(l[4]-l[0]-l[3]+asL*0.5,0,0);
  if(h.cape){const g=h.cape.geometry,pa=g.attributes.position,b=h.cape.userData.base;for(let i=0;i<pa.count;i++){const y=b[i*3+1],x=b[i*3],d=-y;pa.array[i*3+2]=b[i*3+2]-d*d*(0.12+walk*0.35)-Math.sin(t*3+x*4+d*3)*0.025*d-p.c*d*0.2}pa.needsUpdate=true;g.computeVertexNormals()}
 }

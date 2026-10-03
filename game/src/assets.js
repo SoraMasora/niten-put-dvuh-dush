@@ -24,9 +24,23 @@ function extractSkin(o,nm){const sk=o.skeleton;o.parent.updateMatrixWorld(true);
  const mk=(ix,sa)=>{const G=new THREE.BufferGeometry();for(const k in base)G.setAttribute(k,base[k]);G.setAttribute('skinIndex',sa);G.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));G.computeBoundingSphere();return G};
  const S=ASSET.skins[nm]=ASSET.skins[nm]||{parts:[],J:null};
  if(!S.J){S.J=J13.map(()=>new THREE.Vector3());sk.bones.forEach((b,k)=>{if(jm[k]>=0)b.getWorldPosition(S.J[jm[k]])})}
+ if(nm==='hero')for(const [hj,sd] of[[9,1],[12,-1]])fistCurl(pos,nor,si,sw,n,S.J[hj],hj,sd,nm);
  const m=o.material;if(m&&m.name)ASSET.mats[m.name]=m;
  S.parts.push({mat:m,up:{geo:mk(up,siA),cut:mk(up,new THREE.BufferAttribute(cu,4))},lo:{geo:mk(lo,siA),cut:mk(lo,new THREE.BufferAttribute(cl,4))}});
  ASSET.stats.meshes++;ASSET.stats.tris+=idx.length/3}
+// v0.17: кулак — пальцы кисти героя сгибаются вокруг рукояти (в модели ладонь раскрыта, костей пальцев нет).
+// Вершины ниже линии костяшек (K) изгибаются вокруг оси z (поперёк ладони) к стороне ладони (sd: R=+x, L=-x).
+// ASSET.grip[s] — центр кулака относительно сустава кисти: туда ставится рукоять (раньше — в сустав, рукоять уходила в рукав).
+const FIST={K:-0.04,R:0.021,max:2.5};
+function fistCurl(pos,nor,si,sw,n,h,hj,sd,nm){const {K,R,max}=FIST;let x0=0,c=0,z0=0;const sel=[];
+ for(let i=0;i<n;i++){let w=0;for(let q=0;q<4;q++)if(si[i*4+q]===hj)w+=sw[i*4+q];if(w<0.5)continue;const y=pos[i*3+1]-h.y;if(y<K){x0+=pos[i*3]-h.x;z0+=pos[i*3+2]-h.z;c++;sel.push(i)}}
+ if(!c)return;x0/=c;z0/=c;
+ for(const i of sel){const y=pos[i*3+1]-h.y,v=(pos[i*3]-h.x-x0)*sd,s=K-y;let phi=s/R,r=R-v,u,vv;
+  if(phi<=max){u=r*Math.sin(phi);vv=R-r*Math.cos(phi)}else{const e=(phi-max)*R;u=r*Math.sin(max)+e*Math.cos(max);vv=R-r*Math.cos(max)+e*Math.sin(max);phi=max}
+  pos[i*3+1]=h.y+K-u;pos[i*3]=h.x+x0+vv*sd;
+  const nx=nor[i*3]*sd,ny=nor[i*3+1],cs=Math.cos(phi),sn=Math.sin(phi);// поворот нормали в плоскости (v,-y)
+  const a=-ny,b=nx,a2=a*cs-b*sn,b2=a*sn+b*cs;nor[i*3+1]=-a2;nor[i*3]=b2*sd}
+ (ASSET.grip=ASSET.grip||{})[hj===9?'R':'L']=[x0+sd*R,K-R*0.3,z0]}
 const SPECIAL=/^(cape|orb|horn\d)$/;
 function floatAttr(a){const n=a.count,s=a.itemSize,f=new Float32Array(n*s);for(let i=0;i<n;i++){f[i*s]=a.getX(i);if(s>1)f[i*s+1]=a.getY(i);if(s>2)f[i*s+2]=a.getZ(i);if(s>3)f[i*s+3]=a.getW(i)}return new THREE.BufferAttribute(f,s)}
 function bake(mesh){const g=new THREE.BufferGeometry();for(const k of(/^PK__/.test(mesh.name)?['position','normal','uv','color']:['position','normal','uv']))if(mesh.geometry.attributes[k])g.setAttribute(k,floatAttr(mesh.geometry.attributes[k]));
@@ -35,7 +49,7 @@ function bake(mesh){const g=new THREE.BufferGeometry();for(const k of(/^PK__/.te
 function b64ToBuf(s){const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer}
 export async function loadAssets(){
  const src=(window.__NITEN_ASSETS_PARTS||[]).join('')||window.__NITEN_ASSETS;if(!src)return false;
- const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);const hs=(window.__NITEN_HOUSE_PARTS||[]).join('')||window.__NITEN_HOUSE;if(ok&&hs)await loadGLB(hs);const xs=(window.__NITEN_EXT_PARTS||[]).join('')||window.__NITEN_EXT;if(ok&&xs)await loadGLB(xs);const cs=(window.__NITEN_LOC_PARTS||[]).join('')||window.__NITEN_LOC;if(ok&&cs)await loadGLB(cs);const ks=(window.__NITEN_KAK_PARTS||[]).join('')||window.__NITEN_KAK;if(ok&&ks)await loadGLB(ks);const ps=(window.__NITEN_GREEN_PARTS||[]).join('')||window.__NITEN_GREEN;if(ok&&ps)await loadGLB(ps);return ok}
+ const ok=await loadGLB(src);const ls=(window.__NITEN_LOOT_PARTS||[]).join('')||window.__NITEN_LOOT;if(ok&&ls)await loadGLB(ls);const hs=(window.__NITEN_HOUSE_PARTS||[]).join('')||window.__NITEN_HOUSE;if(ok&&hs)await loadGLB(hs);const xs=(window.__NITEN_EXT_PARTS||[]).join('')||window.__NITEN_EXT;if(ok&&xs)await loadGLB(xs);const cs=(window.__NITEN_LOC_PARTS||[]).join('')||window.__NITEN_LOC;if(ok&&cs)await loadGLB(cs);const ks=(window.__NITEN_KAK_PARTS||[]).join('')||window.__NITEN_KAK;if(ok&&ks)await loadGLB(ks);const ps=(window.__NITEN_GREEN_PARTS||[]).join('')||window.__NITEN_GREEN;if(ok&&ps)await loadGLB(ps);const ts=(window.__NITEN_TEMPLE_PARTS||[]).join('')||window.__NITEN_TEMPLE;if(ok&&ts)await loadGLB(ts);return ok}
 async function loadGLB(src){
  try{const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf=await new Promise((res,rej)=>loader.parse(b64ToBuf(src),'',res,rej));

@@ -98,7 +98,7 @@ function updChests(ts){if(!LV.chests)return;for(const c of LV.chests){
  c.lid.rotation.x=-1.95*c.open;c.glow.material.opacity=c.state==='open'?(CS.on&&CS.k==='chest'?Math.min(1,c.open*1.3):0.12*c.open):0}}
 // ---------- взаимодействие (X)
 const INV={open:false,sel:-1,hover:-1,drag:null,mx:0,my:0,msg:null,lastClick:0};
-function nearInteract(){if(!LV)return null;if(LV.kak)return kakNear();if(LV.green)return grNear();let best=null,bd=1.45;for(const o of WI){const d=Math.hypot(o.x-P.x,o.z-P.z);if(d<bd&&o.y<0.6){bd=d;best={k:'item',o}}}
+function nearInteract(){if(!LV)return null;if(LV.kak)return kakNear();if(LV.green)return grNear();if(LV.temple)return tpNear();let best=null,bd=1.45;for(const o of WI){const d=Math.hypot(o.x-P.x,o.z-P.z);if(d<bd&&o.y<0.6){bd=d;best={k:'item',o}}}
  if(LV.H)for(const s of LV.H.spots){if(s.done)continue;const d=Math.hypot(s.x-P.x,s.z-P.z);if(d<Math.min(bd,s.r||1.4)){bd=d;best={k:'spot',s}}}
  if(LV.duelOpen&&Math.hypot(P.x,P.z+26.6)<1.9)best={k:'door'};
  if(LV.chests)for(const c of LV.chests){if(c.state==='open'||c.state==='hidden')continue;const fx=c.x+Math.sin(c.yaw)*0.9,fz=c.z+Math.cos(c.yaw)*0.9,d=Math.hypot(fx-P.x,fz-P.z);if(d<Math.min(bd,1.4)){bd=d;best={k:'chest',c}}}return best}

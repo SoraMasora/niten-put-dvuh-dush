@@ -16,7 +16,7 @@ function grGrid(){if(GR.grid)return GR.grid;const m=new Map();for(const c of GRE
 function grPushO(o,pr){const m=grGrid(),ix=Math.floor(o.x/4),iz=Math.floor(o.z/4);
  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const L=m.get((ix+a)*1000+iz+b);if(!L)continue;
   for(const c of L){const dx=o.x-c[0],dz=o.z-c[1],d=Math.hypot(dx,dz),r=c[2]+pr;if(d<r){if(d<1e-4){o.x+=r;continue}o.x=c[0]+dx/d*r;o.z=c[1]+dz/d*r}}}
- if(!G.grSolved){const g=GREEND.gate;if(Math.abs(o.x-g[0])<2.3&&Math.abs(o.z-g[2])<0.5)o.z=g[2]+(o.z>=g[2]?0.5:-0.5)}}
+ if(!G.grSolved){const g=GREEND.gate;if(Math.abs(o.x-g[0])<(g[3]||2.3)&&Math.abs(o.z-g[2])<0.5)o.z=g[2]+(o.z>=g[2]?0.5:-0.5)}}
 function grCamFix(C){const g=grGH(C.x,C.z)+0.5;if(C.y<g)C.y=g}
 // ---------- окружение
 function grMatFix(g){g.traverse(o=>{if(!o.isMesh||!o.material)return;const m=o.material;if(/gr_(tree|grass)/.test(m.name||'')){const gs=/grass/.test(m.name);if(gs&&m.map&&!m.map.userData.nm){m.map.userData.nm=1;m.map.minFilter=THREE.LinearFilter;m.map.needsUpdate=true}m.transparent=false;m.alphaTest=gs?0.42:0.5;m.depthWrite=true;m.side=THREE.DoubleSide;m.envMapIntensity=0.3}
@@ -66,7 +66,7 @@ function grSolveCS(){const G0=GREEND.gate,gx=G0[0],gy=G0[1],gz=G0[2],PT=GREEND.p
    if(t>=t0&&t<=t0+60)grSprout(i,ek(t,t0,t0+60))}
   if(t>=120&&t<170){for(const m of GR.sealM)if(m.emissiveIntensity!=null)m.emissiveIntensity=3+ek(t,120,170)*9}
   if(t===125){SFX.portal&&SFX.portal();G.shake=0.1}
-  if(t===170){SFX.clear&&SFX.clear();G.shake=0.2;sparks(gx,gy+2.05,gz+0.1,90,[0.6,1,0.6]);flashL(gx,gy+2,gz+0.5,0xa0ffb0,10,40);GR.seal.visible=false}
+  if(t===170){SFX.clear&&SFX.clear();G.shake=0.2;sparks(gx,G0[4]||gy+2.05,gz+0.1,90,[0.6,1,0.6]);flashL(gx,(G0[4]||gy+2.05)-0.05,gz+0.5,0xa0ffb0,10,40);GR.seal.visible=false}
   if(t>=170&&t<240){const k=ek(t,170,240);GR.vine.scale.set(1,Math.max(0.001,1-k),1);GR.vine.position.y=gy*k*0.9;if(t%3===0)grDust(gx+rnd(-2,2),gz+rnd(-0.3,0.3),gy,2)}
   if(t===240){GR.vine.visible=false}
   if(t===215){GR.portd.visible=true;SFX.warp&&SFX.warp()}
@@ -74,7 +74,7 @@ function grSolveCS(){const G0=GREEND.gate,gx=G0[0],gy=G0[1],gz=G0[2],PT=GREEND.p
   if(t===250)csSay('Юки','Сад вспомнил себя… Корни отступили, Акира.',250,370);
   if(t>=380)fin()},fin)}
 function grPortal(){const nx=GRCH()+1;
- if(CH[nx]){travelTo(nx,'portal');return}
+ if(CH[nx]){if(CH[nx].temple)tpPortalCS(nx);else travelTo(nx,'portal');return}
  SFX.warp&&SFX.warp();flashL(P.x,GY+1.4,P.z,0x9fffb0,8,40);G.grDone=1;
  G.card={t:0,title:'ГЛАВА 7 ПРОЙДЕНА',name:'Путь продолжится…'};
  say('Юки','Портал дрожит, но дальше пока не пускает. Следующий путь ещё не проложен.');say('Юки','Можно вернуться в деревню через карту (M).')}
@@ -98,7 +98,7 @@ function grNear(){if(CS.on)return null;const it0=GR.held,PT=GREEND.pots;
  let bi=null,bd=1.5;for(const it of GR.items){if(it.state!=='ground')continue;const d=Math.hypot(P.x-it.x,P.z-it.z);if(d<bd){bd=d;bi=it}}
  if(bi)return{k:'kak',label:'X — взять: '+bi.n+(it0?' (оставить: '+it0.n+')':''),f:()=>grTake(bi)};
  const B=GREEND.board;if(Math.hypot(P.x-B[0],P.z-B[1])<1.9)return{k:'kak',label:'X — прочитать записку отшельника',f:grNote};
- const Gt=GREEND.gate;if(!G.grSolved&&Math.abs(P.x-Gt[0])<2.6&&Math.abs(P.z-Gt[2])<2.2)return{k:'kak',label:'Врата оплетены корнями. На печати — три знака',f:()=>say('Юки','Три знака на печати… и три чаши перед вратами. Отшельник что-то оставил в своём лагере.')};
+ const Gt=GREEND.gate;if(!G.grSolved&&Math.abs(P.x-Gt[0])<(Gt[3]||2.3)+0.3&&Math.abs(P.z-Gt[2])<2.2)return{k:'kak',label:'Врата оплетены корнями. На печати — три знака',f:()=>say('Юки','Три знака на печати… и три чаши перед вратами. Отшельник что-то оставил в своём лагере.')};
  const Pp=GREEND.portal;if(G.grSolved&&Math.hypot(P.x-Pp[0],P.z-Pp[2])<2.6)return{k:'kak',label:'X — шагнуть в портал',f:grPortal};
  return null}
 // ---------- кадр
@@ -167,7 +167,7 @@ function grArrival(){const L=GREEND.land;P.x=L[0];P.z=L[1];P.yaw=Math.PI;const g
 // ---------- переходы и карта мира (свободное перемещение)
 function grFade(fn){csStart('travel',t=>{CS.bars=0;CS.hint=null;if(t<20)CS.fade=t/20;if(t===20)fn();if(t>20)CS.fade=Math.max(0,1-(t-20)/20);if(t>=42)csEnd()},null)}
 function travelTo(i,from){if(i<0||!CH[i])return;grFade(()=>{loadChapter(i);G.card={t:0,title:CH[i].title,name:CH[i].name}})}
-const TRAVEL=[['Пепел Ивате',0],['Лес Шепчущих Бамбуков',1],['Двор с колоколом',2],['Забытый дом',3],['Родная деревня',4],['Зелёная пустошь',5]];
+const TRAVEL=[['Пепел Ивате',0],['Лес Шепчущих Бамбуков',1],['Двор с колоколом',2],['Забытый дом',3],['Родная деревня',4],['Зелёная пустошь',5],['Путь',6]];
 function worldMapOpen(){G.worldMap=true;G.grNote=false;G.mapOpen=true;G.mapK=false;G.mapSel=Math.max(0,TRAVEL.findIndex(t=>t[1]===G.chap))}
 function updWorldMap(){if(G.grNote){if(hit('KeyX')||hit('KeyM')||hit('Escape')||hit('Enter')||hit('Space')||MP[0]){G.mapOpen=false;G.grNote=false}return true}
  if(!G.worldMap)return false;
