@@ -57,7 +57,6 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
   if(r.kind==='ash'){r.weap.position.z=wind?-0.5*k:act?0.7:rec?0.7*(1-e.st/e.atk.rec):0;r.arm.rotation.x=e.state==='stag'?0.6:0}
   else{const grab=e.atk&&e.atk.k==='grab'&&(wind||e.state==='hold');const a2=r.root.userData.arm2;
    if(grab){r.arm.rotation.x=-1.4;a2.rotation.x=-1.4;r.weap.rotation.x=1.2}else{r.arm.rotation.x=wind?lerp(-0.6,-3.0,k):act?-0.2:rec?lerp(-0.2,-0.6,e.st/e.atk.rec):-0.6;a2.rotation.x=-0.3;r.weap.rotation.x=0.8}}}
- else if(r.kind==='tengu'||r.kind==='iwa'||r.kind==='yari')syncNewEnemy(e,t);
  else if(r.mixer){kamaPlay(r,e.state==='stag'?'hit':wind?'crouch':(act||e.y>0.05)?'leap':mv?'run':'idle')}
  else if(r.kind==='kama'){r.legs.forEach((l,i)=>l.rotation.x=Math.sin(ph*1.6+i*1.6)*0.8*mv);r.hips.rotation.x=e.y>0.05?-0.4:0;r.arm.rotation.x=wind?-0.9*k:act?0.9:0}
  else if(r.kind==='yumi'){const ext=wind?k*1.2:rec?1.2*(1-Math.min(1,e.st/40)):act?1.2:0;r.neck.forEach((n,i)=>{n.position.set(Math.sin(t*2+i)*0.05*ext,0.35+i*(0.08+ext*0.17),0.05+Math.sin(i*0.8)*0.1*ext)});
@@ -113,4 +112,4 @@ function updCamera(){
  let tx=P.x,tz=P.z;if(G.lock){tx=lerp(P.x,G.lock.x,0.25);tz=lerp(P.z,G.lock.z,0.25)}
  const sh=G.shake;camera.position.set(tx-Math.sin(G.camYaw)*dist*cp+rnd(-sh,sh)*0.3,1.7+P.y*0.6+GY+dist*sp+rnd(-sh,sh)*0.3,tz-Math.cos(G.camYaw)*dist*cp);
  const rx=-Math.cos(G.camYaw)*0.45,rz=Math.sin(G.camYaw)*0.45;camera.position.x+=rx;camera.position.z+=rz;
- tv1.set(tx+rx,1.35+P.y*0.6+GY,tz+rz);if(LV.house)camClip(tv1,camera.position);else if(LV.env.nav){navCam(tv1,camera.position);if(LV.kak)kakCamFix(camera.position)}if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}
+ tv1.set(tx+rx,1.35+P.y*0.6+GY,tz+rz);if(LV.house)camClip(tv1,camera.position);else if(LV.env.nav){navCam(tv1,camera.position);if(LV.kak)kakCamFix(camera.position);if(LV.green)grCamFix(camera.position)}if(G.csBlend){const b=G.csBlend;b.t++;const k=ease(Math.min(1,b.t/45));camera.position.lerpVectors(b.p,camera.position,k);tv1.lerpVectors(b.l,tv1.clone(),k);if(b.t>=45)G.csBlend=null}camera.lookAt(tv1);if(window.__cam){const c=window.__cam;camera.position.set(c.p[0],c.p[1],c.p[2]);camera.lookAt(c.l[0],c.l[1],c.l[2])}}
