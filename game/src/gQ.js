@@ -54,10 +54,15 @@ function psSolid(x,y,z){const V=V8D.nav.vox,N=V8D.nav,i=Math.floor((x-N.x0)/V.s)
 function psRay(T,dx,dy,dz){const L=Math.hypot(dx,dy,dz);if(L<0.2)return 1;const n=Math.ceil(L/0.1);let s=1;
  if(psSolid(T.x,T.y,T.z)){for(;s<=n;s++){const u=s/n;if(!psSolid(T.x+dx*u,T.y+dy*u,T.z+dz*u))break}if(s*L/n>0.3)return 0.08}
  for(;s<=n;s++){const u=s/n;if(psSolid(T.x+dx*u,T.y+dy*u,T.z+dz*u))return Math.max(0.08,(s-2.5)/n)}return 1}
-// камера: клип по вокселям; если за спиной стена — плавно доворачиваем камеру в свободную сторону
-function psCam(T,C){psNav();const dx=C.x-T.x,dy=C.y-T.y,dz=C.z-T.z;let tm=psRay(T,dx,dy,dz);
- if(tm<0.55&&!CS.on&&G.mode==='play'&&!G.lock){for(const d of[0.35,-0.35,0.7,-0.7,1.1,-1.1,1.6,-1.6,2.2,-2.2]){const c=Math.cos(d),s=Math.sin(d);if(psRay(T,dx*c+dz*s,dy,-dx*s+dz*c)>0.85){G.camYaw+=Math.sign(d)*Math.min(Math.abs(d),0.045);break}}}
- if(tm<1){C.x=T.x+dx*tm;C.y=T.y+dy*tm;C.z=T.z+dz*tm}}
+// камера: клип по вокселям (сглаженный: приближение — сразу, отдаление — плавно), сглаженная высота на лестницах;
+// если за спиной стена и герой идёт — мягко доворачиваем камеру в свободную сторону
+function psCam(T,C){psNav();const free=G.mode==='play'&&!CS.on;
+ if(PS.cgy==null||!free||Math.abs(PS.cgy-GY)>2.5)PS.cgy=GY;else PS.cgy=lerp(PS.cgy,GY,0.14);const oy=PS.cgy-GY;T.y+=oy;C.y+=oy;
+ const dx=C.x-T.x,dy=C.y-T.y,dz=C.z-T.z;let tm=psRay(T,dx,dy,dz);
+ const mv=PS.lx!=null&&Math.hypot(P.x-PS.lx,P.z-PS.lz)>0.012;PS.lx=P.x;PS.lz=P.z;
+ if(tm<0.45&&mv&&free&&!G.lock){for(const d of[0.35,-0.35,0.7,-0.7,1.1,-1.1,1.6,-1.6]){const c=Math.cos(d),s=Math.sin(d);if(psRay(T,dx*c+dz*s,dy,-dx*s+dz*c)>0.85){G.camYaw+=Math.sign(d)*Math.min(Math.abs(d),0.018);break}}}
+ if(PS.ck==null||!free)PS.ck=tm;else PS.ck=tm<PS.ck?tm:Math.min(tm,PS.ck+0.035);const k=PS.ck;
+ if(k<1){C.x=T.x+dx*k;C.y=T.y+dy*k;C.z=T.z+dz*k}}
 // ---------- окружение: PS1-стиль (текстуры без фильтрации, самосвечение, аддитивные световые столбы, вода)
 function buildPs1Env(g,env){PS.glass=[];PS.lamps=[];PS.water=null;
  const fix=(o,f)=>{if(!o.isMesh||!o.material)return;let m=o.material;if(!m.userData.ps1){m=m.clone();m.userData.ps1=1;f(m,o);o.material=m}};
@@ -84,7 +89,7 @@ function v8Skin(items,B,o={}){const root=new Group(),bones=[],by={};
  for(const b of B){const n=new THREE.Bone();n.name=b[0];const p=b[1];if(p>=0){n.position.set(b[2]-B[p][2],b[3]-B[p][3],b[4]-B[p][4]);bones[p].add(n)}else{n.position.set(b[2],b[3],b[4]);root.add(n)}bones.push(n);by[b[0]]=n}
  root.updateMatrixWorld(true);const sk=new THREE.Skeleton(bones),meshes=[],seg=B.map(b=>[b[2],b[3],b[4],b[5],b[6],b[7]]);
  for(const it of items){const g=it.geo.clone(),P0=g.attributes.position,C=g.attributes.color,n=P0.count,si=new Uint16Array(n*4),sw=new Float32Array(n*4),dd=new Float32Array(B.length);
-  for(let i=0;i<n;i++){const id=C?Math.round(C.getX(i)*32):0;if(id>0&&id<=B.length){si[i*4]=id-1;sw[i*4]=1;continue}
+  for(let i=0;i<n;i++){const id=C?Math.round(C.getX(i)*32):0;if(id>0&&id<=B.length){const id2=Math.round(C.getY(i)*32);si[i*4]=id-1;if(id2>0&&id2<=B.length){const w=clamp(C.getZ(i),0,1);si[i*4+1]=id2-1;sw[i*4]=w;sw[i*4+1]=1-w}else sw[i*4]=1;continue}
    const x=P0.getX(i),y=P0.getY(i),z=P0.getZ(i);for(let q=0;q<B.length;q++){const s=seg[q],ax=s[3]-s[0],ay=s[4]-s[1],az=s[5]-s[2],L=ax*ax+ay*ay+az*az||1e-6;let t=((x-s[0])*ax+(y-s[1])*ay+(z-s[2])*az)/L;t=clamp(t,0,1);dd[q]=Math.hypot(x-s[0]-ax*t,y-s[1]-ay*t,z-s[2]-az*t)}
    const ord=[...dd.keys()].sort((a,b)=>dd[a]-dd[b]).slice(0,3);let tw=0;const w=ord.map(q=>{const v=1/Math.pow(dd[q]+0.03,4);tw+=v;return v});ord.forEach((q,c)=>{si[i*4+c]=q;sw[i*4+c]=w[c]/tw})}
   g.setAttribute('skinIndex',new THREE.BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.BufferAttribute(sw,4));g.deleteAttribute('color');
@@ -102,7 +107,8 @@ function v8Rig(t){const T=V8T[t],B=V8D.mob[t],items=v8Items(T.pre);const root=ne
  const gl=glintSprite();scene.add(gl);const tip=new THREE.Object3D();(S&&(S.bones.clawR||S.bones.handR||S.bones.jaw)||body).add(tip);if(S&&S.bones.clawR)tip.position.set(-0.2,-0.5,0.05);
  const upper=new Group();root.add(upper);
  // свечение глаз / пасти
- const eye=new THREE.PointLight(T.col,0.0,4,2);eye.position.set(0,t==='dog'?1.15:t==='smile'?2.3:1.9,0.35);root.add(eye);
+ const eye=new THREE.Object3D();eye.intensity=0;// без PointLight: число источников света не меняется при спавне (нет перекомпиляции шейдеров)
+ eye.position.set(0,t==='dog'?1.15:t==='smile'?1.15:1.9,t==='smile'?0.75:0.35);root.add(eye);
  return{root,upper,gl,tip,mat,kind:'v8',v8:t,S,body,eye}}
 function v8Sync(e,t,wind,act,rec,k,mv){const r=e.rig,S=r.S;if(!S)return;const B=S.bones,a=e.atk,st=e.state,ph=e.anim*0.11,ak=a&&a.k;
  const sc=(e.elite?1.15:1)*(e.spawnK!=null?ease(e.spawnK):1);r.root.scale.setScalar(sc);r.eye.intensity=(e.elite?2.2:1.1)*(0.8+0.2*Math.sin(t*7+e.anim));
@@ -114,14 +120,25 @@ function v8Sync(e,t,wind,act,rec,k,mv){const r=e.rig,S=r.S;if(!S)return;const B=
   if(ak==='claw'||ak==='blink'){const side=(e.comboN||1)%2;const up=wind?-2.6*k:act?lerp(-2.6,0.6,clamp(e.st/a.act,0,1)):rec?0.6*u:0;if(side)rx+=up;else lx+=up;if(act){if(side)rz-=0.5;else lz+=0.5}}
   if(ak==='scream'){lx-=1.6*u;rx-=1.6*u;lz+=0.9*u;rz-=0.9*u}
   bR(B.clawL,lx,0,lz);bR(B.clawR,rx,0,rz)}
- else if(r.v8==='smile'){const w=mv*(e.d.spd/2),sw=Math.sin(ph*1.2);r.body.position.y=Math.abs(Math.cos(ph*1.2))*0.05*mv+(e.leapY||0);
-  bR(B.hips,0.08,sw*0.08*mv,0);bR(B.chest,0.25+0.1*Math.sin(t*1.1)+(ak==='leap'&&wind?0.4*k:0)-0.3*hit,0,Math.sin(t*0.8)*0.06);bR(B.head,Math.sin(t*0.6+e.anim)*0.15-0.1,Math.sin(t*0.45)*0.35,Math.sin(t*3.1)*0.18*(1+hit*3));
-  bR(B.thighL,-sw*0.55*mv-(ak==='leap'&&wind?0.6*k:0),0,0);bR(B.shinL,Math.max(0,sw)*0.7*mv+(ak==='leap'&&wind?1.1*k:0));bR(B.thighR,sw*0.55*mv-(ak==='leap'&&wind?0.6*k:0),0,0);bR(B.shinR,Math.max(0,-sw)*0.7*mv+(ak==='leap'&&wind?1.1*k:0));
-  let aL=sw*0.4*mv+Math.sin(t*1.3)*0.1,aR=-sw*0.4*mv+Math.sin(t*1.3+2)*0.1,zL=0.15,zR=-0.15,fL=-0.2,fR=-0.2;
-  if(ak==='swipe'){const s=(e.comboN||1)%2,v=wind?-2.4*k:act?lerp(-2.4,0.5,clamp(e.st/a.act,0,1)):rec?0.5*u:0;if(s){aR+=v;zR-=act?0.8:0.2*u}else{aL+=v;zL+=act?0.8:0.2*u}}
-  if(ak==='grab'){aL-=1.5*u;aR-=1.5*u;zL-=0.3*u;zR+=0.3*u;fL=-0.2-0.6*u;fR=fL}
-  if(ak==='leap'){aL-=2.5*u;aR-=2.5*u;fL=fR=-0.6*u}
-  bR(B.armL,aL,0,zL);bR(B.armR,aR,0,zR);bR(B.foreL,fL);bR(B.foreR,fR);bR(B.handL,Math.sin(t*4+e.anim)*0.2);bR(B.handR,Math.sin(t*4+e.anim+1)*0.2)}
+ else if(r.v8==='smile'){const g=Math.min(1.5,e.d.spd/2.2),p=ph*1.6*g,c1=Math.sin(p),c2=Math.sin(p+Math.PI);
+  // ползун на четвереньках: диагональная походка (левая рука + правая нога), рывки корпуса, голова «ищет» добычу
+  const rear=ak==='swipe'?(wind?ek(e.st,0,a.wind*0.6):act?1:rec?u:0):ak==='grab'?(wind?0.5*k:act?0.6:rec?0.6*u:0):0;
+  const crouch=ak==='leap'&&wind?k:0,fly=ak==='leap'&&act?1:0;
+  r.body.position.y=Math.abs(Math.sin(p))*0.04*mv+(e.leapY||0)-crouch*0.12+rear*0.08;
+  bR(B.hips,-rear*0.25+crouch*0.12,c1*0.07*mv,c1*0.05*mv);bR(B.spine,-rear*0.45+0.04*Math.sin(t*1.7)-crouch*0.1+0.25*hit,-c1*0.06*mv,0);bR(B.chest,-rear*0.35-fly*0.2-0.2*hit,c1*0.08*mv,Math.sin(t*0.9)*0.05);
+  bR(B.neck,rear*0.5+crouch*0.25+Math.sin(t*0.7+e.anim)*0.12,Math.sin(t*0.45+e.anim)*0.35*(1-mv*0.5),0);
+  bR(B.head,rear*0.25+Math.sin(t*0.6)*0.1-0.2*hit,Math.sin(t*0.33)*0.25,Math.sin(t*2.7+e.anim)*0.22*(1+hit*2)+(Math.sin(t*0.5)>0.8?0.5:0));
+  const jaw=(ak==='grab'||ak==='leap')&&(wind||act)?0.55*u:ak==='swipe'&&act?0.4:0.12+0.1*Math.sin(t*3.3+e.anim);bR(B.jaw,jaw);
+  // руки: x>0 — назад, <0 — вперёд
+  const arm=(sd,ph1)=>{const s=Math.sin(p+ph1),lift=Math.max(0,Math.cos(p+ph1));let ax=s*0.45*mv+rear*0.9,fx=-lift*0.55*mv,hx=lift*0.4*mv,az=0;
+   if(ak==='swipe'&&((e.comboN||1)%2?sd<0:sd>0)){const v=wind?-1.9*ek(e.st,0,a.wind):act?lerp(-1.9,0.9,clamp(e.st/a.act,0,1)):rec?0.9*u:0;ax+=v;az=sd*(act?-0.5:-0.2*u);fx-=act?0.2:0.5*k}
+   if(ak==='grab'){ax-=1.3*u;az=-sd*0.35*u;fx=-0.3*u}
+   if(fly||crouch){ax+=crouch*0.5-fly*1.7;fx-=fly*0.2}
+   bR(B['arm'+(sd>0?'L':'R')],ax,0,az);bR(B['fore'+(sd>0?'L':'R')],fx);bR(B['hand'+(sd>0?'L':'R')],hx+Math.sin(t*4+e.anim+sd)*0.1)};
+  arm(1,0);arm(-1,Math.PI);
+  const leg=(sd,ph1)=>{const s=Math.sin(p+ph1),lift=Math.max(0,Math.cos(p+ph1));const n=sd>0?'L':'R';
+   bR(B['thigh'+n],-s*0.4*mv+rear*0.35-crouch*0.35+fly*0.6,0,0);bR(B['shin'+n],lift*0.5*mv+crouch*0.5-fly*0.3);bR(B['foot'+n],-lift*0.3*mv)};
+  leg(1,Math.PI);leg(-1,0)}
  else if(r.v8==='dog'){const g=Math.min(1.6,e.d.spd/3),p=ph*1.9*g,cy=Math.sin(p);r.body.position.y=Math.abs(Math.sin(p))*0.06*mv+(e.leapY||0);
   const crouch=(ak==='pounce'||ak==='bite')&&wind?k:0;bR(B.hips,-0.05+crouch*0.15,0,0);bR(B.spine,cy*0.05*mv,Math.sin(t*0.7)*0.06,0);bR(B.chest,crouch*0.2-(act&&ak==='pounce'?0.3:0),0,0);
   bR(B.neck,0.1+crouch*0.2+(ak==='howl'?-0.8*u:0)-0.2*hit,Math.sin(t*0.5+e.anim)*0.25*(1-mv),0);
@@ -132,7 +149,7 @@ function v8Sync(e,t,wind,act,rec,k,mv){const r=e.rig,S=r.S;if(!S)return;const B=
   L('flL','flL2',0);L('hlR','hlR2',0.2);L('flR','flR2',Math.PI);L('hlL','hlL2',Math.PI+0.2)}}
 function v8Def(){return{
  wraith:{name:'Тряпичник',hp:140,spd:2.7,range:2.0,rad:0.45,h:2.1,poise:45,souls:[['r',4],['b',3]],atk:[{k:'claw',wind:30,act:9,rec:24,dmg:13,reach:2.4},{k:'blink',wind:28,act:10,rec:30,dmg:18,reach:2.4},{k:'scream',wind:44,act:30,rec:40,dmg:6,reach:6.5}],ai:v8AI},
- smile:{name:'Улыбака',hp:260,spd:2.0,range:2.6,rad:0.6,h:2.5,poise:90,souls:[['r',6],['b',4],['y',1]],atk:[{k:'swipe',wind:34,act:10,rec:28,dmg:20,reach:3.1},{k:'leap',wind:40,act:44,rec:46,dmg:26,reach:2.4},{k:'grab',wind:36,act:8,rec:40,dmg:0,reach:2.2}],ai:v8AI},
+ smile:{name:'Улыбака',hp:260,spd:2.2,range:2.4,rad:0.7,h:1.5,poise:90,souls:[['r',6],['b',4],['y',1]],atk:[{k:'swipe',wind:34,act:10,rec:28,dmg:20,reach:3.1},{k:'leap',wind:40,act:44,rec:46,dmg:26,reach:2.4},{k:'grab',wind:36,act:8,rec:40,dmg:0,reach:2.2}],ai:v8AI},
  dog:{name:'Пёс',hp:120,spd:4.6,range:1.7,rad:0.5,h:1.3,poise:28,souls:[['r',3],['b',2]],atk:[{k:'bite',wind:20,act:12,rec:22,dmg:12,reach:1.9},{k:'pounce',wind:30,act:34,rec:30,dmg:16,reach:1.8},{k:'howl',wind:30,act:40,rec:30,dmg:0,reach:0}],ai:v8AI}}}
 // высоты: e.gy — пол под мобом, разница с игроком (абсолютная)
 const v8dy=e=>(P.y+GY)-(e.y+(e.gy||0));
@@ -236,10 +253,15 @@ function drawPsHUD(){if(CS.on)return;X.textAlign='center';const a=PS.done?0:1;if
  X.textAlign='left';X.font='12px Georgia,serif';X.fillStyle='rgba(220,210,235,0.62)';X.fillText('F Полумесяц (15) · G Вихрь (25) · V Шаг тени · R Два Неба (Они)',W-420,H-19)}
 // ---------- новые катаны: «Акэбоно» (правая, рассвет) и «Ёиями» (левая, ночь между мирами)
 const NB_C={R:[2.6,1.15,0.45],L:[1.0,0.55,2.7]},NB_S={R:[1,0.72,0.4],L:[0.62,0.5,1.4]};
-function nbEquip(){G.nb=true;G.oneBlade=false;if(!ASSET.parts.SW_N1)return;
- for(const [s,pre] of[['R','SW_N1'],['L','SW_N2']]){const A=hero.arms[s];if(A.sw.userData.nb)continue;const o=A.sw,n=makeSword(0.78,null,false,pre);n.userData.nb=1;n.traverse(m=>{if(m.isMesh){m.castShadow=true;if(m.material&&!m.material.userData.nbf){m.material.userData.nbf=1;m.material.envMapIntensity=0.9}}});(o.parent||hero.hips).add(n);if(o.parent)o.parent.remove(o);A.sw=n}
- if(hero.saya&&ASSET.parts.SN1)hero.saya.forEach((g,k)=>{if(g.userData.nb)return;g.userData.nb=1;while(g.children.length)g.remove(g.children[0]);const inn=new Group();g.add(inn);addPart(inn,k?'SN2':'SN1','saya')});
+function nbEquip(force){G.nb=true;G.oneBlade=false;if(!ASSET.parts.SW_N1)return;
+ for(const [s,pre] of[['R','SW_N1'],['L','SW_N2']]){const A=hero.arms[s];if(A.sw.userData.nb&&!force)continue;const o=A.sw,n=makeSword(0.78,null,false,pre);n.userData.nb=1;n.traverse(m=>{if(m.isMesh){m.castShadow=true;if(m.material&&!m.material.userData.nbf){m.material.userData.nbf=1;m.material.envMapIntensity=0.9}}});(o.parent||hero.hips).add(n);if(o.parent)o.parent.remove(o);A.sw=n}
+ if(hero.saya&&ASSET.parts.SN1)hero.saya.forEach((g,k)=>{if(g.userData.nb)return;g.userData.nb=1;g.userData.old=[...g.children];while(g.children.length)g.remove(g.children[0]);const inn=new Group();g.add(inn);addPart(inn,k?'SN2':'SN1','saya')});
  trails.L.col=NB_C.L}
+// вернуть старые клинки (новая игра / после прогрева шейдеров)
+function nbUnequip(){G.nb=false;
+ for(const [s,len,ts,lp] of[['R',0.74,M.tsubaR,false],['L',0.69,M.tsubaL,true]]){const A=hero.arms[s];if(!A.sw.userData.nb)continue;const o=A.sw,n=makeSword(len,ts,lp,HXS?'KN':undefined);n.traverse(m=>{if(m.isMesh)m.castShadow=true});(o.parent||A.hand).add(n);if(o.parent)o.parent.remove(o);A.sw=n}
+ if(hero.saya)hero.saya.forEach(g=>{if(!g.userData.nb)return;g.userData.nb=0;while(g.children.length)g.remove(g.children[0]);for(const c of g.userData.old||[])g.add(c);g.visible=true});
+ trails.L.col=[0.5,1.2,2.4]}
 function nbDefs(){const R='R',L='L',N='N';return{
  A1:{s:12,a:6,r:22,dmg:[24,30],reach:2.6,arc:-0.1,st:10,knock:3,type:R,clip:'A1',nb:1},
  A2:{s:10,a:6,r:22,dmg:[22,28],reach:2.6,arc:-0.1,st:10,knock:3,type:L,clip:'A2',nb:1},
@@ -361,7 +383,7 @@ function qSpaceCS(){tpVoiceOff();if(CS.on)csEnd();const s=TP.sw.red;if(s)s.visib
  // расписание реплик
  let tt=300;const LN=Q_SCRIPT.map(([n,t])=>{const d=Math.max(150,Math.round(t.length*3.6)),a=tt;tt+=d+16;return{n,t,a,b:a+d}});const at=i=>LN[i].a,END=LN[14].b+20;QS.ln=LN;
  const fly={};let disp=null;
- const go=()=>{tpVoiceOff();qSpaceOff();QS.vis={R:true,L:true};hero.arms.R.sw.visible=true;P.hideL=false;P.csPost=null;P.csClip=null;if(!G.nb)nbEquip();if(hero.saya)hero.saya.forEach(g=>g.visible=true);TP.ov={c:'255,255,255',a:1};loadChapter(CH.findIndex(c=>c.ps1));G.card=null;G.subs=[];psWakeCS()};
+ const go=()=>{tpVoiceOff();qSpaceOff();QS.vis={R:true,L:true};hero.arms.R.sw.visible=true;P.hideL=false;P.csPost=null;P.csClip=null;nbEquip(true);for(const s of['R','L'])hero.arms[s].sw.visible=true;if(hero.saya)hero.saya.forEach(g=>g.visible=true);TP.ov={c:'255,255,255',a:1};loadChapter(CH.findIndex(c=>c.ps1));G.card=null;G.subs=[];psWakeCS()};
  csStart('tpSpace',t=>{const H=CS.H;CS.bars=1;P.csHide=false;H.yaw=yaw;
   TP.ov={c:'0,0,0',a:1-ek(t,10,90)};if(t>=END-60)TP.ov={c:'255,255,255',a:ek(t,END-60,END)};
   QS.gal.rotation.y=t*0.00035;QS.stars.rotation.y=t*0.00008;
@@ -393,7 +415,7 @@ function qSpaceCS(){tpVoiceOff();if(CS.on)csEnd();const s=TP.sw.red;if(s)s.visib
   if(t===T2){SFX.soul&&SFX.soul();P.drawn=false;QS.vis={R:false,L:false}}
   // 3) новые клинки рождаются в шаре Старца и ложатся в ножны героя
   if(t===at(11)){SFX.bell&&SFX.bell();o.orb.getWorldPosition(_q1);flashA(_q1.x,_q1.y,_q1.z,0xe0e8ff,12,40);sparkA(_q1.x,_q1.y,_q1.z,50,[1.6,1.8,2.6],5);
-   nbEquip();if(hero.saya)hero.saya.forEach(g=>g.visible=false);disp=['SW_N1','SW_N2'].map(p=>{const s=makeSword(0.78,null,false,p);QS.g.add(s);s.userData.tip0=1;return s});QS.disp=disp}
+   nbEquip(true);if(hero.saya)hero.saya.forEach(g=>g.visible=false);disp=['SW_N1','SW_N2'].map(p=>{const s=makeSword(0.78,null,false,p);QS.g.add(s);s.userData.tip0=1;return s});QS.disp=disp}
   if(disp&&t>=at(11)){o.orb.getWorldPosition(_q2);const F0=at(12),F1=at(12)+120;
    P.csPost=()=>{for(const [k,s] of[[0,'R'],[1,'L']]){const d=disp[k],w=hero.arms[s].sw;w.visible=t>=F1;d.visible=t<F1;if(t>=F1)continue;
     _q1.set(_q2.x+(k?-0.4:0.4)*Math.cos(yaw),_q2.y+0.35+Math.sin(t*0.04+k*2)*0.05,_q2.z-(k?-0.4:0.4)*Math.sin(yaw));_qQ.setFromEuler(new THREE.Euler(-Math.PI/2+0.2*Math.sin(t*0.02+k),t*0.01*(k?-1:1),0));

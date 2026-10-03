@@ -6,7 +6,9 @@
 #   the_old_man.glb             — Felnev, CC-BY-NC-4.0         (Старец; некоммерческая лицензия!)
 #   set_of_two_katanas.glb      — stasbelyk13, CC-BY-4.0       (две новые катаны + ножны)
 #   enemie_for_horror_game.glb  — DynamicSAV, CC-BY-4.0        (моб «Тряпичник»)
-#   smily_horror_monster.glb, dog_monster.glb — если файлов нет, строятся процедурные заглушки (Blender)
+#   smily_horror_monster.glb    — Bento, CC-BY-4.0             (моб «Улыбака», ползун)
+#   dog_monster.glb             — Ploobert, CC-BY-NC-SA-4.0    (моб «Пёс»; некоммерческая лицензия!)
+#   (если этих двух файлов нет — строятся процедурные заглушки)
 import bpy,bmesh,sys,os,json,math,base64,random
 import numpy as np
 from mathutils import Vector,Matrix,Quaternion
@@ -365,10 +367,95 @@ def dog():
        ['hlL',0,0.17,0.86,-0.6,0.22,0.55,-0.78],['hlL2',7,0.22,0.55,-0.78,0.2,0.03,-0.66],['hlR',0,-0.17,0.86,-0.6,-0.22,0.55,-0.78],['hlR2',9,-0.22,0.55,-0.78,-0.2,0.03,-0.66],
        ['flL',2,0.2,0.92,0.3,0.23,0.5,0.36],['flL2',11,0.23,0.5,0.36,0.2,0.03,0.42],['flR',2,-0.2,0.92,0.3,-0.23,0.5,0.36],['flR2',13,-0.23,0.5,0.36,-0.2,0.03,0.42]]
     return parts,B
-def ext_mob(fn,pre,H):
-    """Если файл прислан — импорт, выравнивание (стопы на 0, высота H), кости — по габаритам (гуманоид)."""
-    ms=imp(f(fn));o=join(ms,pre+'__body__m');co=verts(o);mn,mx=co.min(0),co.max(0);s=H/(mx[2]-mn[2])
-    o.data.transform(Matrix.Scale(s,4)@Matrix.Translation((-(mn[0]+mx[0])/2,-(mn[1]+mx[1])/2,-mn[2])));o.data.update();prefix_mats([o],'n8x_');set_id(o,0);return [o]
+# Присланные модели (Sketchfab, риг в glTF): импорт без «угадывания» bind-позы, меш в позе покоя (evaluated),
+# упрощение, перенос весов исходных костей на упрощённый скелет игры (2 кости на вершину -> вершинный цвет: id1/32, id2/32, w1).
+DOG_B=[['hips',-1,(-0.12,1.10,-0.70),(-0.03,1.11,-0.17)],['spine',0,None,(-0.05,1.06,0.40)],['chest',1,None,(-0.10,1.07,0.63)],['neck',2,None,(-0.13,1.20,0.78)],
+ ['head',3,(-0.13,1.20,0.78),(-0.11,1.12,0.95)],['jaw',4,(-0.11,1.04,0.76),(-0.10,0.98,0.93)],['tail',0,(-0.12,1.0,-0.75),(-0.12,0.75,-0.95)],
+ ['hlL',0,(0.068,1.019,-0.641),(0.318,0.686,-0.355)],['hlL2',7,None,(0.215,0.006,-0.617)],['hlR',0,(-0.263,0.997,-0.54),(-0.136,0.54,-0.368)],['hlR2',9,None,(-0.274,0.006,-0.696)],
+ ['flL',2,(0.15,1.131,0.277),(0.325,0.417,0.186)],['flL2',11,None,(0.28,0.005,0.645)],['flR',2,(-0.176,1.111,0.273),(-0.386,0.414,0.172)],['flR2',13,None,(-0.429,0.045,0.668)]]
+DOG_G={'hips':['DEF-spine.004','DEF-spine.005','DEF-spine.006','DEF-pelvis.L','DEF-pelvis.R'],'tail':['DEF-spine','DEF-spine.001','DEF-spine.002','DEF-spine.003'],
+ 'spine':['DEF-spine.007','DEF-spine.008'],'chest':['DEF-spine.009','DEF-spine.010','DEF-breast.L','DEF-breast.R'],'neck':['DEF-spine.011','head.001','head.002'],
+ 'head':['head','head.005','head.006'],'jaw':['head.003','head.004']}
+for sd in 'LR':
+    DOG_G['hl'+sd]=['DEF-thigh.'+sd,'DEF-thigh.%s.001'%sd];DOG_G['hl%s2'%sd]=['DEF-shin.'+sd,'DEF-shin.%s.001'%sd,'DEF-foot.'+sd,'DEF-foot.%s.001'%sd,'DEF-toe.'+sd]
+    DOG_G['fl'+sd]=['DEF-shoulder.'+sd,'DEF-front_thigh.'+sd,'DEF-front_thigh.%s.001'%sd];DOG_G['fl%s2'%sd]=['DEF-front_shin.'+sd,'DEF-front_shin.%s.001'%sd,'DEF-front_foot.'+sd,'DEF-front_foot.%s.001'%sd,'DEF-front_toe.'+sd]
+SM_B=[['hips',-1,(-70.249,61.598,-32.376),(-73.489,59.058,-15.476)],['spine',0,None,(-77.985,65.702,7.972)],['chest',1,None,(-81.442,71.456,26.001)],['neck',2,None,(-83.609,75.292,37.302)],
+ ['head',3,None,(-84.0,77.5,58.0)],['jaw',4,(-81.53,70.959,45.146),(-78.787,64.887,51.488)],
+ ['armL',2,(-57.72,70.18,29.112),(-49.316,49.77,25.614)],['foreL',6,None,(-47.786,10.274,41.55)],['handL',7,None,(-46.5,1.5,47)],
+ ['armR',2,(-102.392,63.336,17.682),(-116.992,46.85,13.88)],['foreR',9,None,(-127.555,11.353,34.966)],['handR',10,None,(-129,2,40)],
+ ['thighL',0,(-57.138,58.358,-23.309),(-33.263,34.388,6.516)],['shinL',12,None,(-49.042,16.672,-42.764)],['footL',13,None,(-36.726,1.539,-28.844)],
+ ['thighR',0,(-85.662,64.856,-28.325),(-113.323,35.245,-8.522)],['shinR',15,None,(-81.591,15.701,-48.553)],['footR',16,None,(-99.305,1.722,-40.475)]]
+SM_G={'hips':['spinebase','Hip.L','Hip.R'],'spine':['belly'],'chest':['chest','shoulder.L','shoulder.R'],'neck':['neck'],'head':['head','frontface'],'jaw':['jaw']}
+for sd in 'LR':
+    SM_G['arm'+sd]=['Arm.'+sd];SM_G['fore'+sd]=['Forearm.'+sd];SM_G['hand'+sd]=['Hand.'+sd];SM_G['thigh'+sd]=['leg.'+sd];SM_G['shin'+sd]=['sheen.'+sd];SM_G['foot'+sd]=['foot.'+sd,'toes.'+sd]
+def gbase(n):
+    b=n.rsplit('_',1)
+    return b[0] if len(b)==2 and b[1].isdigit() else n
+def seg_d(p,a,b):
+    ab=b-a;t=np.clip(((p-a)@ab)/max(1e-9,ab@ab),0,1);return np.linalg.norm(p-(a+np.outer(t,ab)),axis=1)
+def rig_mob(fn,pre,H,BD,GM,tris,mat_pre):
+    n0=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=f(fn),guess_original_bind_pose=False);new=[o for o in bpy.data.objects if o not in n0]
+    arm=[o for o in new if o.type=='ARMATURE'][0]
+    if arm.animation_data:arm.animation_data.action=None
+    for pb in arm.pose.bones:pb.matrix_basis.identity()
+    bpy.context.view_layer.update();dg=bpy.context.evaluated_depsgraph_get()
+    ms=[o for o in new if o.type=='MESH' and len(o.data.vertices)>=100]
+    for o in ms:   # координаты из evaluated (поза покоя), группы вершин сохраняются
+        e=o.evaluated_get(dg);m=e.to_mesh();P=[tuple(e.matrix_world@v.co) for v in m.vertices];e.to_mesh_clear()
+        if o.data.users>1:o.data=o.data.copy()
+        for v,p in zip(o.data.vertices,P):v.co=p
+        for md in list(o.modifiers):o.modifiers.remove(md)
+        mw=o.matrix_world.copy();o.parent=None;o.matrix_world=Matrix.Identity(4);o.data.update()
+    bone_par={b.name:(b.parent.name if b.parent else None) for b in arm.data.bones}
+    for o in [o for o in new if o not in ms]:bpy.data.objects.remove(o)
+    for o in ms:
+        if len(o.vertex_groups)==0:decimate(o,400)
+    allc=np.concatenate([verts(o) for o in ms]);mn,mx=allc.min(0),allc.max(0);s=H/(mx[2]-mn[2])
+    M=Matrix.Scale(s,4)@Matrix.Translation((-(mn[0]+mx[0])/2,-(mn[1]+mx[1])/2,-mn[2]))
+    for o in ms:o.data.transform(M);o.data.update()
+    gpt=lambda g:M@Vector((g[0],-g[2],g[1]))
+    B=[];pts=[]
+    for i,(nm,p,h,t) in enumerate(BD):
+        hb=gpt(h) if h else pts[p][1];tb=gpt(t);pts.append((hb,tb))
+        B.append([nm,p]+[round(x,4) for x in(hb.x,hb.z,-hb.y,tb.x,tb.z,-tb.y)])
+    names=[b[0] for b in BD];g2b={}
+    for bn,gl in GM.items():
+        for g in gl:g2b[g]=names.index(bn)
+    SA=np.array([[p[0].x,p[0].y,p[0].z] for p in pts]);SB=np.array([[p[1].x,p[1].y,p[1].z] for p in pts])
+    def nearest(P):
+        D=np.stack([seg_d(P,SA[q],SB[q]) for q in range(len(pts))],1);return D
+    prefix_mats(ms,mat_pre)
+    o=join(ms,pre+'__body__m');decimate(o,tris)
+    co=verts(o);nv=len(co);W=np.zeros((nv,len(BD)))
+    gmap={}
+    for vg in o.vertex_groups:
+        b=gbase(vg.name);k=None;cur=vg.name
+        while cur is not None:
+            if gbase(cur) in g2b:k=g2b[gbase(cur)];break
+            cur=bone_par.get(cur)
+        gmap[vg.index]=k
+    unk={}
+    for v in o.data.vertices:
+        for g in v.groups:
+            k=gmap.get(g.group)
+            if k is None:unk.setdefault(g.group,[]).append((v.index,g.weight))
+            elif g.weight>0:W[v.index,k]+=g.weight
+    for gi,lst in unk.items():   # кость не найдена -> ближайший сегмент к центру группы
+        idx=np.array([a for a,_ in lst]);w=np.array([b for _,b in lst])
+        if w.sum()<=0:continue
+        c=(co[idx]*w[:,None]).sum(0)/w.sum();k=int(np.argmin(nearest(c[None])[0]));W[idx,k]+=w
+    empty=W.sum(1)<=1e-6
+    if empty.any():   # без групп (глаза и т.п.) -> ближайший сегмент
+        D=nearest(co[empty]);W[np.where(empty)[0],D.argmin(1)]=1
+    o2=np.argsort(-W,1)[:,:2];w1=W[np.arange(nv),o2[:,0]];w2=W[np.arange(nv),o2[:,1]];wt=np.where(w1+w2>0,w1/(w1+w2+1e-9),1)
+    ca=o.data.color_attributes.new('Col','FLOAT_COLOR','POINT')
+    col=np.zeros((nv,4));col[:,0]=(o2[:,0]+1)/32.0;col[:,1]=np.where(w2>1e-4,(o2[:,1]+1)/32.0,0);col[:,2]=wt;col[:,3]=1
+    ca.data.foreach_set('color',col.ravel().astype(np.float32))
+    o.data.color_attributes.active_color=ca
+    while o.vertex_groups:o.vertex_groups.remove(o.vertex_groups[0])
+    co=verts(o);print(pre,'tris',sum(len(p.vertices)-2 for p in o.data.polygons),'bbox game',[round(co[:,0].min(),3),round(co[:,2].min(),3),round(-co[:,1].max(),3)],[round(co[:,0].max(),3),round(co[:,2].max(),3),round(-co[:,1].min(),3)])
+    print(pre,'bone usage',dict(zip(names,np.bincount(o2[:,0],minlength=len(BD)).tolist())))
+    return o,B
 # ------------------------------------------------------------------ облако галактики (need_some_space.glb, точки)
 def space_data(n=36000):
     import struct
@@ -390,10 +477,11 @@ def build_all():
         jj=join(objs,'j');jj.name='LV__%s__%d'%(part,k);k+=1
     kinfo=katanas();old=oldman();W,WB=wraith()
     mobs={'wraith':WB}
-    if os.path.exists(f('smily_horror_monster.glb')):ext_mob('smily_horror_monster.glb','V8S',2.5);mobs['smile']=None
-    else:_,SB=smile();mobs['smile']=SB
-    if os.path.exists(f('dog_monster.glb')):ext_mob('dog_monster.glb','V8D',1.3);mobs['dog']=None
-    else:_,DB=dog();mobs['dog']=DB
+    if os.path.exists(f('smily_horror_monster.glb')):_,SB=rig_mob('smily_horror_monster.glb','V8S',1.5,SM_B,SM_G,9000,'n8s_')
+    else:_,SB=smile()
+    if os.path.exists(f('dog_monster.glb')):_,DB=rig_mob('dog_monster.glb','V8D',1.3,DOG_B,DOG_G,10000,'n8d_')
+    else:_,DB=dog()
+    mobs['smile']=SB;mobs['dog']=DB
     shrink_imgs('n8_',1024)
     for im in bpy.data.images:
         if im.users and im.packed_file is None and im.size[0]:
@@ -409,7 +497,11 @@ def build_all():
     print('gQd.js ok')
 if __name__=='__main__':
     stage=sys.argv[-1]
-    if stage not in('nav','old','kat'):build_all()
+    if stage not in('nav','old','kat','mobs'):build_all()
+    if stage=='mobs':
+        clean();_,SB=rig_mob('smily_horror_monster.glb','V8S',1.5,SM_B,SM_G,9000,'n8s_');_,DB=rig_mob('dog_monster.glb','V8D',1.3,DOG_B,DOG_G,10000,'n8d_');shrink_imgs('n8_',1024)
+        bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'mobs.glb'),export_format='GLB',export_image_format='WEBP',export_image_quality=82,export_yup=True,export_apply=True,export_skins=False,export_animations=False,export_vertex_color='ACTIVE',export_all_vertex_colors=False)
+        json.dump({'smile':SB,'dog':DB},open(os.path.join(OUT,'mobs.json'),'w'))
     if stage=='nav':
         clean();location();nav=navbake();json.dump(nav,open(os.path.join(OUT,'nav.json'),'w'))
     if stage=='old':

@@ -26,7 +26,8 @@ function updPortal(p,ts=1){const u=p.userData,o=u.open;p.visible=o>0.004;if(!p.v
 const gateP=makePortal(),csP=makePortal();
 const beam=new Mesh(new THREE.CylinderGeometry(0.55,1.1,9,24,1,true),csMat(csTex.beam));beam.renderOrder=12;beam.visible=false;scene.add(beam);
 function csLights(){const s=[];for(const p of[gateP,csP])if(p.visible){p.getWorldPosition(tv1);s.push([tv1.x,tv1.y,tv1.z,p.userData.l,(p===csP?7:3.5)*p.userData.open*p.userData.int,10])}return s}
-function csPrecompile(on){for(const p of[gateP,csP]){p.visible=on;p.position.set(0,1.5,-2);p.scale.setScalar(1)}beam.visible=on}
+function csPrecompile(on){for(const p of[gateP,csP]){p.visible=on;p.position.set(0,1.5,-2);p.scale.setScalar(1)}beam.visible=on;
+ for(const o of[QRING[0].m,QPORT[0].g,NBEAM[0].m]){o.visible=on;if(on)o.position.set(0,1.2,-2.5)}}// v0.18.1: пулы эффектов главы 9 тоже компилируются заранее
 // ---------- движок
 function csSay(n,t,a,b){CS.subs.push({n,t,a,b})}
 function csStart(k,fn,skip){for(const q of KILLS){q.life=0;q.m.visible=false}CS.card=null;CS.hint=null;CS.img=null;CS.imgT=0;CS.onImgClose=null;CS.on=true;CS.k=k;CS.t=0;CS.fn=fn;CS.skip=skip;CS.subs=[];CS.H={};CS.fov=55;G.lock=null;G.trans=0;G.csBlend=null;
