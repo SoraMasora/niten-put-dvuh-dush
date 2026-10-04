@@ -14,24 +14,34 @@ SRC=os.path.join(os.environ.get('NITEN_SRC','/data/src'),'v20')
 ROOT=os.path.join(HERE,'..','..');OUT=os.path.join(HERE,'..','out','v20');os.makedirs(OUT,exist_ok=True)
 def f(n):return os.path.join(SRC,n)
 S=3.6;Z0=1.9                 # масштаб фотограмметрии (дом ~9 м) и высота двора -> y=0
-CS=0.3;STEP=0.36;CLEAR=1.7   # nav: клетка, макс. перепад между соседями, мин. высота над полом
-TRIS=300000                  # бюджет треугольников локации
+CS=0.3;STEP=0.5;CLEAR=1.7    # nav: клетка, макс. перепад между соседями, мин. высота над полом
+TRIS=1000000                 # бюджет треугольников локации (v0.21: было 300 тыс.)
+RSTEP=1.0;RAMPS=[([(3.0,1.8),(3.4,-3.0),(3.0,-7.8)],2.6),([(10.5,-0.8),(11.0,-4.5),(7.6,-6.4)],2.2)]   # тропы к воде (игровые x,z), ширина
 DOOR=(9.9,9.4)               # восточная дверь дома (игровые x,z) — выход героя
-BOSS=(18.5,2.5)              # центр грязного двора — Мудзин
+BOSS=(3.0,-13.0)              # v0.21: на воде (река под скалами) — Мудзин
 # ------------------------------------------------------------------ локация
+NEAR=(-32,44,-36,18)          # игровая зона (x0,x1,z0,z1): дом, двор, скалы, река — детализация почти полная
 def location():
     n0=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=f('waryongam_old_private_educational_institution.glb'))
     new=[o for o in bpy.data.objects if o not in n0];ms=[o for o in new if o.type=='MESH' and len(o.data.polygons)]
     for o in ms:bake_xf(o)
     for o in [o for o in new if o not in ms]:bpy.data.objects.remove(o)
     M=Matrix.Scale(S,4)@Matrix.Translation((0,0,-Z0))
-    tot=sum(len(o.data.polygons) for o in ms)
-    for o in ms:
-        o.data.transform(M);o.data.update();decimate(o,int(TRIS*len(o.data.polygons)/tot))
+    for o in ms:o.data.transform(M);o.data.update()
+    # v0.21: один меш (без щелей между кусками скана), сварка швов, затем прореживание: дальние поля сильно, игровая зона почти не трогается
+    o=join(ms,'w0loc');bm=bmesh.new();bm.from_mesh(o.data);bmesh.ops.remove_doubles(bm,verts=bm.verts,dist=0.004);bm.to_mesh(o.data);bm.free();o.data.update()
+    n0=sum(len(p.vertices)-2 for p in o.data.polygons)
+    vg=o.vertex_groups.new(name='far');x0,x1,z0,z1=NEAR;co=verts(o)
+    far=[i for i,c in enumerate(co) if not(x0<c[0]<x1 and z0<-c[1]<z1)]
+    vg.add(far,1.0,'REPLACE')
+    nf=min(n0*0.9,len(far)*2.0);m=o.modifiers.new('dec','DECIMATE');m.ratio=max(0.05,(n0-0.72*nf)/n0);print('LOC far verts',len(far),'ratio',m.ratio);m.vertex_group='far';m.use_collapse_triangulate=True;L.apply_mods(o)
+    o.vertex_groups.clear();n1=sum(len(p.vertices)-2 for p in o.data.polygons)
+    decimate(o,TRIS)
+    print('LOC tris',n0,'->',n1,'->',sum(len(p.vertices)-2 for p in o.data.polygons))
+    ms=[o]
     prefix_mats(ms,'w0_')
     for im in bpy.data.images:
         if im.users and not im.name.startswith('w0_'):im.name='w0_'+im.name
-    print('LOC tris',sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in ms))
     return ms
 def bvh_of(objs):
     bm=bmesh.new()
@@ -61,7 +71,19 @@ def navbake(ms):
                 if hs and y-hs[-1]<0.25:hs[-1]=y
                 else:hs.append(y)
             LAY[j][i]=hs
+    # v0.21: «тропы» по скалам между двором и рекой — шаг до RSTEP, без проверки стен (герой перелезает камни)
+    RM=np.zeros((h,w),bool)
+    for pts,wd in RAMPS:
+        for (ax,az),(bx,bz) in zip(pts,pts[1:]):
+            for j in range(h):
+                z=z0+(j+.5)*CS
+                for i in range(w):
+                    x=x0+(i+.5)*CS;sx,sz=bx-ax,bz-az;t=max(0,min(1,((x-ax)*sx+(z-az)*sz)/(sx*sx+sz*sz)))
+                    if math.hypot(x-ax-sx*t,z-az-sz*t)<=wd/2:RM[j,i]=True
+    print('NAV ramp cells',int(RM.sum()))
+    def lim(j,i,j2,i2):return RSTEP if RM[j,i] and RM[j2,i2] else STEP
     def passable(j,i,hA,j2,i2,hB):
+        if RM[j,i] and RM[j2,i2]:return abs(hA-hB)<=RSTEP
         if abs(hA-hB)>STEP:return False
         a=Vector((x0+(i+.5)*CS,-(z0+(j+.5)*CS),0));b=Vector((x0+(i2+.5)*CS,-(z0+(j2+.5)*CS),0))
         for dy in(0.5,1.3):
@@ -90,7 +112,7 @@ def navbake(ms):
             if not(0<=a<h and 0<=b<w):continue
             bq=None
             for q2,hB in enumerate(LAY[a][b]):
-                if abs(hB-hA)<=STEP and (bq is None or abs(hB-hA)<abs(LAY[a][b][bq]-hA)):bq=q2
+                if abs(hB-hA)<=lim(j,i,a,b) and (bq is None or abs(hB-hA)<abs(LAY[a][b][bq]-hA)):bq=q2
             if bq is None or not passable(j,i,hA,a,b,LAY[a][b][bq]):continue
             E[(j,i,q,d)]=bq
             if (a,b,bq) not in R:R.add((a,b,bq));st.append((a,b,bq))
