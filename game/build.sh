@@ -18,7 +18,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)";cd "$ROOT"
 [ "$SKIP_MODELS" = "1" ] || [ "$SKIP_TEMPLE" = "1" ] || { python3 blender/ext/temple.py; TEX=webp RATIO=1 node tools/optimize.mjs blender/out/niten_temple.glb blender/out/niten_temple.opt.glb; }
 # v0.18: ГЛАВА 9 «Пробуждение» (blender/ext/v18.py, исходники $NITEN_SRC/v18: PS1-локация, Старец, катаны, мобы, галактика) -> niten_v18.glb (+ game/src/gQd.js)
 [ "$SKIP_MODELS" = "1" ] || [ "$SKIP_V18" = "1" ] || { python3 blender/ext/v18.py; TEX=webp RATIO=1 node tools/optimize.mjs blender/out/niten_v18.glb blender/out/niten_v18.opt.glb; }
-cat game/src/gA.js game/src/gN.js game/src/gL.js game/src/gK.js game/src/gGd.js game/src/gTd.js game/src/gQd.js game/src/gV.js game/src/gG.js game/src/gT.js game/src/gQ.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gI.js game/src/gH.js game/src/gAdm.js game/src/gF.js > game/src/game.js
+cat game/src/gA.js game/src/gN.js game/src/gL.js game/src/gK.js game/src/gGd.js game/src/gTd.js game/src/gQd.js game/src/gV.js game/src/gG.js game/src/gT.js game/src/gQ.js game/src/gR.js game/src/gB.js game/src/gC.js game/src/gD.js game/src/gE.js game/src/gS.js game/src/gI.js game/src/gH.js game/src/gAdm.js game/src/gF.js > game/src/game.js
 npx esbuild game/src/game.js --bundle --minify --format=esm --target=es2022 --outfile=dist/niten.js --log-level=warning
 python3 - "$ROOT" <<'PY'
 import base64,os,sys

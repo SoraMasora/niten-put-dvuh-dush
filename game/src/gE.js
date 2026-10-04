@@ -5,7 +5,7 @@ function heroPose(){const st=P.stance,base=P.drawn?(G.oneBlade&&POSE.one?POSE.on
   else if(a.type==='R'){p=T<a.s?mixPose(base,POSE.rUp,k1):T<a.s+a.a?mixPose(POSE.rUp,POSE.rDown,k2):mixPose(POSE.rDown,base,k3)}
   else if(a.type==='L'){p=T<a.s?mixPose(base,POSE.lBack,k1):T<a.s+a.a?mixPose(POSE.lBack,POSE.lThrust,k2):mixPose(POSE.lThrust,base,k3)}
   else{p=T<a.s?mixPose(base,POSE.nUp,k1):T<a.s+a.a?mixPose(POSE.nUp,POSE.nDown,k2):mixPose(POSE.nDown,base,k3)}}
- else if(s==='block'||s==='clinch')p=POSE.block;else if(s==='dodge')p=POSE.dodge;else if(s==='absorb')p=POSE.absorb;else if(s==='issen')p=POSE.issen;else if(s==='hurt')p=POSE.hurt;else if(s==='dead')p=POSE.dead;else if(s==='eat')p=POSE.eat;else if(s==='dive')p=POSE.nDown;
+ else if(s==='block'||s==='clinch')p=POSE.block;else if(s==='dodge')p=POSE.dodge;else if(s==='absorb')p=POSE.absorb;else if(s==='issen')p=POSE.issen;else if(s==='hurt')p=POSE.hurt;else if(s==='dead')p=POSE.dead;else if(s==='eat')p=eatPose(base);else if(s==='dive')p=POSE.nDown;
  else if(s==='idle'&&P.st<30)p=mixPose(base,POSE.hurt,0.3);
  else if(s==='idle'&&P.idleT>300&&P.drawn)p=mixPose(base,POSE.rest,Math.min(1,(P.idleT-300)/60));
  if(P.csPose&&P.csPose.w>0.001)p=mixPose(p,P.csPose.p,P.csPose.w);
@@ -54,7 +54,7 @@ function holdM(rx=0,ry=0,rz=0,x=0,y=0,z=0){return new THREE.Matrix4().makeRotati
 function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.atk.wind):0,act=e.state==='act',rec=e.state==='rec';
  if(!e.dead){r.root.position.set(e.x,e.y+(e.gy||0),e.z);r.root.rotation.order='YXZ';const T=e.tl;r.root.rotation.set((T?T.x:0)+(e.csRx||0),e.yaw,T?T.z:0)}
  if(r.mat){r.mat.emissive.set(e.flash>0?0x606060:e.frozen>0?0x103060:e.burn>0?0x401000:0x000000)}
- const mv=(e.state==='move'||e.state==='enter')?1:0,ph=e.anim*0.11;
+ const mv=(e.state==='move'||e.state==='enter'||e.state==='dodge')?1:0,ph=e.anim*0.11;
  if(r.mixer){const dt=r.lt==null?0.016:Math.min(0.1,Math.max(0,t-r.lt));r.lt=t;if(e.dead)kamaPlay(r,'hit',0.1);r.mixer.update(dt*(r.cur==='run'?1.4:1))}
  if(e.dead){r.gl.visible=false;return}
  if(r.human&&(r.kind==='ash'||r.kind==='yumi')){const A=r.kind==='ash';let p=A?POSE.yariG:POSE.bowIdle;

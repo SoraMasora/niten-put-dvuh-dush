@@ -3,7 +3,7 @@ function buildRig(t){if(V8T[t])return v8Rig(t);if(t==='musha'||t==='shogun')retu
 function mkEnemy(t,x,z){const d=ET[t],hp=Math.round(d.hp*DIFF[G.diff].hp),rig=buildRig(t);scene.add(rig.root);rig.root.traverse(o=>{if(o.isMesh)o.castShadow=true});
  return{t,d,x,z,y:0,vy:0,vx:0,vz:0,yaw:Math.atan2(P.x-x,P.z-z),hp,max:hp,state:d.boss?'intro':'enter',st:0,cd:rnd(40,100),atk:null,hitDone:false,frozen:0,burn:0,burnAcc:0,poiseDmg:0,
   revived:false,anim:rnd(0,99),dead:false,deathT:0,pending:0,blackIn:0,flash:0,inv:0,phase:1,comboN:0,hits:0,rig,upV:null}}
-function removeRig(e){scene.remove(e.rig.root);if(e.rig.upper.parent)e.rig.upper.parent.remove(e.rig.upper);scene.remove(e.rig.gl)}
+function removeRig(e){{const b=HPB.m.get(e);if(b)hbDel(e,b)}scene.remove(e.rig.root);if(e.rig.upper.parent)e.rig.upper.parent.remove(e.rig.upper);scene.remove(e.rig.gl)}
 // ---------- физика: пружинный наклон от удара, падение тела «рэгдолл-лайт», расталкивание
 function hitTilt(e,dx,dz,imp){const T=e.tl||(e.tl={x:0,z:0,vx:0,vz:0}),sy=Math.sin(e.yaw),cy=Math.cos(e.yaw),f=dx*sy+dz*cy,s=dx*cy-dz*sy;T.vx+=f*imp;T.vz-=s*imp}
 function stepTilt(T,ts){if(!T)return;const k=0.028,c=0.16;T.vx+=(-k*T.x-c*T.vx)*ts;T.vz+=(-k*T.z-c*T.vz)*ts;T.x+=T.vx*ts;T.z+=T.vz*ts;T.x=clamp(T.x,-0.7,0.7);T.z=clamp(T.z,-0.7,0.7)}
@@ -55,11 +55,12 @@ function updEnemy0(e,ts){
   const lo=e.rig.root,F=e.fall;if(F){F.v+=0.0042*Math.sin(F.a+0.25)*ts;F.a+=F.v*ts;if(F.a>1.5){F.a=1.5;F.v=Math.abs(F.v)>0.006?-F.v*0.28:0;if(!F.n++){dust(lo.position.x+F.sx*20,lo.position.z+F.sz*20,10);G.shake=Math.max(G.shake,0.04)}}
    lo.position.x+=F.sx*ts;lo.position.z+=F.sz*ts;const fr=Math.pow(F.a>1.3?0.82:0.95,ts);F.sx*=fr;F.sz*=fr;lo.rotation.order='YXZ';lo.rotation.set(F.a*F.f,e.yaw,-F.a*F.s)}else lo.rotation.x=lerp(lo.rotation.x,-1.2,0.04);if(e.deathT>420){lo.position.y-=0.004*ts;up.position.y-=0.004*ts}return}
  if(e.burn>0){e.burn-=ts;e.burnAcc+=ts;if(Math.random()<0.4)embers(e.x,rnd(0.2,e.d.h),e.z);if(e.burnAcc>=60){e.burnAcc-=60;dmgEnemy(e,5,0,0,{stop:0,knock:0});if(e.dead)return}}
- if(e.inv&&e.state!=='trans'&&e.state!=='intro')e.inv=0;
+ if(e.inv&&e.state!=='trans'&&e.state!=='intro'&&e.state!=='dodge')e.inv=0;
  if(e.frozen>0){e.frozen-=ts;return}
  e.vy-=0.0075*ts;e.y+=e.vy*ts;if(e.y<0){e.y=0;e.vy=0}
  e.x+=e.vx*ts;e.z+=e.vz*ts;const fr=Math.pow(0.86,ts);e.vx*=fr;e.vz*=fr;arenaClamp(e,0.5);solidPush(e,e.d.rad);
  let dx=P.x-e.x,dz=P.z-e.z;const d=Math.hypot(dx,dz)||1;if(LV.env.nav&&d>1.2){const s=navSteer(e);if(s){dx=s[0]*d;dz=s[1]*d}}const ty=Math.atan2(dx,dz);
+ if(aiPre(e,ts,Math.hypot(P.x-e.x,P.z-e.z)||1))return;
  if(e.t==='sota')return updSota(e,ts,d,ty);if(e.d.ai)return e.d.ai(e,ts,d,ty);
  e.st+=ts;const sp=e.d.spd/60;
  switch(e.state){

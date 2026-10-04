@@ -20,7 +20,7 @@ function drawHUD(){X.clearRect(0,0,W,H);X.drawImage(vig,0,0);X.textBaseline='alp
  const kj=['虎','鶴','水'][P.stance],nm=['Тигр','Журавль','Вода'][P.stance],sc=1+P.stanceFx/14*0.4;X.save();X.translate(W/2,H-58);X.scale(sc,sc);X.fillStyle='rgba(0,0,0,0.45)';X.beginPath();X.arc(0,-10,30,0,7);X.fill();X.strokeStyle='rgba(200,40,40,0.7)';X.lineWidth=2;X.beginPath();X.arc(0,-10,30,0.3,5.9);X.stroke();
  X.font='36px "Noto Serif CJK JP","Noto Sans JP",serif';X.textAlign='center';X.fillStyle='#efe6d6';X.fillText(kj,0,3);X.restore();X.textAlign='center';X.font='12px Georgia,serif';X.fillStyle='rgba(230,220,200,0.7)';X.fillText(nm+'  ·  1 / 2 / 3',W/2,H-14);
  if(G.lock&&!G.lock.dead){tv1.set(G.lock.x,G.lock.d.h*0.6,G.lock.z).project(camera);if(tv1.z<1){const sx=(tv1.x+1)/2*W,sy=(1-tv1.y)/2*H;X.strokeStyle='rgba(255,220,150,0.8)';X.lineWidth=1.5;X.beginPath();X.arc(sx,sy,10,0,7);X.stroke();X.beginPath();X.moveTo(sx-16,sy);X.lineTo(sx-6,sy);X.moveTo(sx+6,sy);X.lineTo(sx+16,sy);X.stroke()}}
- const bb=G.bossBar;if(bb&&!bb.dead&&bb.state!=='intro'){X.font='18px Georgia,serif';X.fillStyle='#e6c98a';X.fillText(bb.d.name+(bb.phase===2?(bb.t==='sota'?' — Демон':' — Ярость'):''),W/2,44);X.fillStyle='rgba(0,0,0,0.6)';X.fillRect(W/2-300,54,600,6);X.fillStyle=bb.phase===2?'#8a2aff':'#b31b25';X.fillRect(W/2-300,54,600*Math.max(0,bb.hp)/bb.max,6)}
+ // v0.19: полоса босса — в 3D над головой (gR.js hbSync)
  X.textAlign='left';const s=G.subs[0];if(s){X.font='20px Georgia,serif';const tw=X.measureText(s.t).width;X.font='bold 18px Georgia,serif';const nw=X.measureText(s.n).width;const tot=nw+tw+44,x0=W/2-tot/2,y=H-150;
   X.fillStyle='rgba(0,0,0,0.6)';X.fillRect(x0-10,y-26,tot+20,38);X.fillStyle='#e6c26a';X.fillText(s.n,x0,y);X.font='20px Georgia,serif';X.fillStyle='#f2ede4';X.fillText(s.t,x0+nw+24,y)}
  X.textAlign='center';G.pops.forEach((p,i)=>{X.globalAlpha=clamp(p.life/30,0,1);X.font='18px Georgia,serif';X.fillStyle=p.col;X.fillText(p.t,W/2,H*0.3+i*26)});X.globalAlpha=1;
@@ -76,19 +76,19 @@ function frame(now){requestAnimationFrame(frame);if(!lastT)lastT=now;acc+=Math.m
  while(acc>=1000/60&&n<4){if(!window.__frz)update();acc-=1000/60;n++;if(n===1){for(const k in KP)delete KP[k];MP[0]=MP[1]=MP[2]=0}}
  if(n===0)return;clock.t=now/1000;const t=clock.t;
  if(G.mode==='title'){camera.position.set(P.x+Math.sin(t*0.1)*4.5,1.6,P.z+Math.cos(t*0.1)*4.5);camera.lookAt(P.x,1.2,P.z);P.state='idle';P.walk=0}
- syncHero(t);for(const e of enemies)syncEnemy(e,t);syncWorld(t);
+ syncHero(t);for(const e of enemies)syncEnemy(e,t);hbSync();eatSync();syncWorld(t);
  composer.render();
  if(G.mode==='title')drawTitle();else if(G.mode==='ending')drawTpEnding();else if(CS.on&&G.mode==='play'){drawCS();if(G.paused)panel('Свиток. Пауза',CTRL,'Клик или Enter — продолжить')}else if(G.mapOpen){drawHUD();drawMap()}else if(INV.open){drawHUD();drawInv()}else{drawHUD();
   if(G.paused)panel('Свиток. Пауза',CTRL,'Клик или Enter — продолжить');
   if(G.mode==='dead')panel('Путь оборван',[['Акира пал. Но зеркало помнит его.'],[''],['Убито Генма: '+G.stats.kills],['Иссэн: '+G.stats.issen],[''],['Совет: красный блеск — жми Q в последний миг.',1],['Синяя вспышка Соты — только уворот (Shift).',1]],'Enter — вернуться к зеркалу');
   if(G.mode==='victory'){const m=Math.floor(G.stats.time/3600),sec=Math.floor(G.stats.time/60)%60;panel('Путь Меча',[['Сота пал от руки брата. Кагэмару, Страж Дома, повержен.'],['Ёи сломана, но Акацуки ведёт дальше — в глубину Забытого дома.'],['Тайников найдено: '+((G.hreveal&&G.hreveal.size)||0)+' / 3 · комнат очищено: '+((G.hcleared&&G.hcleared.size)||0)+' / 7'],['Сложность: '+DIFF[G.diff].n],['Время: '+m+':'+String(sec).padStart(2,'0')],['Убито Генма: '+G.stats.kills],['Иссэн: '+G.stats.issen,1],['Красных душ: '+G.souls.r+' · фиолетовых: '+G.souls.p],['Смертей: '+G.stats.deaths],[''],['Продолжение следует: Путь Души и Путь Пустоты.']],'Enter — в главное меню')}}}
 addEventListener('resize',resize);resize();
-q18Init();
+q18Init();q19Init();
 {const ld=document.getElementById('ld'),ths=[...new Set(CH.map(c=>c&&c.theme).filter(Boolean))],ids=ths.map(th=>CH.findIndex(c=>c&&c.theme===th));let k=0;
  const cams=[[0,6,10,0,1,0],[8,3,-6,0,1.2,4],[-7,4,3,2,1,-3]];
  for(const i of ids){k++;if(ld)ld.textContent='КОМПИЛЯЦИЯ ШЕЙДЕРОВ… '+k+'/'+ids.length;await new Promise(r=>setTimeout(r,16));
   try{loadChapter(i);resetPlayer(0,0);let j=0;for(const t of Object.keys(ET)){const e=mkEnemy(t,Math.cos(j)*4,Math.sin(j)*4);enemies.push(e);j++}
-   for(const e of enemies)syncEnemy(e,0);syncHero(0);syncWorld(0);
+   for(const e of enemies)syncEnemy(e,0);syncHero(0);syncWorld(0);hbSync(1);
    csPrecompile(true);if(renderer.compileAsync)await renderer.compileAsync(scene,camera);
    for(const c of cams){camera.position.set(c[0],c[1],c[2]);camera.lookAt(c[3],c[4],c[5]);composer.render()}csPrecompile(false)}catch(err){console.warn('precompile',err)}}
  try{nbUnequip()}catch(err){console.warn('nb',err)}

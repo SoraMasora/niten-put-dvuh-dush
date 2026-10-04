@@ -85,7 +85,7 @@ function updTrail(t,sw,on){const H=t.hist;if(on){sw.userData.base.getWorldPositi
  t.g.attributes.position.needsUpdate=true;t.g.attributes.color.needsUpdate=true;t.m.visible=H.length>1}
 const bolts=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x9ad8ff,transparent:true,blending:THREE.AdditiveBlending,toneMapped:false}));bolts.frustumCulled=false;scene.add(bolts);
 const crescent=new Mesh(new THREE.RingGeometry(2.4,2.9,48,1,0,0.1),new MB({color:0xffffff,transparent:true,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false}));crescent.renderOrder=20;crescent.visible=false;scene.add(crescent);
-function resetPlayer(x,z){Object.assign(P,{x,z,y:0,vy:0,yaw:0,vx:0,vz:0,hp:120+(G.maxB||0),max:120+(G.maxB||0),st:100,stMax:100,oni:0,mana:40,state:'idle',t:0,atk:null,hitList:null,combo:'',comboT:0,buf:null,stance:1,stanceFx:0,muso:0,exhaust:0,iss:0,blockTap:-999,pdWin:0,air:false,food:3,tar:0,rT:-99,lT:-99,pendR:false,pendL:false,clinch:null,clT:0,hurtT:0,invT:0,dodgeLen:24,swung:false,absorbing:false,atkSpd:1,eatDone:false,walkPh:0,walk:0,gait:1,idleT:0,pose:POSE.sheath,drawn:false,drawSpd:1,idleClip:null,clipName:null,csRx:0,hideL:false})}
+function resetPlayer(x,z){Object.assign(P,{x,z,y:0,vy:0,yaw:0,vx:0,vz:0,hp:120+(G.maxB||0),max:120+(G.maxB||0),st:100,stMax:100,oni:0,mana:40,state:'idle',t:0,atk:null,hitList:null,combo:'',comboT:0,buf:null,stance:1,stanceFx:0,muso:0,exhaust:0,iss:0,blockTap:-999,pdWin:0,air:false,food:3,tar:0,rT:-99,lT:-99,pendR:false,pendL:false,clinch:null,clT:0,hurtT:0,invT:0,dodgeLen:24,swung:false,absorbing:false,atkSpd:1,eatB:0,eatQ:0,walkPh:0,walk:0,gait:1,idleT:0,pose:POSE.sheath,drawn:false,drawSpd:1,idleClip:null,clipName:null,csRx:0,hideL:false})}
 const fwdX=y=>Math.sin(y),fwdZ=y=>Math.cos(y);
 function say(n,t){G.subs.push({n,t,d:Math.max(170,t.length*4.2),a:0})}
 function pop(t,col='#e8dcc0'){G.pops.push({t,col,life:110})}
@@ -142,7 +142,8 @@ function castIce(){if(P.mana<15){pop('Мало синих душ','#8fb8ff');ret
  for(const e of enemies)if(!e.dead&&Math.hypot(e.x-P.x,e.z-P.z)<6){e.frozen=e.d.boss?90:240;n++;for(let i=0;i<20;i++)FX.add.add({x:e.x+rnd(-.4,.4),y:rnd(0.1,e.d.h),z:e.z+rnd(-.4,.4),vx:0,vy:rnd(0,1)/60,vz:0,life:rnd(40,90),s:rnd(0.03,0.06),r:0.6,gg:1.2,b:2})}
  flashL(P.x,1.2,P.z,0x80c0ff,8,20);if(!n)pop('Никого рядом','#8fb8ff')}
 function startMuso(){if(P.muso>0)return;if(P.oni<100){pop('Шкала Они не полна','#c9a0a0');return}P.oni=0;P.muso=1200;SFX.bell();SFX.guitar();pop('МУСО НИТЭН','#ffd27a');G.shake=0.25;flashL(P.x,1.5,P.z,0xffb070,12,30)}
-function eat(){if(P.food<=0){pop('Онигири кончились','#c9a0a0');return}if(P.hp>=P.max)return;P.state='eat';P.t=0;P.eatDone=false}
+function eat(){if(P.food<=0){pop('Онигири кончились','#c9a0a0');return false}if(P.hp>=P.max){pop('Здоровье полное','#c9c0a0');return false}
+ if(P.drawn){P.eatQ=G.frame;startDraw(false);return true}P.eatQ=0;P.state='eat';P.t=0;P.eatB=0;P.idleClip=null;(SFX.pickup||(()=>{}))();return true}
 function perfectDodge(){G.slow=72;G.slowTs=0.3;P.oni=Math.min(100,P.oni+10);P.pdWin=50;SFX.heart();pop('Идеальный уворот — ЛКМ: Иссэн-рывок','#bfe3ff')}
 function toward(src){const dx=src.x-P.x,dz=src.z-P.z,d=Math.hypot(dx,dz)||1;return(dx*fwdX(P.yaw)+dz*fwdZ(P.yaw))/d>0.35}
 function hitPlayer(src,dmg,o={}){if(ADM.god)return'none';if(G.buf&&G.buf.def>0)dmg=Math.round(dmg*0.65);if(G.buf&&G.buf.sake>0)dmg=Math.round(dmg*1.2);
@@ -184,7 +185,7 @@ function updPlayer(ts){
   if(hit('Space')&&!P.air)P.vy=0.14;
   if(down('KeyQ')&&!P.air){if(!P.drawn){startDraw(true);break}P.state='block';P.t=0;break}
   if(down('KeyE')&&!P.air){P.state='absorb';P.t=0;break}
-  if(G.nb){if(nbKeys(dirY))break}else{if(hit('KeyF')){castFire();break}if(hit('KeyG'))castIce();if(hit('KeyR'))startMuso()}if(hit('KeyH'))eat();
+  if(G.nb){if(nbKeys(dirY))break}else{if(hit('KeyF')){castFire();break}if(hit('KeyG'))castIce();if(hit('KeyR'))startMuso()}if(hit('KeyH')&&!P.air&&eat())break;
   if(dirY!=null){P.yaw=turn(P.yaw,dirY,0.25);const wk=down('KeyC')||down('CapsLock');P.gait=lerp(P.gait??1,wk?0:1,0.12);mv=(1.9+3.3*P.gait)/60*m*(G.buf&&G.buf.spd>0?1.25:1);P.state='run';P.st=Math.min(P.stMax,P.st+12/60*ts)}else{P.state='idle';P.st=Math.min(P.stMax,P.st+25/60*ts)}
   P.comboT-=ts;if(P.comboT<=0)P.combo='';break;
  case'atk':{const a=P.atk,T=P.t*P.atkSpd;if(a.nb)nbTick(a,T);
@@ -196,7 +197,7 @@ function updPlayer(ts){
   if(dirY!=null){P.yaw=turn(P.yaw,dirY,0.2);mv=1.7/60*m}
   if(dodgeHit()&&!P.air){if(dr)P.drawn=T>n*0.4;startDodge(dirY);break}
   if(dr){if(act)P.buf=act;if(down('KeyQ'))P.buf=P.buf||'Q';if(T>=n*0.6)P.drawn=true;if(T>=n){P.state='idle';P.t=0;P.drawn=true;const b=P.buf;P.buf=null;if(b==='Q'){if(down('KeyQ'))P.state='block'}else if(b)startAttack(b,dirY)}}
-  else{if(act&&T<n*0.7){P.state='idle';startAttack(act,dirY);break}if(T>=n*0.75)P.drawn=false;if(T>=n){P.state='idle';P.t=0;P.drawn=false}}
+  else{if(act&&T<n*0.7){P.state='idle';startAttack(act,dirY);break}if(T>=n*0.75)P.drawn=false;if(T>=n){P.state='idle';P.t=0;P.drawn=false;if(P.eatQ&&G.frame-P.eatQ<160){P.eatQ=0;eat()}}}
   break;}
  case'charge':{const hold=MH[0]||down('KeyJ');if(G.lock&&!G.lock.dead)aimAt(G.lock);else if(dirY!=null)P.yaw=turn(P.yaw,dirY,0.08);
   if(P.t>=40&&!P.zr){P.zr=true;SFX.zanReady();hero.arms.R.sw.userData.tip.getWorldPosition(tv1);flashL(tv1.x,tv1.y,tv1.z,0xffc060,6,16);sparks(tv1.x,tv1.y,tv1.z,16,[1,0.8,0.4])}
@@ -209,7 +210,7 @@ function updPlayer(ts){
  case'absorb':if(!down('KeyE')){P.state='idle';P.t=0}if(dirY!=null){P.yaw=turn(P.yaw,dirY,0.15);mv=5.2/60*0.3}break;
  case'hurt':if(P.t>=P.hurtT){P.state='idle';P.t=0}break;
  case'issen':if(P.t>=24){P.state='idle';P.t=0}break;
- case'eat':if(!P.eatDone&&P.t>=22){P.eatDone=true;P.food--;P.hp=Math.min(P.max,P.hp+40);pop('+40','#ffd98a');SFX.heal()}if(P.t>=40){P.state='idle';P.t=0}break;
+ case'eat':mv=eatTick(ts,dirY)*m;break;
  case'clinch':{P.clT-=ts;const e=P.clinch;if(!e||e.dead){P.state='idle';P.clinch=null;break}aimAt(e);
   if(act==='N'){P.clinch=null;P.state='idle';P.t=0;e.state='stag';e.st=0;e.stagT=90;sparks((P.x+e.x)/2,1.5,(P.z+e.z)/2,260);SFX.clang();SFX.cross();G.shake=0.25;dmgEnemy(e,45,fwdX(P.yaw),fwdZ(P.yaw),{force:true,stagT:90,knock:8});pop('Вырвался!','#ffd27a')}
   else if(P.clT<=0){P.clinch=null;e.state='rec';e.st=0;P.hp-=35;P.tar=1;G.tarScreen=120;G.flashRed=14;G.shake=0.3;SFX.hurt();P.oni=Math.max(0,P.oni-20);P.state='hurt';P.t=0;P.hurtT=24;checkDeath()}

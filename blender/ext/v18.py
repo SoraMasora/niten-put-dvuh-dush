@@ -69,17 +69,25 @@ def navbake():
     for j in range(h):
         z=z0+(j+.5)*CS
         for i in range(w):
-            x=x0+(i+.5)*CS;top=30.0;hits=[]
-            for k in range(16):
-                r=T.ray_cast(Vector((x,-z,top)),dn,60)
-                if r[0] is None:break
-                p,n=r[0],r[1]
-                if n.z>0.6:
-                    c=T.ray_cast(p+up*0.05,up,10);cl=(c[3]+0.05) if c[0] is not None else 99
-                    wt=TW.ray_cast(p+up*0.02,up,3)
-                    if cl>=CLEAR and wt[0] is None:hits.append(round(p.z,3))
-                top=p.z-0.03
-            LAY[j][i]=sorted(set(hits))
+            x=x0+(i+.5)*CS;hits=[]
+            # v0.19: 5 лучей на ячейку (ступени из отдельных досок с зазорами) и горизонтальные грани любой ориентации
+            # (у деревянных винтовых лестниц нормали верхних граней развёрнуты вниз — раньше они не считались полом)
+            for ox,oz in((0,0),(-0.08,-0.08),(0.08,-0.08),(-0.08,0.08),(0.08,0.08)):
+                top=30.0
+                for k in range(16):
+                    r=T.ray_cast(Vector((x+ox,-(z+oz),top)),dn,60)
+                    if r[0] is None:break
+                    p,n=r[0],r[1]
+                    if abs(n.z)>0.6:
+                        c=T.ray_cast(p+up*0.05,up,10);cl=(c[3]+0.05) if c[0] is not None else 99
+                        wt=TW.ray_cast(p+up*0.02,up,3)
+                        if cl>=CLEAR and wt[0] is None:hits.append(round(p.z,3))
+                    top=p.z-0.03
+            hs=[]
+            for y in sorted(hits):
+                if hs and y-hs[-1]<0.1:hs[-1]=y
+                else:hs.append(y)
+            LAY[j][i]=hs
     # рёбра между узлами (ячейка, слой): перепад <= STEP и свободный проход на высоте колен/груди
     def node_ok(j,i,hh):return True
     def passable(j,i,hA,j2,i2,hB):
@@ -93,7 +101,7 @@ def navbake():
     D4=((0,1),(0,-1),(1,0),(-1,0))   # (dj,di): +x,-x,+z,-z
     sj=int((SPAWN[1]-z0)/CS);si=int((SPAWN[0]-x0)/CS)
     lay0=LAY[sj][si];assert lay0,'spawn has no floor'
-    s0=min(range(len(lay0)),key=lambda q:abs(lay0[q]-0.0))
+    s0=min(range(len(lay0)),key=lambda q:abs(lay0[q]-1.16))   # терраса пробуждения (~1,16 м)
     R={(sj,si,s0)};st=[(sj,si,s0)];E={}
     while st:
         j,i,q=st.pop();hA=LAY[j][i][q]
@@ -467,6 +475,70 @@ def space_data(n=36000):
     P=P-np.median(P,0);r=np.abs(P).max();rng=np.random.default_rng(7);idx=rng.choice(len(P),n,replace=False);P=P[idx];C=C[idx]
     q=np.clip(np.round(P/r*32767),-32767,32767).astype('<i2');c=np.clip(np.round(C[:,:3]*255),0,255).astype(np.uint8)
     return dict(n=n,p=base64.b64encode(q.tobytes()).decode(),c=base64.b64encode(c.tobytes()).decode())
+# ------------------------------------------------------------------ v0.19: HP-бары (SAO / Demon Slayer) и онигири
+SRC19=os.path.join(os.environ.get('NITEN_SRC','/data/src'),'v19')
+def f19(n):return os.path.join(SRC19,n)
+def imp19(fn):
+    n0=set(bpy.data.objects);bpy.ops.import_scene.gltf(filepath=f19(fn));new=[o for o in bpy.data.objects if o not in n0]
+    ms=[o for o in new if o.type=='MESH' and len(o.data.polygons)>0]
+    for o in ms:bake_xf(o)
+    for o in [o for o in new if o not in ms]:bpy.data.objects.remove(o)
+    return ms
+def flat_bar(objs,width,x_center=None):
+    """Плоский бар в плоскости XZ Blender (= XY игры, лицом к +Z игры): глубина обнуляется, ширина -> width, центр по X, низ/верх по центру Z."""
+    P=np.concatenate([verts(o) for o in objs]);mn,mx=P.min(0),P.max(0);s=width/(mx[0]-mn[0]);cx=(mn[0]+mx[0])/2 if x_center is None else x_center;cz=(mn[2]+mx[2])/2
+    for o in objs:
+        for v in o.data.vertices:v.co=Vector(((v.co.x-cx)*s,-(v.co.y-mn[1])*s*0.0,(v.co.z-cz)*s))
+        o.data.update()
+    return s
+def hud19():
+    out=[]
+    if os.path.exists(f19('sao_health_bar.glb')):
+        ms=imp19('sao_health_bar.glb');flat_bar(ms,1.0)
+        for o in ms:
+            m=matname(o);o.name='V8H__saoB__m' if 'Outer' in m else 'V8H__saoI__m'
+        prefix_mats(ms,'n9h_');out+=ms
+    if os.path.exists(f19('demon_slayer_ui_concept_art.glb')):
+        ms=imp19('demon_slayer_ui_concept_art.glb')
+        keep=[];
+        for o in ms:
+            m=matname(o);c=verts(o).mean(0)
+            if c[2]>2800 or m in('hero_ui','Hero','hero_mask'):bpy.data.objects.remove(o);continue
+            keep.append(o)
+        ch=[o for o in keep if 'Chain' in matname(o)]
+        def relink(o,nu=8,nv=4):   # звено цепи -> лёгкий эллиптический тор по PCA исходного звена
+            P=verts(o);c=P.mean(0);U,S,Vt=np.linalg.svd(P-c,full_matrices=False);a1,a2,nn=Vt[0],Vt[1],Vt[2]
+            e1=np.abs((P-c)@a1).max();e2=np.abs((P-c)@a2).max();t=np.abs((P-c)@nn).max();r=t;R1=max(e1-r,r*1.2);R2=max(e2-r,r*1.2)
+            bm=bmesh.new();V=[]
+            for i in range(nu):
+                u=2*math.pi*i/nu;cu,su=math.cos(u),math.sin(u);q=c+a1*R1*cu+a2*R2*su;rad=a1*cu+a2*su
+                V.append([bm.verts.new(tuple(q+(rad*math.cos(2*math.pi*k/nv)+nn*math.sin(2*math.pi*k/nv))*r)) for k in range(nv)])
+            for i in range(nu):
+                for k in range(nv):bm.faces.new((V[i][k],V[(i+1)%nu][k],V[(i+1)%nu][(k+1)%nv],V[i][(k+1)%nv]))
+            bm.to_mesh(o.data);bm.free();o.data.update()
+        for o in ch:relink(o)
+        P=np.concatenate([verts(o) for o in keep]);mn,mx=P.min(0),P.max(0)
+        # центр — по полосе здоровья (Demon_Health), ширина всей группы -> 2.2 м
+        hp=[o for o in keep if 'Health' in matname(o)][0];hc=verts(hp);s=2.2/(mx[0]-mn[0]);cx=(hc[:,0].min()+hc[:,0].max())/2;cz=(hc[:,2].min()+hc[:,2].max())/2
+        ymid=np.median(P[:,1])
+        for o in keep:
+            m=matname(o);dz=0.0 if 'Chain' in m else 0.0
+            for v in o.data.vertices:v.co=Vector(((v.co.x-cx)*s,-(v.co.y-ymid)*s*(1.0 if 'Chain' in m else 0.0),(v.co.z-cz)*s))
+            o.data.update()
+        groups={'dsBack':[o for o in keep if 'back' in matname(o).lower()],'dsHp':[hp],'dsIco':[o for o in keep if matname(o) in('Demon','EYES')],'dsChain':ch}
+        print('DS tris',{k:sum(len(p.vertices)-2 for o in v for p in o.data.polygons) for k,v in groups.items()})
+        for k,objs in groups.items():
+            prefix_mats(objs,'n9h_')
+            if k=='dsIco':
+                for o in objs:o.name='V8H__dsIco__'+matname(o)
+                out+=objs
+            else:out.append(join(objs,'V8H__%s__m'%k))
+    if os.path.exists(f19('onigiri_1.glb')):
+        ms=imp19('onigiri_1.glb');o=join(ms,'V8G__oni__m');decimate(o,3000)
+        co=verts(o);mn,mx=co.min(0),co.max(0);s=0.095/(mx[0]-mn[0])
+        o.data.transform(Matrix.Scale(s,4)@Matrix.Translation((-(mn+mx)/2)));o.data.update();prefix_mats([o],'n9g_');shrink_imgs('n9g_',512);out.append(o)
+        co=verts(o);print('ONIGIRI bbox',co.min(0).round(3),co.max(0).round(3))
+    return out
 # ------------------------------------------------------------------ сборка
 def build_all():
     clean();locs=location();nav=navbake()
@@ -482,6 +554,7 @@ def build_all():
     if os.path.exists(f('dog_monster.glb')):_,DB=rig_mob('dog_monster.glb','V8D',1.3,DOG_B,DOG_G,10000,'n8d_')
     else:_,DB=dog()
     mobs['smile']=SB;mobs['dog']=DB
+    hud19()
     shrink_imgs('n8_',1024)
     for im in bpy.data.images:
         if im.users and im.packed_file is None and im.size[0]:
@@ -497,7 +570,10 @@ def build_all():
     print('gQd.js ok')
 if __name__=='__main__':
     stage=sys.argv[-1]
-    if stage not in('nav','old','kat','mobs'):build_all()
+    if stage not in('nav','old','kat','mobs','hud'):build_all()
+    if stage=='hud':
+        clean();hud19()
+        bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'hud.glb'),export_format='GLB',export_image_format='WEBP',export_yup=True,export_apply=True,export_skins=False,export_animations=False)
     if stage=='mobs':
         clean();_,SB=rig_mob('smily_horror_monster.glb','V8S',1.5,SM_B,SM_G,9000,'n8s_');_,DB=rig_mob('dog_monster.glb','V8D',1.3,DOG_B,DOG_G,10000,'n8d_');shrink_imgs('n8_',1024)
         bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'mobs.glb'),export_format='GLB',export_image_format='WEBP',export_image_quality=82,export_yup=True,export_apply=True,export_skins=False,export_animations=False,export_vertex_color='ACTIVE',export_all_vertex_colors=False)
