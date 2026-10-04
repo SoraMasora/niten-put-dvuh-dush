@@ -48,7 +48,8 @@ const CH=[
  {title:'ГЛАВА 6',name:'Родная деревня',theme:'kak',kak:true,noGate:true,mirrors:[],start:[],waves:[]},
  {title:'ГЛАВА 7',name:'Зелёная пустошь',theme:'green',green:true,noGate:true,mirrors:[],start:[],waves:[]},
  {title:'ГЛАВА 8',name:'Путь',theme:'temple',temple:true,noGate:true,mirrors:[],start:[],waves:[]},
- {title:'ГЛАВА 9',name:'Пробуждение',theme:'ps1',ps1:true,noGate:true,mirrors:[],start:[],waves:[]}
+ {title:'ГЛАВА 9',name:'Пробуждение',theme:'ps1',ps1:true,noGate:true,mirrors:[],start:[],waves:[]},
+ {title:'ГЛАВА 10',name:'Пустые глаза',theme:'w0',w0:true,noGate:true,mirrors:[],start:[],waves:[]}
 ];
 const G={mode:'title',diff:1,frame:0,chap:0,slow:0,slowTs:1,freeze:0,hitstop:0,shake:0,fov:55,fovT:55,camYaw:0,camPitch:0.28,camDist:4.6,card:null,subs:[],pops:[],
  souls:{r:0,b:0,p:0},stats:{kills:0,issen:0,time:0,deaths:0},issenFx:null,flashRed:0,tarScreen:0,rainFreeze:0,rainUp:false,winT:0,deadT:0,cp:null,bossBar:null,paused:false,menuSel:1,reviveHint:false,lock:null,wave:0,waveT:0,trans:0,exposureT:1};

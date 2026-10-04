@@ -1,5 +1,5 @@
 // ---------- enemies
-function buildRig(t){if(V8T[t])return v8Rig(t);if(t==='musha'||t==='shogun')return rigMusha(t==='shogun');if(t==='chochin')return rigChochin();if(t==='moku')return rigMoku();return t==='ash'?rigAsh(false):t==='gasa'?rigAsh(true):t==='kama'?rigKama():t==='yumi'?rigYumi():rigSota()}
+function buildRig(t){if(t==='mudzin')return mzRig();if(V8T[t])return v8Rig(t);if(t==='musha'||t==='shogun')return rigMusha(t==='shogun');if(t==='chochin')return rigChochin();if(t==='moku')return rigMoku();return t==='ash'?rigAsh(false):t==='gasa'?rigAsh(true):t==='kama'?rigKama():t==='yumi'?rigYumi():rigSota()}
 function mkEnemy(t,x,z){const d=ET[t],hp=Math.round(d.hp*DIFF[G.diff].hp),rig=buildRig(t);scene.add(rig.root);rig.root.traverse(o=>{if(o.isMesh)o.castShadow=true});
  return{t,d,x,z,y:0,vy:0,vx:0,vz:0,yaw:Math.atan2(P.x-x,P.z-z),hp,max:hp,state:d.boss?'intro':'enter',st:0,cd:rnd(40,100),atk:null,hitDone:false,frozen:0,burn:0,burnAcc:0,poiseDmg:0,
   revived:false,anim:rnd(0,99),dead:false,deathT:0,pending:0,blackIn:0,flash:0,inv:0,phase:1,comboN:0,hits:0,rig,upV:null}}
@@ -10,7 +10,7 @@ function stepTilt(T,ts){if(!T)return;const k=0.028,c=0.16;T.vx+=(-k*T.x-c*T.vx)*
 function separate(){for(let i=0;i<enemies.length;i++){const a=enemies[i];if(a.dead)continue;for(let j=i+1;j<enemies.length;j++){const b=enemies[j];if(b.dead)continue;
  const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),m=a.d.rad+b.d.rad;if(d<m&&d>0.0001){const p=(m-d)*0.5,ux=dx/d,uz=dz/d,wa=b.d.boss?0.9:a.d.boss?0.1:0.5;a.x-=ux*p*wa*2*0.5;a.z-=uz*p*wa*2*0.5;b.x+=ux*p*(1-wa);b.z+=uz*p*(1-wa)}}}}
 // v0.18: эффекты попаданий — на высоте пола врага (FXY)
-function dmgEnemy(e,dmg,dx,dz,o={}){const f=FXY;if(LV&&LV.ps1)FXY=e.gy||0;try{return dmgEnemy0(e,dmg,dx,dz,o)}finally{FXY=f}}
+function dmgEnemy(e,dmg,dx,dz,o={}){const f=FXY;if(LV&&LV.ps1)FXY=e.gy||0;try{return e.t==='mudzin'?mzDmg(e,dmg,dx,dz,o):dmgEnemy0(e,dmg,dx,dz,o)}finally{FXY=f}}
 function dmgEnemy0(e,dmg,dx,dz,o={}){
  if(e.dead||(e.inv&&!o.force))return;if(ADM.x10)dmg*=10;
  if((e.t==='sota'||e.d.block)&&e.state==='move'&&!o.noBlock&&!o.gb&&P.muso<=0&&Math.random()<(e.d.block||0.4)){sparks((e.x+P.x)/2,1.4,(e.z+P.z)/2,180);SFX.clang();e.cd=Math.min(e.cd,12);P.vx-=dx*0.06;P.vz-=dz*0.06;G.hitstop=3;pop(e.t==='sota'?'Сота блокирует':'Блок','#bba');return}
@@ -19,7 +19,7 @@ function dmgEnemy0(e,dmg,dx,dz,o={}){
  if(e.hp<=0)return killEnemy(e,dx,dz,o);
  const ms=e.d.boss?2.2:e.d.poise?1.7:1,kb=(o.knock||2)*0.014/ms;e.vx+=dx*kb;e.vz+=dz*kb;hitTilt(e,dx,dz,(0.012+(o.knock||2)*0.004)/ms);if(o.launch&&!e.d.boss)e.vy=0.12;
  e.poiseDmg+=dmg;if(e.state!=='hold'&&(e.poiseDmg>=(e.d.poise||0)||o.stagT)){e.poiseDmg=0;if(!(e.d.boss&&e.state==='act')){e.state='stag';e.st=0;e.stagT=o.stagT||(e.d.boss?22:20)}}}
-function killEnemy(e,dx,dz,o={}){const f=FXY;if(LV&&LV.ps1)FXY=e.gy||0;try{return killEnemy0(e,dx,dz,o)}finally{FXY=f}}
+function killEnemy(e,dx,dz,o={}){const f=FXY;if(LV&&LV.ps1)FXY=e.gy||0;try{return e.t==='mudzin'?mzDie(e,dx,dz,o):killEnemy0(e,dx,dz,o)}finally{FXY=f}}
 function killEnemy0(e,dx,dz,o={}){
  if(e.t==='sota'&&e.phase===1){e.phase=2;e.hp=e.max=Math.round(800*DIFF[G.diff].hp);e.state='trans';e.st=0;e.inv=1;G.rainFreeze=200;SFX.bell();G.shake=0.3;
   for(const h of e.rig.horns)h.visible=true;if(e.rig.mm){e.rig.root.traverse(o=>{if(o.isSkinnedMesh&&o.material.name==='sota_m2')o.visible=false});for(const m of Object.values(e.rig.mm))if(!m.userData.em)m.color.multiply(new THREE.Color(0.75,0.62,0.85))}if(!ASSET.ok)e.rig.human.torso.children[1].material=M.purple;M.sotaSkin.color.set(0x5b4a66);
@@ -95,13 +95,13 @@ function updSota(e,ts,d,ty){e.st+=ts;const sp=e.phase===2?1.3:1;
  case'stag':if(e.st>=e.stagT){e.state='move';e.st=0;e.cd=20}break;}}
 // ---------- chapters
 function clearWorld(){for(const e of enemies)removeRig(e);for(const s of souls)scene.remove(s.m);for(const p of proj)scene.remove(p.m);enemies=[];souls=[];proj=[];lines=[];FX.add.list.length=0;FX.norm.list.length=0}
-function loadChapter(i,cp){clearWorld();clearWI();G.chap=i;(G.visited=G.visited||new Set()).add(i);GY=0;const c=CH[i];const env=buildEnv(c.theme);
+function loadChapter(i,cp){w0Unload();clearWorld();clearWI();G.chap=i;(G.visited=G.visited||new Set()).add(i);GY=0;const c=CH[i];const env=buildEnv(c.theme);
  env.mirrors=c.mirrors.map(([x,z,y])=>makeMirror(ENV,x,z,y));const gp=(LAYOUT[c.theme]&&LOCN[c.theme]&&LVok(LOCN[c.theme])&&LAYOUT[c.theme].gate)||[0,16];env.gate=makeGate(ENV,gp[0],c.house?-90:gp[1]);
  PS.on=false;LV={c,env,wave:0,waveT:0,started:false,done:false,walls:env.walls||null,house:!!c.house,H:env.H||null};G.subs=[];G.bossBar=null;G.rainFreeze=0;G.rainUp=false;G.issenFx=null;G.lock=null;M.sotaSkin.color.set(0x9c7b66);
  resetPlayer(0,c.house?-14.6:-12);G.camYaw=0;G.camK=1;
  if(cp&&env.mirrors.length){LV.wave=cp.wave;const m=env.mirrors[cp.mi]||env.mirrors[0];P.x=m.x+Math.sin(m.face.parent.rotation.y)*1.5;P.z=m.z+Math.cos(m.face.parent.rotation.y)*1.5;P.oni=cp.oni||0;for(let k=0;k<=cp.mi;k++)activateMirror(env.mirrors[k],true);LV.started=true}
  else{G.cp={chap:i,wave:0,mi:0,oni:0};for(const s of c.start)say(s[0],s[1])}
- if(env.mirrors[0])activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);if(c.kak)kakLoad(cp);if(c.green)grLoad(cp);if(c.temple)tpLoad(cp);if(c.ps1)psLoad(cp);
+ if(env.mirrors[0])activateMirror(env.mirrors[0],true);setupChests(cp);if(c.house)houseLoad(cp);if(c.kak)kakLoad(cp);if(c.green)grLoad(cp);if(c.temple)tpLoad(cp);if(c.ps1)psLoad(cp);if(c.w0)w0Load(cp);
  G.card={t:0,title:c.title,name:c.name}}
 function activateMirror(m,silent){if(m.act)return;m.act=true;m.face.material=M.mirrorOn;m.lant.material=M.lampOn;if(!silent){P.food=3;P.hp=P.max;pop('Зеркало-сакр: путь сохранён','#e6c98a');SFX.bell()}}
 function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s[1]);
@@ -111,7 +111,7 @@ function spawnWave(){const w=LV.c.waves[LV.wave];for(const s of w.say)say(s[0],s
 function updGate(){const gt=LV.env.gate,u=gateP.userData;if(!gt||!gt.t.visible){u.open=0;gateP.visible=false;return}
  if(!u.open){const nx=CH[G.chap+1];portalCol(gateP,PCOL[nx?nx.theme:'ash']||PCOL.ash);u.w=LVok('portal')?PORTAL_R:1.15;u.h=LVok('portal')?PORTAL_R:1.55;u.int=1;u.spin=1;ripple(gateP)}
  gateP.position.set(gt.x,1.75,gt.z);gateP.rotation.set(0,0,0);u.open=Math.min(1,u.open+0.02);if(!CS.on){u.int=lerp(u.int,1,0.05);u.spin=lerp(u.spin,1,0.05)}updPortal(gateP)}
-function updChapter(ts){if(LV.ps1){updPs(ts);return}if(LV.kak){updKak(ts);return}if(LV.temple){updTemple(ts);return}if(LV.green){updGreen(ts);return}if(LV.env.hdoor)updDuelDoor();
+function updChapter(ts){if(LV.w0){updW0(ts);return}if(LV.ps1){updPs(ts);return}if(LV.kak){updKak(ts);return}if(LV.temple){updTemple(ts);return}if(LV.green){updGreen(ts);return}if(LV.env.hdoor)updDuelDoor();
  if(LV.house){updHouse(ts);if(G.rainFreeze>0)G.rainFreeze-=ts;return}
  if(!LV.started){LV.waveT+=ts;if(LV.waveT>300||Math.hypot(P.x,P.z+12)>4){LV.started=true;LV.waveT=150}}
  else if(!LV.active&&LV.wave<LV.c.waves.length){LV.waveT+=ts;if(LV.waveT>180&&!G.subs.length||LV.waveT>420){spawnWave();LV.waveT=0}}

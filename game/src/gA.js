@@ -37,7 +37,7 @@ const GRADE=new ShaderPass({uniforms:{tDiffuse:{value:null},uTint:{value:new THR
   c=c*uTint+uShadow*(1.0-smoothstep(0.0,0.45,l));vec2 d=vUv-0.5;c*=1.0-uVig*smoothstep(0.25,0.85,length(d*vec2(1.25,1.0)));
   c+=(h(vUv*vec2(1931.0,1377.0)+fract(uT*7.13))-0.5)*uGrain;gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`});
 composer.addPass(GRADE);
-const GRADES={ash:{t:[1.06,0.97,0.88],s:[0.025,0.008,0.0],sat:0.88,con:1.07},forest:{t:[0.95,1.04,1.0],s:[0.0,0.015,0.012],sat:0.92,con:1.05},duel:{t:[0.92,0.97,1.08],s:[0.0,0.006,0.03],sat:0.78,con:1.1},house:{t:[1.05,0.99,0.92],s:[0.012,0.006,0.014],sat:0.9,con:1.07},kak:{t:[1.06,1.0,0.92],s:[0.014,0.006,0.012],sat:0.95,con:1.05},green:{t:[1.0,1.03,0.97],s:[0.006,0.012,0.0],sat:1.02,con:1.04},ps1:{t:[0.96,1.0,1.08],s:[0.006,0.004,0.02],sat:0.86,con:1.12},temple:{t:[0.97,0.98,1.05],s:[0.004,0.006,0.02],sat:0.96,con:1.06}};
+const GRADES={ash:{t:[1.06,0.97,0.88],s:[0.025,0.008,0.0],sat:0.88,con:1.07},forest:{t:[0.95,1.04,1.0],s:[0.0,0.015,0.012],sat:0.92,con:1.05},duel:{t:[0.92,0.97,1.08],s:[0.0,0.006,0.03],sat:0.78,con:1.1},house:{t:[1.05,0.99,0.92],s:[0.012,0.006,0.014],sat:0.9,con:1.07},kak:{t:[1.06,1.0,0.92],s:[0.014,0.006,0.012],sat:0.95,con:1.05},green:{t:[1.0,1.03,0.97],s:[0.006,0.012,0.0],sat:1.02,con:1.04},ps1:{t:[0.96,1.0,1.08],s:[0.006,0.004,0.02],sat:0.86,con:1.12},temple:{t:[0.97,0.98,1.05],s:[0.004,0.006,0.02],sat:0.96,con:1.06},w0:{t:[1.02,1.0,0.97],s:[0.008,0.006,0.01],sat:0.82,con:1.08}};
 function setGrade(th){const q=GRADES[th]||GRADES.ash,U=GRADE.uniforms;U.uTint.value.set(...q.t);U.uShadow.value.set(...q.s);U.uSat.value=q.sat;U.uCon.value=q.con}
 // ветер для травы/бамбука (vertex shader)
 const WU={uT:{value:0},uW:{value:0.5}};

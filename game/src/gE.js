@@ -70,6 +70,7 @@ function syncEnemy(e,t){const r=e.rig,wind=e.state==='wind',k=wind?ease(e.st/e.a
  else if(r.kind==='yumi'){const ext=wind?k*1.2:rec?1.2*(1-Math.min(1,e.st/40)):act?1.2:0;r.neck.forEach((n,i)=>{n.position.set(Math.sin(t*2+i)*0.05*ext,0.35+i*(0.08+ext*0.17),0.05+Math.sin(i*0.8)*0.1*ext)});
   const top=r.neck[6].position;r.head.position.set(top.x,top.y+0.12,top.z);r.head.lookAt(tv1.set(P.x,1.5,P.z));}
  else if(r.kind==='chochin'||r.kind==='moku')syncHouseEnemy(e,t);
+ else if(r.kind==='mudzin')mzSync(e,t);
  else if(r.v8)v8Sync(e,t,wind,act,rec,k,mv);
  else if(r.kind==='sota'||r.kind==='musha'){let p=POSE.crane;const a=e.atk;
   if(wind&&a){p=a.k==='iai'?mixPose(POSE.crane,POSE.iai,k):mixPose(POSE.crane,POSE.nUp,k)}else if(act||rec){p=a&&a.k==='iai'?POSE.issen:POSE.nDown}else if(e.state==='stag'||e.state==='trans')p=POSE.hurt;if(e.csPose)p=e.csPose;

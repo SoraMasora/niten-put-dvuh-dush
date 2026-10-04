@@ -228,7 +228,7 @@ function psSpawnWave(){const w=PS_W[PS.wave],N=psFlow(),D=N.dist,cand=[];for(con
 const Q_TO=[];function setTimeout0(f,n){Q_TO.push({f,n})}
 function updTimersQ(ts){for(const q of Q_TO)q.n-=ts;for(let i=Q_TO.length-1;i>=0;i--)if(Q_TO[i].n<=0){const f=Q_TO[i].f;Q_TO.splice(i,1);f()}}
 // ---------- загрузка главы, кадр
-function psLoad(cp){LV.ps1=true;psNav();PS.on=true;PS.t=0;PS.done=false;PS.active=false;PS.fight=false;PS.waveT=0;PS.clearT=0;Q_TO.length=0;PS.wave=cp&&cp.wave||0;PS.started=!!cp;LV.env.nav=null;LV.env.R=999;
+function psLoad(cp){LV.ps1=true;psNav();PS.on=true;PS.cs=0;PS.t=0;PS.done=false;PS.active=false;PS.fight=false;PS.waveT=0;PS.clearT=0;Q_TO.length=0;PS.wave=cp&&cp.wave||0;PS.started=!!cp;LV.env.nav=null;LV.env.R=999;
  const S=V8D.spawn;P.x=S[0];P.z=S[1];P._pk=null;P.yaw=Math.PI;G.camYaw=P.yaw;P.y=0;P.vy=0;
  // клиренс игрока: 2 (0.5 м от стен), если связность почти не страдает
  if(PS.reqC==null){const N=V8D.nav,cnt=req=>{const s=psFind(S[0],0.2,S[1],req);if(s<0)return 0;const seen=new Uint8Array(N.N),Q=[s];seen[s]=1;let n=0;while(Q.length){const k=Q.pop();n++;for(let d=0;d<4;d++){const m=N.nb[k*4+d];if(m>=0&&!seen[m]&&N.cl[m]>=req){seen[m]=1;Q.push(m)}}}return n};
@@ -237,6 +237,7 @@ function psLoad(cp){LV.ps1=true;psNav();PS.on=true;PS.t=0;PS.done=false;PS.activ
  G.cp={chap:G.chap,wave:PS.wave,mi:0,oni:P.oni};if(cp){P.oni=cp.oni||0;G.card=null;say('Юки','Ещё раз, Акира. Они не уйдут сами.')}}
 function psAnim(ts){if(!LV.ps1)return;PS.t+=ts;FXY=GY;updRingsQ(ts);updPortalsQ(ts);updTimersQ(ts);updNbFx(ts);
  if(P._pk!=null&&P._pk>=0){const g=psGround(P);GY=Math.abs(g-GY)>1.2?g:lerp(GY,g,0.4)}
+ if(LV.w0){w0Anim(ts);return}
  for(const m of PS.glass)m.opacity=0.42+0.1*Math.sin(PS.t*0.03);if(PS.water&&PS.water.map){PS.water.map.offset.x=PS.t*0.0004;PS.water.map.offset.y=Math.sin(PS.t*0.004)*0.01}
  for(const m of PS.lamps)m.emissiveIntensity=2.0+0.25*Math.sin(PS.t*0.11+Math.sin(PS.t*0.031)*3);
  if(PS.motes){const a=PS.motes.geometry.attributes.position;for(let i=0;i<a.count;i+=9){a.setY(i,a.getY(i)+0.003);if(a.getY(i)>9)a.setY(i,-3)}a.needsUpdate=true}
@@ -465,12 +466,12 @@ function psWakeCS(){const S=V8D.spawn;TP.nar=[];TP.ov={c:'255,255,255',a:1};TP.l
   if(t>=1085)fin()},fin)}
 // ---------- финал главы
 function psClearCS(){if(PS.cs)return;PS.cs=1;if(P.drawn){P.state='sheathe';P.t=0;P.drawSpd=1;SFX.draw&&SFX.draw(false)}
- const end=()=>{PS.cs=0;tpEnd('ps1')};
+ const end=()=>{if(PS.cs!==1)return;PS.cs=2;csEnd();w0DoorCS()};
  csStart('tpClear',t=>{CS.bars=1;const gy=GY,an=0.6+t*0.0016;const T={x:P.x,y:gy+1.3,z:P.z},C={x:P.x+Math.sin(an)*4.2,y:gy+2.0,z:P.z+Math.cos(an)*4.2};psCam(T,C);cam([C.x,C.y,C.z],[P.x,gy+1.2,P.z]);
   if(t===20)csSay('Юки','Тихо… Тени ушли. Ты справился, Акира.',20,140);
   if(t===150)csSay('Акира','Старик говорил о рыбе и воде. Кажется, я начинаю понимать…',150,290);
   if(t===300)csSay('Юки','Тогда идём. Клинки зовут дальше.',300,400);
-  if(t>=380)TP.ov={c:'0,0,0',a:ek(t,380,440)};if(t>=445)end()},end)}
+  if(t>=400)end()},end)}
 // ---------- инициализация (после gB/gC: ET, ATK, M)
 let Q18OK=false;function q18Init(){if(Q18OK)return;Q18OK=true;Object.assign(ET,v8Def());Object.assign(ATK,nbDefs())}
 function qHook(){return{PS,QS,V8D,nav:psNav,find:psFind,clamp:psClamp,ground:psGround,cam:psCam,solid:psSolid,space:qSpaceCS,wake:psWakeCS,clear:psClearCS,equip:nbEquip,spawn:v8Spawn,wave:psSpawnWave,old:qOld}}

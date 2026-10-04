@@ -2,7 +2,7 @@
 // Модели: sao_health_bar.glb (Sockona), demon_slayer_ui_concept_art.glb (Yaanaa), onigiri_1.glb (DevCentral) — CC BY 4.0, см. README.
 // blender/ext/v18.py hud19(): плоские части V8H__saoB/saoI (рамка/полоса, ширина 1 м), V8H__dsBack/dsHp/dsIco/dsChain (2.2 м), V8G__oni.
 const HPB={m:new Map(),K:null,tmp:new V3()};
-const HB_HIDE=new Set(['intro','csIdle','cs','hidden','locked']);
+const HB_HIDE=new Set(['intro','csIdle','cs','hidden','locked','mzwait']);
 const HB_C={hi:0x12d83c,mid:0xf2b814,lo:0xf01c1c,p2:0x9a3cff};
 function hbMat(col,o={}){return new MB({color:col,transparent:true,opacity:o.op??1,depthWrite:false,depthTest:true,toneMapped:false,fog:false,side:THREE.DoubleSide})}
 function hbKinds(){if(HPB.K)return HPB.K;const P0=(ASSET.parts&&ASSET.parts.V8H)||{};
